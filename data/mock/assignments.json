@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "title": "Build Your First Webpage",
+    "description": "Create a personal webpage using HTML and CSS. Include at least 3 sections: header, main content, and footer. Use semantic HTML tags and style with CSS.",
+    "dueDate": "2024-06-01T23:59:59Z",
+    "maxPoints": 100,
+    "courseId": 1,
+    "createdAt": "2024-03-20T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "title": "JavaScript Calculator",
+    "description": "Build a simple calculator using JavaScript that can perform basic arithmetic operations (+, -, *, /). Include clear, intuitive buttons and a display area.",
+    "dueDate": "2024-06-15T23:59:59Z",
+    "maxPoints": 150,
+    "courseId": 1,
+    "createdAt": "2024-04-01T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "title": "React To-Do App",
+    "description": "Create a to-do list application using React. Features should include: add tasks, mark tasks as complete, delete tasks, and persist data to localStorage.",
+    "dueDate": "2024-06-30T23:59:59Z",
+    "maxPoints": 200,
+    "courseId": 2,
+    "createdAt": "2024-04-10T00:00:00Z"
+  },
+  {
+    "id": 4,
+    "title": "Data Analysis Project",
+    "description": "Using Python and pandas, analyze a dataset of your choice. Include data cleaning, exploratory analysis, and visualizations using matplotlib. Submit your Jupyter notebook.",
+    "dueDate": "2024-07-15T23:59:59Z",
+    "maxPoints": 250,
+    "courseId": 3,
+    "createdAt": "2024-04-15T00:00:00Z"
+  },
+  {
+    "id": 5,
+    "title": "TypeScript Generic Utility",
+    "description": "Implement a generic utility class in TypeScript that can manage a collection of items with CRUD operations. Include proper type definitions and JSDoc comments.",
+    "dueDate": "2024-07-01T23:59:59Z",
+    "maxPoints": 180,
+    "courseId": 4,
+    "createdAt": "2024-04-20T00:00:00Z"
+  },
+  {
+    "id": 6,
+    "title": "REST API Development",
+    "description": "Build a RESTful API using Node.js and Express. Include endpoints for CRUD operations on a resource of your choice, proper error handling, and input validation.",
+    "dueDate": "2024-08-01T23:59:59Z",
+    "maxPoints": 300,
+    "courseId": 6,
+    "createdAt": "2024-05-01T00:00:00Z"
+  }
+]

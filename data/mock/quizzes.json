@@ -1,0 +1,200 @@
+[
+  {
+    "id": 1,
+    "title": "HTML Basics Quiz",
+    "description": "Test your knowledge of HTML fundamentals",
+    "courseId": 1,
+    "timeLimit": 15,
+    "attemptsAllowed": 3,
+    "createdAt": "2024-02-10T00:00:00Z",
+    "questions": [
+      {
+        "id": 1,
+        "quizId": 1,
+        "text": "What does HTML stand for?",
+        "type": "MC_SINGLE",
+        "points": 5,
+        "options": {
+          "A": "Hyper Text Markup Language",
+          "B": "Home Tool Markup Language",
+          "C": "Hyperlinks and Text Markup Language",
+          "D": "Hyper Tool Multi Language"
+        },
+        "correctAnswer": "A"
+      },
+      {
+        "id": 2,
+        "quizId": 1,
+        "text": "Which tag is used to create a paragraph?",
+        "type": "MC_SINGLE",
+        "points": 5,
+        "options": {
+          "A": "<paragraph>",
+          "B": "<p>",
+          "C": "<text>",
+          "D": "<para>"
+        },
+        "correctAnswer": "B"
+      },
+      {
+        "id": 3,
+        "quizId": 1,
+        "text": "Which of the following are valid HTML heading tags? (Select all that apply)",
+        "type": "MC_MULTI",
+        "points": 10,
+        "options": {
+          "A": "<h1>",
+          "B": "<head>",
+          "C": "<h6>",
+          "D": "<heading>"
+        },
+        "correctAnswer": ["A", "C"]
+      },
+      {
+        "id": 4,
+        "quizId": 1,
+        "text": "HTML is a programming language.",
+        "type": "TRUE_FALSE",
+        "points": 5,
+        "options": {
+          "A": "True",
+          "B": "False"
+        },
+        "correctAnswer": "B"
+      },
+      {
+        "id": 5,
+        "quizId": 1,
+        "text": "Explain the difference between block-level and inline elements.",
+        "type": "TEXT",
+        "points": 15,
+        "correctAnswer": ""
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "JavaScript Variables and Types",
+    "description": "Assess your understanding of JavaScript variables and data types",
+    "courseId": 1,
+    "timeLimit": 20,
+    "attemptsAllowed": 2,
+    "createdAt": "2024-02-20T00:00:00Z",
+    "questions": [
+      {
+        "id": 6,
+        "quizId": 2,
+        "text": "Which keyword is used to declare a constant in JavaScript?",
+        "type": "MC_SINGLE",
+        "points": 5,
+        "options": {
+          "A": "var",
+          "B": "let",
+          "C": "const",
+          "D": "constant"
+        },
+        "correctAnswer": "C"
+      },
+      {
+        "id": 7,
+        "quizId": 2,
+        "text": "Which of the following are primitive data types in JavaScript? (Select all that apply)",
+        "type": "MC_MULTI",
+        "points": 10,
+        "options": {
+          "A": "String",
+          "B": "Array",
+          "C": "Boolean",
+          "D": "Object"
+        },
+        "correctAnswer": ["A", "C"]
+      },
+      {
+        "id": 8,
+        "quizId": 2,
+        "text": "JavaScript is statically typed.",
+        "type": "TRUE_FALSE",
+        "points": 5,
+        "options": {
+          "A": "True",
+          "B": "False"
+        },
+        "correctAnswer": "B"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "React Hooks Assessment",
+    "description": "Test your knowledge of React Hooks including useState and useEffect",
+    "courseId": 2,
+    "timeLimit": 30,
+    "attemptsAllowed": 3,
+    "createdAt": "2024-03-01T00:00:00Z",
+    "questions": [
+      {
+        "id": 9,
+        "quizId": 3,
+        "text": "Which hook is used to manage state in a functional component?",
+        "type": "MC_SINGLE",
+        "points": 5,
+        "options": {
+          "A": "useEffect",
+          "B": "useState",
+          "C": "useContext",
+          "D": "useReducer"
+        },
+        "correctAnswer": "B"
+      },
+      {
+        "id": 10,
+        "quizId": 3,
+        "text": "useEffect runs after every render by default.",
+        "type": "TRUE_FALSE",
+        "points": 5,
+        "options": {
+          "A": "True",
+          "B": "False"
+        },
+        "correctAnswer": "A"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Python Data Types Quiz",
+    "description": "Evaluate your understanding of Python data types and structures",
+    "courseId": 3,
+    "timeLimit": 25,
+    "attemptsAllowed": 2,
+    "createdAt": "2024-03-15T00:00:00Z",
+    "questions": [
+      {
+        "id": 11,
+        "quizId": 4,
+        "text": "Which of the following is immutable in Python?",
+        "type": "MC_SINGLE",
+        "points": 5,
+        "options": {
+          "A": "List",
+          "B": "Dictionary",
+          "C": "Tuple",
+          "D": "Set"
+        },
+        "correctAnswer": "C"
+      },
+      {
+        "id": 12,
+        "quizId": 4,
+        "text": "Python uses 0-based indexing.",
+        "type": "TRUE_FALSE",
+        "points": 5,
+        "options": {
+          "A": "True",
+          "B": "False"
+        },
+        "correctAnswer": "A"
+      }
+    ]
+  }
+]

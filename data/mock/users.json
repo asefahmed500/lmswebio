@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "email": "admin@lms.com",
+    "fullName": "System Administrator",
+    "role": "ADMIN",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "email": "instructor1@lms.com",
+    "fullName": "Dr. Sarah Johnson",
+    "role": "INSTRUCTOR",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
+    "createdAt": "2024-01-15T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "email": "instructor2@lms.com",
+    "fullName": "Prof. Michael Chen",
+    "role": "INSTRUCTOR",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=michael",
+    "createdAt": "2024-02-01T00:00:00Z"
+  },
+  {
+    "id": 4,
+    "email": "student1@lms.com",
+    "fullName": "Emma Williams",
+    "role": "STUDENT",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=emma",
+    "createdAt": "2024-03-01T00:00:00Z"
+  },
+  {
+    "id": 5,
+    "email": "student2@lms.com",
+    "fullName": "James Rodriguez",
+    "role": "STUDENT",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=james",
+    "createdAt": "2024-03-05T00:00:00Z"
+  },
+  {
+    "id": 6,
+    "email": "student3@lms.com",
+    "fullName": "Olivia Brown",
+    "role": "STUDENT",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=olivia",
+    "createdAt": "2024-03-10T00:00:00Z"
+  },
+  {
+    "id": 7,
+    "email": "student4@lms.com",
+    "fullName": "William Davis",
+    "role": "STUDENT",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=william",
+    "createdAt": "2024-03-15T00:00:00Z"
+  },
+  {
+    "id": 8,
+    "email": "student5@lms.com",
+    "fullName": "Sophia Martinez",
+    "role": "STUDENT",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=sophia",
+    "createdAt": "2024-03-20T00:00:00Z"
+  },
+  {
+    "id": 9,
+    "email": "student6@lms.com",
+    "fullName": "Benjamin Taylor",
+    "role": "STUDENT",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=benjamin",
+    "createdAt": "2024-04-01T00:00:00Z"
+  },
+  {
+    "id": 10,
+    "email": "student7@lms.com",
+    "fullName": "Isabella Anderson",
+    "role": "STUDENT",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=isabella",
+    "createdAt": "2024-04-05T00:00:00Z"
+  }
+]

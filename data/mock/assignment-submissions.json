@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1,
+    "assignmentId": 1,
+    "userId": 4,
+    "fileUrl": "/submissions/emma-webpage.zip",
+    "textAnswer": "I've created a personal webpage with all required sections. Used semantic HTML5 tags including <header>, <main>, <section>, and <footer>. Styled with CSS Grid for layout.",
+    "grade": null,
+    "feedback": null,
+    "submittedAt": "2024-05-20T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "assignmentId": 1,
+    "userId": 5,
+    "fileUrl": "/submissions/james-webpage.zip",
+    "textAnswer": "My webpage includes a responsive header with navigation, hero section, about me, and footer. Used Flexbox for responsive design.",
+    "grade": 95,
+    "feedback": "Excellent work! Great use of semantic HTML and responsive design. Minor improvements possible on mobile view.",
+    "submittedAt": "2024-05-18T00:00:00Z",
+    "gradedAt": "2024-05-19T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "assignmentId": 2,
+    "userId": 7,
+    "fileUrl": "/submissions/olivia-calculator.zip",
+    "textAnswer": "JavaScript calculator with all basic operations. Added keyboard support and error handling for division by zero.",
+    "grade": 88,
+    "feedback": "Good implementation! Calculator works well. Consider adding more operations like modulus and decimal support.",
+    "submittedAt": "2024-05-15T00:00:00Z",
+    "gradedAt": "2024-05-17T00:00:00Z"
+  },
+  {
+    "id": 4,
+    "assignmentId": 3,
+    "userId": 9,
+    "fileUrl": "/submissions/benjamin-todo.zip",
+    "textAnswer": "React to-do app with full CRUD functionality. Uses useState for state management and localStorage for persistence.",
+    "grade": 92,
+    "feedback": "Very clean code! Good use of React hooks. Consider adding edit functionality for existing tasks.",
+    "submittedAt": "2024-05-21T00:00:00Z",
+    "gradedAt": "2024-05-22T00:00:00Z"
+  },
+  {
+    "id": 5,
+    "assignmentId": 4,
+    "userId": 8,
+    "fileUrl": "/submissions/sophia-analysis.ipynb",
+    "textAnswer": "Analyzed customer churn dataset. Includes data cleaning, exploratory analysis, and predictive modeling with visualizations.",
+    "grade": 98,
+    "feedback": "Outstanding analysis! Excellent visualizations and insights. Very well-documented notebook.",
+    "submittedAt": "2024-05-08T00:00:00Z",
+    "gradedAt": "2024-05-09T00:00:00Z"
+  },
+  {
+    "id": 6,
+    "assignmentId": 1,
+    "userId": 10,
+    "fileUrl": "/submissions/isabella-webpage.zip",
+    "textAnswer": "Personal webpage project with header, main content sections, and footer. Included external CSS stylesheet.",
+    "grade": null,
+    "feedback": null,
+    "submittedAt": "2024-05-22T00:00:00Z"
+  }
+]

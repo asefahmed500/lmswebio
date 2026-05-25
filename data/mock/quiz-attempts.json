@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1,
+    "quizId": 1,
+    "userId": 4,
+    "score": 85,
+    "submittedAt": "2024-04-20T00:00:00Z",
+    "answers": {
+      "1": "A",
+      "2": "B",
+      "3": ["A", "C"],
+      "4": "B",
+      "5": "Block-level elements take up the full width available and start on a new line. Inline elements only take up as much width as necessary and do not start on a new line."
+    },
+    "feedback": "Great work! Review block-level vs inline elements for deeper understanding."
+  },
+  {
+    "id": 2,
+    "quizId": 1,
+    "userId": 5,
+    "score": 100,
+    "submittedAt": "2024-04-25T00:00:00Z",
+    "answers": {
+      "1": "A",
+      "2": "B",
+      "3": ["A", "C"],
+      "4": "B",
+      "5": "Block-level elements occupy full width and break to new lines. Inline elements flow with content and only use necessary space."
+    },
+    "feedback": "Excellent! Perfect score."
+  },
+  {
+    "id": 3,
+    "quizId": 2,
+    "userId": 6,
+    "score": 70,
+    "submittedAt": "2024-05-01T00:00:00Z",
+    "answers": {
+      "6": "C",
+      "7": ["A"],
+      "8": "B"
+    }
+  },
+  {
+    "id": 4,
+    "quizId": 3,
+    "userId": 9,
+    "score": 90,
+    "submittedAt": "2024-05-15T00:00:00Z",
+    "answers": {
+      "9": "B",
+      "10": "A"
+    }
+  },
+  {
+    "id": 5,
+    "quizId": 4,
+    "userId": 8,
+    "score": 100,
+    "submittedAt": "2024-05-10T00:00:00Z",
+    "answers": {
+      "11": "C",
+      "12": "A"
+    }
+  }
+]

@@ -1,0 +1,131 @@
+[
+  {
+    "id": 1,
+    "userId": 4,
+    "courseId": 1,
+    "enrolledAt": "2024-03-15T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 66.67,
+    "lastAccessedAt": "2024-05-20T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "userId": 4,
+    "courseId": 2,
+    "enrolledAt": "2024-04-01T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 50,
+    "lastAccessedAt": "2024-05-18T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "userId": 5,
+    "courseId": 1,
+    "enrolledAt": "2024-03-20T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 100,
+    "lastAccessedAt": "2024-05-10T00:00:00Z",
+    "completedAt": "2024-05-10T00:00:00Z"
+  },
+  {
+    "id": 4,
+    "userId": 5,
+    "courseId": 3,
+    "enrolledAt": "2024-04-05T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 50,
+    "lastAccessedAt": "2024-05-19T00:00:00Z"
+  },
+  {
+    "id": 5,
+    "userId": 6,
+    "courseId": 2,
+    "enrolledAt": "2024-03-25T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 25,
+    "lastAccessedAt": "2024-05-17T00:00:00Z"
+  },
+  {
+    "id": 6,
+    "userId": 6,
+    "courseId": 4,
+    "enrolledAt": "2024-04-10T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 0,
+    "lastAccessedAt": "2024-04-10T00:00:00Z"
+  },
+  {
+    "id": 7,
+    "userId": 7,
+    "courseId": 1,
+    "enrolledAt": "2024-04-01T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 33.33,
+    "lastAccessedAt": "2024-05-15T00:00:00Z"
+  },
+  {
+    "id": 8,
+    "userId": 7,
+    "courseId": 6,
+    "enrolledAt": "2024-04-15T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 100,
+    "lastAccessedAt": "2024-05-12T00:00:00Z",
+    "completedAt": "2024-05-12T00:00:00Z"
+  },
+  {
+    "id": 9,
+    "userId": 8,
+    "courseId": 3,
+    "enrolledAt": "2024-04-05T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 100,
+    "lastAccessedAt": "2024-05-08T00:00:00Z",
+    "completedAt": "2024-05-08T00:00:00Z"
+  },
+  {
+    "id": 10,
+    "userId": 8,
+    "courseId": 4,
+    "enrolledAt": "2024-04-20T00:00:00Z",
+    "status": "DROPPED",
+    "progress": 0,
+    "lastAccessedAt": "2024-04-22T00:00:00Z"
+  },
+  {
+    "id": 11,
+    "userId": 9,
+    "courseId": 2,
+    "enrolledAt": "2024-04-15T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 75,
+    "lastAccessedAt": "2024-05-21T00:00:00Z"
+  },
+  {
+    "id": 12,
+    "userId": 9,
+    "courseId": 6,
+    "enrolledAt": "2024-04-25T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 50,
+    "lastAccessedAt": "2024-05-16T00:00:00Z"
+  },
+  {
+    "id": 13,
+    "userId": 10,
+    "courseId": 1,
+    "enrolledAt": "2024-05-01T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 16.67,
+    "lastAccessedAt": "2024-05-22T00:00:00Z"
+  },
+  {
+    "id": 14,
+    "userId": 10,
+    "courseId": 3,
+    "enrolledAt": "2024-05-05T00:00:00Z",
+    "status": "ACTIVE",
+    "progress": 0,
+    "lastAccessedAt": "2024-05-05T00:00:00Z"
+  }
+]

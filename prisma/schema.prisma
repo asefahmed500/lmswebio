@@ -1,0 +1,544 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum EnrolmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum QuestionType {
+  MC_SINGLE
+  MC_MULTI
+  TEXT
+  TRUE_FALSE
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         Role      @default(STUDENT)
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  isEmailVerified Boolean @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  courses           Course[]
+  enrolments        Enrolment[]
+  lessonCompletions LessonCompletion[]
+  quizAttempts      QuizAttempt[]
+  submissions       AssignmentSubmission[]
+  refreshTokens     RefreshToken[]
+  certificates      Certificate[]
+  discussions       Discussion[]
+  comments          Comment[]
+  discussionVotes   DiscussionVote[]
+  reviews           CourseReview[]
+  reviewHelpfulVotes ReviewHelpfulVote[]
+  notes             Note[]
+  bookmarks         Bookmark[]
+  learningPathEnrollments LearningPathEnrollment[]
+  userBadges        UserBadge[]
+  calendarAttendees CalendarEventAttendee[]
+  notifications     Notification[]
+  instructorProfile InstructorProfile?
+
+  @@index([role])
+  @@index([createdAt])
+  @@index([isActive])
+}
+
+model Course {
+  id           Int       @id @default(autoincrement())
+  title        String
+  slug         String    @unique
+  description  String?
+  thumbnail    String?
+  level        Level     @default(BEGINNER)
+  isPublished  Boolean   @default(false)
+  instructorId Int
+  instructor   User      @relation(fields: [instructorId], references: [id])
+  category     String?
+  tags         String[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  modules     Module[]
+  enrolments  Enrolment[]
+  quizzes     Quiz[]
+  announcements Announcement[]
+  assignments Assignment[]
+  certificates Certificate[]
+  discussions Discussion[]
+  reviews     CourseReview[]
+  reviewHelpfulVotes ReviewHelpfulVote[]
+  learningPaths LearningPathCourse[]
+  calendarEvents CalendarEvent[]
+
+  @@index([instructorId])
+  @@index([isPublished])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model Module {
+  id       Int    @id @default(autoincrement())
+  title    String
+  order    Int
+  courseId Int
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  lessons Lesson[]
+}
+
+model Lesson {
+  id          Int     @id @default(autoincrement())
+  title       String
+  content     String?
+  contentType String  @default("text")
+  order       Int
+  moduleId    Int
+  module      Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  duration    Int?
+
+  completions LessonCompletion[]
+  notes       Note[]
+  bookmarks   Bookmark[]
+}
+
+model Enrolment {
+  id             Int             @id @default(autoincrement())
+  userId         Int
+  user           User            @relation(fields: [userId], references: [id])
+  courseId        Int
+  course         Course          @relation(fields: [courseId], references: [id])
+  enrolledAt     DateTime        @default(now())
+  status         EnrolmentStatus @default(ACTIVE)
+  progress       Float           @default(0)
+  lastAccessedAt DateTime?
+  completedAt    DateTime?
+
+  @@unique([userId, courseId])
+}
+
+model LessonCompletion {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  lessonId    Int
+  lesson      Lesson   @relation(fields: [lessonId], references: [id])
+  completedAt DateTime @default(now())
+
+  @@unique([userId, lessonId])
+}
+
+model Quiz {
+  id             Int      @id @default(autoincrement())
+  title          String
+  description    String?
+  courseId       Int
+  course         Course   @relation(fields: [courseId], references: [id])
+  timeLimit      Int?
+  attemptsAllowed Int     @default(1)
+  createdAt      DateTime @default(now())
+
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+}
+
+model QuizQuestion {
+  id            Int          @id @default(autoincrement())
+  quizId        Int
+  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text          String
+  type          QuestionType
+  points        Int
+  options       Json?
+  correctAnswer Json?
+}
+
+model QuizAttempt {
+  id          Int      @id @default(autoincrement())
+  quizId      Int
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  score       Float?
+  submittedAt DateTime @default(now())
+  answers     Json
+
+  @@index([quizId])
+  @@index([userId])
+  @@index([quizId, userId])
+}
+
+model Assignment {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  dueDate     DateTime?
+  maxPoints   Float
+  courseId    Int
+  course      Course   @relation(fields: [courseId], references: [id])
+  createdAt   DateTime @default(now())
+
+  submissions AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id           Int       @id @default(autoincrement())
+  assignmentId Int
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  userId       Int
+  user         User       @relation(fields: [userId], references: [id])
+  fileUrl      String?
+  textAnswer   String?
+  grade        Float?
+  feedback     String?
+  submittedAt  DateTime   @default(now())
+  gradedAt     DateTime?
+
+  @@index([assignmentId])
+  @@index([userId])
+  @@index([assignmentId, userId])
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// Certificate System
+model Certificate {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  courseId    Int
+  course      Course   @relation(fields: [courseId], references: [id])
+  certificateUrl String
+  verificationId String @unique
+  issuedAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([courseId, issuedAt])
+  @@index([verificationId])
+}
+
+// Discussion Forums
+model Discussion {
+  id        Int      @id @default(autoincrement())
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  content   String
+  isPinned  Boolean  @default(false)
+  isResolved Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments  Comment[]
+  votes     DiscussionVote[]
+
+  @@index([courseId])
+  @@index([userId])
+}
+
+model Comment {
+  id          Int       @id @default(autoincrement())
+  discussionId Int
+  discussion  Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  parentId    Int?
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     Comment[] @relation("CommentReplies")
+  content     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([discussionId])
+  @@index([userId])
+}
+
+model DiscussionVote {
+  id          Int       @id @default(autoincrement())
+  discussionId Int
+  discussion  Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  value       Int // 1 for upvote, -1 for downvote
+
+  @@unique([discussionId, userId])
+  @@index([discussionId])
+  @@index([userId])
+}
+
+// Course Reviews and Ratings
+model CourseReview {
+  id        Int      @id @default(autoincrement())
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int // 1-5 stars
+  review    String?
+  helpfulVotes Int   @default(0)
+  helpfulVoteRecords ReviewHelpfulVote[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, userId])
+  @@index([courseId])
+  @@index([userId])
+}
+
+model ReviewHelpfulVote {
+  id        Int          @id @default(autoincrement())
+  reviewId  Int
+  review    CourseReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User         @relation(fields: [userId], references: [id])
+  createdAt DateTime     @default(now())
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
+}
+
+// Learning Paths
+model LearningPath {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  description String?
+  thumbnail   String?
+  level       Level    @default(BEGINNER)
+  estimatedDuration Int // in hours
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses     LearningPathCourse[]
+  enrollments LearningPathEnrollment[]
+}
+
+model LearningPathCourse {
+  id             Int          @id @default(autoincrement())
+  learningPathId Int
+  learningPath   LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+  courseId       Int
+  course         Course       @relation(fields: [courseId], references: [id])
+  order          Int
+  isMandatory    Boolean      @default(true)
+
+  @@unique([learningPathId, courseId])
+  @@index([learningPathId])
+  @@index([courseId])
+}
+
+model LearningPathEnrollment {
+  id             Int          @id @default(autoincrement())
+  userId         Int
+  user           User         @relation(fields: [userId], references: [id])
+  learningPathId Int
+  learningPath   LearningPath @relation(fields: [learningPathId], references: [id])
+  enrolledAt     DateTime     @default(now())
+  progress       Float        @default(0)
+  completedAt    DateTime?
+
+  @@unique([userId, learningPathId])
+  @@index([userId])
+  @@index([learningPathId])
+}
+
+// Badges and Achievements
+model Badge {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String
+  iconUrl     String?
+  criteria    Json // Requirements to earn the badge
+  points      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  badgeId     Int
+  badge       Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt    DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+}
+
+// Notes and Bookmarks
+model Note {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  lessonId  Int
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  timestamp Int? // Video timestamp in seconds
+  isPrivate Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([lessonId])
+}
+
+model Bookmark {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  lessonId  Int
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  timestamp Int? // Video timestamp in seconds
+  createdAt DateTime @default(now())
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+}
+
+// Calendar Events
+model CalendarEvent {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  eventType   String // "live_session", "deadline", "assignment_due", "quiz", "other"
+  startTime   DateTime
+  endTime     DateTime?
+  location    String? // Physical location or meeting link
+  courseId    Int?
+  course      Course?  @relation(fields: [courseId], references: [id])
+  isRecurring Boolean  @default(false)
+  recurrencePattern String? // "daily", "weekly", "monthly"
+  createdBy   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attendees   CalendarEventAttendee[]
+
+  @@index([courseId])
+  @@index([startTime])
+}
+
+model CalendarEventAttendee {
+  id          Int            @id @default(autoincrement())
+  eventId     Int
+  event       CalendarEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String         @default("going") // "going", "maybe", "declined"
+  respondedAt DateTime?
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+// Announcements
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   @db.Text
+  courseId  Int
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId])
+}
+
+// Instructor Profile
+model InstructorProfile {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  user              User     @relation(fields: [userId], references: [id])
+  bio               String?  @db.Text
+  expertise         String[]
+  experience        String?  @db.Text
+  education         String?
+  website           String?
+  linkedInUrl       String?
+  twitterUrl        String?
+  youtubeUrl        String?
+  isFeatured        Boolean  @default(false)
+  rating            Float?   @default(0)
+  totalReviews      Int      @default(0)
+  totalStudents     Int      @default(0)
+  totalCourses      Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  title      String
+  message    String
+  type       String   @default("info")
+  read       Boolean  @default(false)
+  link       String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Settings {
+  id                  Int     @id @default(1)
+  siteName            String  @default("LMS Platform")
+  siteDescription     String  @default("Learning Management System")
+  allowRegistration   Boolean @default(true)
+  defaultRole         String  @default("STUDENT")
+  maintenanceMode     Boolean @default(false)
+  maxUploadSize       Int     @default(20)
+  emailNotifications  Boolean @default(true)
+}
+
+// Rate Limiting for API endpoints
+model RateLimitRecord {
+  id         Int      @id @default(autoincrement())
+  identifier String
+  timestamp  DateTime @default(now())
+
+  @@index([identifier, timestamp])
+  @@index([timestamp])
+}

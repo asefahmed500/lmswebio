@@ -1,0 +1,281 @@
+[
+  {
+    "id": 1,
+    "title": "Introduction to Web Development",
+    "slug": "intro-web-dev",
+    "description": "Learn the fundamentals of HTML, CSS, and JavaScript to build modern websites.",
+    "thumbnail": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
+    "level": "BEGINNER",
+    "isPublished": true,
+    "instructorId": 2,
+    "category": "Web Development",
+    "tags": ["HTML", "CSS", "JavaScript", "Frontend"],
+    "createdAt": "2024-02-01T00:00:00Z",
+    "modules": [
+      {
+        "id": 1,
+        "title": "Getting Started with HTML",
+        "order": 1,
+        "courseId": 1,
+        "lessons": [
+          {
+            "id": 1,
+            "title": "What is HTML?",
+            "content": "<h1>Introduction to HTML</h1><p>HTML (HyperText Markup Language) is the standard markup language for creating web pages.</p>",
+            "contentType": "TEXT",
+            "order": 1,
+            "moduleId": 1,
+            "duration": 15
+          },
+          {
+            "id": 2,
+            "title": "HTML Document Structure",
+            "content": "https://www.youtube.com/embed/vT3JvsSIQ6U",
+            "contentType": "VIDEO",
+            "order": 2,
+            "moduleId": 1,
+            "duration": 25
+          },
+          {
+            "id": 3,
+            "title": "Common HTML Tags",
+            "content": "<h1>Common HTML Tags</h1><p>Learn about headings, paragraphs, lists, and more...</p>",
+            "contentType": "TEXT",
+            "order": 3,
+            "moduleId": 1,
+            "duration": 20
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "CSS Fundamentals",
+        "order": 2,
+        "courseId": 1,
+        "lessons": [
+          {
+            "id": 4,
+            "title": "Introduction to CSS",
+            "content": "https://www.youtube.com/embed/1Rs2ND1ryYc",
+            "contentType": "VIDEO",
+            "order": 1,
+            "moduleId": 2,
+            "duration": 30
+          },
+          {
+            "id": 5,
+            "title": "Selectors and Properties",
+            "content": "<h1>CSS Selectors</h1><p>Learn how to target HTML elements with CSS selectors...</p>",
+            "contentType": "TEXT",
+            "order": 2,
+            "moduleId": 2,
+            "duration": 25
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "JavaScript Basics",
+        "order": 3,
+        "courseId": 1,
+        "lessons": [
+          {
+            "id": 6,
+            "title": "Variables and Data Types",
+            "content": "https://www.youtube.com/embed/hdI2bqOjy3c",
+            "contentType": "VIDEO",
+            "order": 1,
+            "moduleId": 3,
+            "duration": 35
+          },
+          {
+            "id": 7,
+            "title": "Functions and Scope",
+            "content": "<h1>JavaScript Functions</h1><p>Understanding functions, parameters, and scope...</p>",
+            "contentType": "TEXT",
+            "order": 2,
+            "moduleId": 3,
+            "duration": 30
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "React.js Masterclass",
+    "slug": "react-masterclass",
+    "description": "Deep dive into React.js including hooks, state management, and best practices.",
+    "thumbnail": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800",
+    "level": "INTERMEDIATE",
+    "isPublished": true,
+    "instructorId": 2,
+    "category": "Frontend Development",
+    "tags": ["React", "JavaScript", "Hooks", "Frontend"],
+    "createdAt": "2024-02-15T00:00:00Z",
+    "modules": [
+      {
+        "id": 4,
+        "title": "React Fundamentals",
+        "order": 1,
+        "courseId": 2,
+        "lessons": [
+          {
+            "id": 8,
+            "title": "What is React?",
+            "content": "https://www.youtube.com/embed/SqcY0GlETPk",
+            "contentType": "VIDEO",
+            "order": 1,
+            "moduleId": 4,
+            "duration": 40
+          },
+          {
+            "id": 9,
+            "title": "JSX and Components",
+            "content": "<h1>Understanding JSX</h1><p>JSX is a syntax extension for JavaScript...</p>",
+            "contentType": "TEXT",
+            "order": 2,
+            "moduleId": 4,
+            "duration": 30
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "State and Props",
+        "order": 2,
+        "courseId": 2,
+        "lessons": [
+          {
+            "id": 10,
+            "title": "Working with State",
+            "content": "https://www.youtube.com/embed/O6P86mw2xNo",
+            "contentType": "VIDEO",
+            "order": 1,
+            "moduleId": 5,
+            "duration": 45
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Python for Data Science",
+    "slug": "python-data-science",
+    "description": "Learn Python programming and data analysis with pandas, numpy, and matplotlib.",
+    "thumbnail": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800",
+    "level": "BEGINNER",
+    "isPublished": true,
+    "instructorId": 3,
+    "category": "Data Science",
+    "tags": ["Python", "Data Science", "Pandas", "NumPy"],
+    "createdAt": "2024-03-01T00:00:00Z",
+    "modules": [
+      {
+        "id": 6,
+        "title": "Python Basics",
+        "order": 1,
+        "courseId": 3,
+        "lessons": [
+          {
+            "id": 11,
+            "title": "Setting Up Python",
+            "content": "https://www.youtube.com/embed/rfscVS0vtbw",
+            "contentType": "VIDEO",
+            "order": 1,
+            "moduleId": 6,
+            "duration": 20
+          },
+          {
+            "id": 12,
+            "title": "Variables and Data Types",
+            "content": "<h1>Python Variables</h1><p>Learn about Python's dynamic typing...</p>",
+            "contentType": "TEXT",
+            "order": 2,
+            "moduleId": 6,
+            "duration": 25
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Advanced TypeScript Patterns",
+    "slug": "advanced-typescript",
+    "description": "Master advanced TypeScript concepts, generics, utility types, and design patterns.",
+    "thumbnail": "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800",
+    "level": "ADVANCED",
+    "isPublished": true,
+    "instructorId": 3,
+    "category": "Backend Development",
+    "tags": ["TypeScript", "JavaScript", "Advanced"],
+    "createdAt": "2024-03-15T00:00:00Z",
+    "modules": [
+      {
+        "id": 7,
+        "title": "Generics and Utility Types",
+        "order": 1,
+        "courseId": 4,
+        "lessons": [
+          {
+            "id": 13,
+            "title": "Understanding Generics",
+            "content": "https://www.youtube.com/embed/yN64H2D8j8g",
+            "contentType": "VIDEO",
+            "order": 1,
+            "moduleId": 7,
+            "duration": 50
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "title": "UI/UX Design Principles",
+    "slug": "ui-ux-principles",
+    "description": "Learn the fundamental principles of user interface and user experience design.",
+    "thumbnail": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800",
+    "level": "BEGINNER",
+    "isPublished": false,
+    "instructorId": 2,
+    "category": "Design",
+    "tags": ["UI/UX", "Design", "Figma"],
+    "createdAt": "2024-04-01T00:00:00Z",
+    "modules": []
+  },
+  {
+    "id": 6,
+    "title": "Node.js Backend Development",
+    "slug": "nodejs-backend",
+    "description": "Build scalable backend applications with Node.js, Express, and databases.",
+    "thumbnail": "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=800",
+    "level": "INTERMEDIATE",
+    "isPublished": true,
+    "instructorId": 3,
+    "category": "Backend Development",
+    "tags": ["Node.js", "Express", "API", "Backend"],
+    "createdAt": "2024-04-10T00:00:00Z",
+    "modules": [
+      {
+        "id": 8,
+        "title": "Node.js Fundamentals",
+        "order": 1,
+        "courseId": 6,
+        "lessons": [
+          {
+            "id": 14,
+            "title": "Introduction to Node.js",
+            "content": "https://www.youtube.com/embed/ENrzD9HAZK4",
+            "contentType": "VIDEO",
+            "order": 1,
+            "moduleId": 8,
+            "duration": 35
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -3,6 +3,12 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
 
+/**
+ * Theme provider with next-themes
+ * Note: suppressHydrationWarning is used in root layout because next-themes
+ * intentionally causes a hydration mismatch during SSR (server renders default
+ * theme, client updates with stored/system theme). This is expected behavior.
+ */
 function ThemeProvider({
   children,
   ...props
@@ -69,3 +75,4 @@ function ThemeHotkey() {
 }
 
 export { ThemeProvider }
+

@@ -1,4 +1,95 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
+const nextConfig = {
+  // Enable standalone output for Docker deployments
+  output: 'standalone',
+
+  // Configure image domains for Next.js Image optimization
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+  },
+
+  async headers() {
+    const ContentSecurityPolicy = `
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' https:
+        https://cdn.jsdelivr.net
+        https://*.vercel-scripts.com;
+      style-src 'self' 'unsafe-inline' https:
+        https://fonts.googleapis.com
+        https://cdn.jsdelivr.net;
+      img-src 'self' data: https: blob: http:;
+      font-src 'self' data: https:
+        https://fonts.gstatic.com
+        https://cdn.jsdelivr.net;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'self';
+      upgrade-insecure-requests;
+      connect-src 'self' https://*.vercel.com https://*.vercel.app;
+      media-src 'self' https:;
+      worker-src 'self' blob:;
+      manifest-src 'self';
+    `.replace(/\s{2,}/g, ' ').trim()
+
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(self), microphone=(self), geolocation=(self)'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: ContentSecurityPolicy
+          }
+        ]
+      },
+      {
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          }
+        ]
+      }
+    ]
+  }
+}
 
 export default nextConfig
