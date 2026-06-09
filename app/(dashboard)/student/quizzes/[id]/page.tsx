@@ -139,7 +139,7 @@ function SingleChoiceQuestion({
   const isCorrect = showResult && value === correctAnswer
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <RadioGroup value={value} onValueChange={onChange} disabled={showResult}>
         {Object.entries(options).map(([key, label]) => {
           const isCorrectOption = showResult && key === correctAnswer
@@ -149,8 +149,8 @@ function SingleChoiceQuestion({
               key={key}
               className={cn(
                 "flex items-center gap-3 rounded-lg border p-3",
-                isCorrectOption && "border-green-500 bg-green-50 dark:bg-green-950",
-                isWrongOption && "border-red-500 bg-red-50 dark:bg-red-950"
+                isCorrectOption && "border-success bg-success/10",
+                isWrongOption && "border-destructive bg-destructive/10"
               )}
             >
               <RadioGroupItem value={key} id={`${question.id}_${key}`} />
@@ -161,10 +161,10 @@ function SingleChoiceQuestion({
                 {label}
               </Label>
               {isCorrectOption && (
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="text-success h-4 w-4" />
               )}
               {isWrongOption && (
-                <XCircle className="h-4 w-4 text-red-600" />
+                <XCircle className="h-4 w-4 text-destructive" />
               )}
             </div>
           )
@@ -203,21 +203,22 @@ function MultiChoiceQuestion({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {Object.entries(options).map(([key, label]) => {
         const isSelected = value.includes(key)
         const isCorrectOption = showResult && correctArray.includes(key)
         const isWrongOption =
           showResult && isSelected && !correctArray.includes(key)
-        const isMissing = showResult && !isSelected && correctArray.includes(key)
+        const isMissing =
+          showResult && !isSelected && correctArray.includes(key)
         return (
           <div
             key={key}
             className={cn(
               "flex items-center gap-3 rounded-lg border p-3",
-              isCorrectOption && "border-green-500 bg-green-50 dark:bg-green-950",
-              isWrongOption && "border-red-500 bg-red-50 dark:bg-red-950",
-              isMissing && "border-orange-300 bg-orange-50 dark:bg-orange-950"
+              isCorrectOption && "border-success bg-success/10",
+              isWrongOption && "border-destructive bg-destructive/10",
+              isMissing && "border-warning bg-warning/10"
             )}
           >
             <Checkbox
@@ -233,14 +234,10 @@ function MultiChoiceQuestion({
               {label}
             </Label>
             {isCorrectOption && (
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <CheckCircle2 className="text-success h-4 w-4" />
             )}
-            {isWrongOption && (
-              <XCircle className="h-4 w-4 text-red-600" />
-            )}
-            {isMissing && (
-              <AlertCircle className="h-4 w-4 text-orange-600" />
-            )}
+            {isWrongOption && <XCircle className="h-4 w-4 text-destructive" />}
+            {isMissing && <AlertCircle className="text-warning h-4 w-4" />}
           </div>
         )
       })}
@@ -297,22 +294,26 @@ function TrueFalseQuestion({
   return (
     <div className="flex gap-3">
       {["true", "false"].map((opt) => {
-        const isCorrectOption =
-          showResult && opt === correctAnswer
+        const isCorrectOption = showResult && opt === correctAnswer
         const isWrongOption =
           showResult && opt === value && opt !== correctAnswer
         const isSelected = opt === value
         return (
-          <button
+          <Button
             key={opt}
+            type="button"
             onClick={() => !showResult && onChange(opt)}
             disabled={showResult}
+            variant="ghost"
             className={cn(
-              "flex-1 rounded-lg border-2 p-4 text-center font-medium transition-colors",
+              "h-auto flex-1 rounded-lg border-2 p-4 text-center font-medium transition-colors",
               isSelected && !showResult && "border-primary bg-primary/10",
-              isCorrectOption && "border-green-500 bg-green-50 dark:bg-green-950 text-green-700",
-              isWrongOption && "border-red-500 bg-red-50 dark:bg-red-950 text-red-700",
-              !isSelected && !showResult && "border-border hover:border-primary/50"
+              isCorrectOption && "border-success bg-success/10 text-success",
+              isWrongOption &&
+                "border-destructive bg-destructive/10 text-destructive",
+              !isSelected &&
+                !showResult &&
+                "border-border hover:border-primary/50"
             )}
           >
             {opt === "true" ? "True" : "False"}
@@ -320,7 +321,7 @@ function TrueFalseQuestion({
               <CheckCircle2 className="mx-auto mt-1 h-4 w-4" />
             )}
             {isWrongOption && <XCircle className="mx-auto mt-1 h-4 w-4" />}
-          </button>
+          </Button>
         )
       })}
     </div>
@@ -407,17 +408,12 @@ function QuizResults({
   attempts: AttemptResult[]
 }) {
   const latestAttempt = attempts[0]
-  const bestScore = Math.max(
-    ...attempts.map((a) => a.score ?? 0)
-  )
+  const bestScore = Math.max(...attempts.map((a) => a.score ?? 0))
   const latestScore = latestAttempt?.score ?? 0
-  const totalPoints = quiz.questions.reduce(
-    (sum, q) => sum + q.points,
-    0
-  )
+  const totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0)
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold">{quiz.title} - Results</h2>
         <p className="mt-1 text-muted-foreground">{quiz.course.title}</p>
@@ -435,10 +431,10 @@ function QuizResults({
               className={cn(
                 "text-3xl font-bold",
                 latestScore >= 70
-                  ? "text-green-600"
+                  ? "text-success"
                   : latestScore >= 40
-                    ? "text-amber-600"
-                    : "text-red-600"
+                    ? "text-warning"
+                    : "text-destructive"
               )}
             >
               {latestScore.toFixed(0)}%
@@ -456,10 +452,10 @@ function QuizResults({
               className={cn(
                 "text-3xl font-bold",
                 bestScore >= 70
-                  ? "text-green-600"
+                  ? "text-success"
                   : bestScore >= 40
-                    ? "text-amber-600"
-                    : "text-red-600"
+                    ? "text-warning"
+                    : "text-destructive"
               )}
             >
               {bestScore.toFixed(0)}%
@@ -483,7 +479,7 @@ function QuizResults({
         </Card>
       </div>
 
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Question Review</h3>
         {quiz.questions.map((question) => {
           const answer = latestAttempt?.answers[question.id.toString()]
@@ -500,8 +496,8 @@ function QuizResults({
             <Card
               key={question.id}
               className={cn(
-                isCorrect === true && "border-l-4 border-l-green-500",
-                isCorrect === false && "border-l-4 border-l-red-500"
+                isCorrect === true && "border-l-success border-l-4",
+                isCorrect === false && "border-l-4 border-l-destructive"
               )}
             >
               <CardHeader className="pb-2">
@@ -513,9 +509,9 @@ function QuizResults({
                     variant="outline"
                     className={
                       isCorrect === true
-                        ? "border-green-500 text-green-600"
+                        ? "border-success text-success"
                         : isCorrect === false
-                          ? "border-red-500 text-red-600"
+                          ? "border-destructive text-destructive"
                           : ""
                     }
                   >
@@ -532,14 +528,14 @@ function QuizResults({
                   <div className="mb-2">
                     <span className="font-medium">Your answer: </span>
                     {Array.isArray(answer)
-                      ? answer
-                          .map((a) => question.options?.[a] || a)
-                          .join(", ")
-                      : question.options?.[answer as string] || answer || "No answer"}
+                      ? answer.map((a) => question.options?.[a] || a).join(", ")
+                      : question.options?.[answer as string] ||
+                        answer ||
+                        "No answer"}
                   </div>
                 )}
                 {isCorrect === false && question.correctAnswer && (
-                  <div className="text-green-600">
+                  <div className="text-success">
                     <span className="font-medium">Correct answer: </span>
                     {Array.isArray(question.correctAnswer)
                       ? question.correctAnswer
@@ -579,11 +575,13 @@ export default function QuizTakingPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
-  const quizId = parseInt(params.id as string)
+  const quizId = params.id as string
 
   const [quiz, setQuiz] = React.useState<QuizData | null>(null)
   const [attempts, setAttempts] = React.useState<AttemptResult[]>([])
-  const [answers, setAnswers] = React.useState<Record<number, string | string[]>>({})
+  const [answers, setAnswers] = React.useState<
+    Record<number, string | string[]>
+  >({})
   const [isLoading, setIsLoading] = React.useState(true)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [submitted, setSubmitted] = React.useState(false)
@@ -677,9 +675,7 @@ export default function QuizTakingPage() {
     handleSubmit()
   }, [handleSubmit])
 
-  const remainingAttempts = quiz
-    ? quiz.attemptsAllowed - attempts.length
-    : 0
+  const remainingAttempts = quiz ? quiz.attemptsAllowed - attempts.length : 0
 
   if (isLoading) {
     return (
@@ -725,7 +721,7 @@ export default function QuizTakingPage() {
     attempts.length > 0
   ) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <QuizResults quiz={quiz} attempts={attempts} />
       </div>
     )
@@ -734,14 +730,14 @@ export default function QuizTakingPage() {
   if (submitted && submissionResult) {
     const allAttempts = attempts.length > 0 ? attempts : [submissionResult]
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <QuizResults quiz={quiz} attempts={allAttempts} />
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
       {/* Quiz header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -782,7 +778,7 @@ export default function QuizTakingPage() {
       />
 
       {/* Questions */}
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         {quiz.questions.map((question, index) => (
           <div key={question.id}>
             <div className="mb-2 flex items-center gap-2">
@@ -819,11 +815,7 @@ export default function QuizTakingPage() {
             </span>
           )}
         </div>
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          size="lg"
-        >
+        <Button onClick={handleSubmit} disabled={isSubmitting} size="lg">
           {isSubmitting ? (
             <>
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -831,7 +823,7 @@ export default function QuizTakingPage() {
             </>
           ) : (
             <>
-              <Send className="mr-2 h-4 w-4" />
+              <Send data-icon="inline-start" />
               Submit Quiz
             </>
           )}

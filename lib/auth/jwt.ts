@@ -9,7 +9,9 @@ function getSecret(key: string): Uint8Array {
     throw new Error(`Missing required environment variable: ${key}`)
   }
   if (secret.length < 32) {
-    throw new Error(`Environment variable ${key} must be at least 32 characters for security`)
+    throw new Error(
+      `Environment variable ${key} must be at least 32 characters for security`
+    )
   }
   return new TextEncoder().encode(secret)
 }
@@ -17,8 +19,8 @@ function getSecret(key: string): Uint8Array {
 const JWT_SECRET = getSecret("JWT_SECRET")
 const JWT_REFRESH_SECRET = getSecret("JWT_REFRESH_SECRET")
 
-const ACCESS_TOKEN_EXPIRY = "15m"
-const REFRESH_TOKEN_EXPIRY = "7d"
+const ACCESS_TOKEN_EXPIRY = "7d"
+const REFRESH_TOKEN_EXPIRY = "30d"
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12)
@@ -32,18 +34,18 @@ export async function verifyPassword(
 }
 
 export async function signAccessToken(
-  userId: number,
+  userId: string,
   role: string
 ): Promise<string> {
-  return new SignJWT({ sub: String(userId), role })
+  return new SignJWT({ sub: userId, role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_EXPIRY)
     .sign(JWT_SECRET)
 }
 
-export async function signRefreshToken(userId: number): Promise<string> {
-  return new SignJWT({ sub: String(userId) })
+export async function signRefreshToken(userId: string): Promise<string> {
+  return new SignJWT({ sub: userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_EXPIRY)
@@ -52,11 +54,11 @@ export async function signRefreshToken(userId: number): Promise<string> {
 
 export async function verifyAccessToken(
   token: string
-): Promise<{ sub: number; role: string } | null> {
+): Promise<{ sub: string; role: string } | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET)
     if (!payload.sub || typeof payload.role !== "string") return null
-    return { sub: Number(payload.sub), role: payload.role }
+    return { sub: payload.sub, role: payload.role }
   } catch {
     return null
   }
@@ -64,11 +66,11 @@ export async function verifyAccessToken(
 
 export async function verifyRefreshToken(
   token: string
-): Promise<{ sub: number } | null> {
+): Promise<{ sub: string } | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_REFRESH_SECRET)
     if (!payload.sub) return null
-    return { sub: Number(payload.sub) }
+    return { sub: payload.sub }
   } catch {
     return null
   }
@@ -85,7 +87,7 @@ export async function setTokens(
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 15 * 60,
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   })
 
   cookieStore.set("refresh_token", refreshToken, {
@@ -93,7 +95,7 @@ export async function setTokens(
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   })
 }
 
@@ -114,7 +116,14 @@ export async function getRefreshToken(): Promise<string | undefined> {
 }
 
 export async function getSession(): Promise<{
-  user: { id: number; email: string; fullName: string; role: string }
+  user: {
+    id: string
+    email: string
+    fullName: string
+    role: string
+    avatarUrl: string | null
+    createdAt: Date
+  }
 } | null> {
   const token = await getAccessToken()
   if (!token) return null
@@ -124,7 +133,14 @@ export async function getSession(): Promise<{
 
   const user = await prisma.user.findUnique({
     where: { id: payload.sub },
-    select: { id: true, email: true, fullName: true, role: true },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      role: true,
+      avatarUrl: true,
+      createdAt: true,
+    },
   })
 
   if (!user) return null

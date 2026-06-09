@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
@@ -6,7 +7,7 @@ import { z } from "zod"
 const createAnnouncementSchema = z.object({
   title: z.string().min(1),
   content: z.string().min(1),
-  courseId: z.number(),
+  courseId: z.string(),
 })
 
 export async function GET(request: NextRequest) {
@@ -19,9 +20,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const courseId = searchParams.get("courseId")
 
-    const where: any = {}
+    const where: Prisma.AnnouncementWhereInput = {}
     if (courseId) {
-      where.courseId = Number(courseId)
+      where.courseId = courseId
     }
 
     const announcements = await prisma.announcement.findMany({

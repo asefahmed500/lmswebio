@@ -5,13 +5,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 // Validation schema
 const createNoteSchema = z.object({
-  lessonId: z.number(),
+  lessonId: z.string(),
   content: z.string().min(1),
   timestamp: z.number().optional(),
   isPrivate: z.boolean().default(true),
@@ -32,17 +33,17 @@ export async function GET(req: NextRequest) {
     const lessonId = searchParams.get("lessonId")
     const courseId = searchParams.get("courseId")
 
-    const where: any = { userId: session.user.id }
+    const where: Prisma.NoteWhereInput = { userId: session.user.id }
 
     if (lessonId) {
-      where.lessonId = parseInt(lessonId)
+      where.lessonId = lessonId
     }
 
     if (courseId) {
       // Filter by course through lesson's module
       where.lesson = {
         module: {
-          courseId: parseInt(courseId),
+          courseId: courseId,
         },
       }
     }
@@ -70,7 +71,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ notes })
   } catch (error) {
     console.error("Notes fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch notes" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to fetch notes" },
+      { status: 500 }
+    )
   }
 }
 

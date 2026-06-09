@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { canAccessCourse, canModifyCourse } from "@/lib/authorization"
 import { z } from "zod"
+import { Role } from "@prisma/client"
 
 const updateCourseSchema = z.object({
   title: z.string().min(1).optional(),
@@ -24,16 +25,18 @@ export async function GET(
     }
 
     const { id } = await params
-    const courseId = Number(id)
 
-    // Check if user can access this course (prevents IDOR)
-    const hasAccess = await canAccessCourse(session.user.id, courseId, session.user.role)
+    const hasAccess = await canAccessCourse(
+      session.user.id,
+      id,
+      session.user.role as Role
+    )
     if (!hasAccess) {
       return NextResponse.json({ error: "Course not found" }, { status: 404 })
     }
 
     const course = await prisma.course.findUnique({
-      where: { id: courseId },
+      where: { id },
       include: {
         instructor: {
           select: { id: true, fullName: true, avatarUrl: true },
@@ -74,10 +77,13 @@ export async function PUT(
     }
 
     const { id } = await params
-    const courseId = Number(id)
 
     // Check if user can modify this course (prevents IDOR)
-    const canModify = await canModifyCourse(session.user.id, courseId, session.user.role)
+    const canModify = await canModifyCourse(
+      session.user.id,
+      id,
+      session.user.role as Role
+    )
     if (!canModify) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
@@ -86,7 +92,7 @@ export async function PUT(
     const data = updateCourseSchema.parse(body)
 
     const updatedCourse = await prisma.course.update({
-      where: { id: courseId },
+      where: { id },
       data,
       include: {
         instructor: {
@@ -122,10 +128,9 @@ export async function DELETE(
     }
 
     const { id } = await params
-    const courseId = Number(id)
 
     await prisma.course.delete({
-      where: { id: courseId },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })
@@ -149,10 +154,13 @@ export async function PATCH(
     }
 
     const { id } = await params
-    const courseId = Number(id)
 
     // Check if user can modify this course (prevents IDOR)
-    const canModify = await canModifyCourse(session.user.id, courseId, session.user.role)
+    const canModify = await canModifyCourse(
+      session.user.id,
+      id,
+      session.user.role as Role
+    )
     if (!canModify) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
@@ -168,7 +176,7 @@ export async function PATCH(
     }
 
     const updatedCourse = await prisma.course.update({
-      where: { id: courseId },
+      where: { id },
       data: { isPublished },
       include: {
         instructor: {

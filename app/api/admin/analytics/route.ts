@@ -9,7 +9,14 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const [totalUsers, totalInstructors, totalStudents, totalCourses, totalPublished, totalEnrolments] = await Promise.all([
+    const [
+      totalUsers,
+      totalInstructors,
+      totalStudents,
+      totalCourses,
+      totalPublished,
+      totalEnrolments,
+    ] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { role: "INSTRUCTOR" } }),
       prisma.user.count({ where: { role: "STUDENT" } }),
@@ -42,8 +49,12 @@ export async function GET() {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([week, enrollments]) => ({ week, enrollments }))
 
-    const avgProgress = await prisma.enrolment.aggregate({ _avg: { progress: true } })
-    const completions = await prisma.enrolment.count({ where: { status: "COMPLETED" } })
+    const avgProgress = await prisma.enrolment.aggregate({
+      _avg: { progress: true },
+    })
+    const completions = await prisma.enrolment.count({
+      where: { status: "COMPLETED" },
+    })
 
     return NextResponse.json({
       totalUsers,
@@ -54,11 +65,17 @@ export async function GET() {
       totalEnrolments,
       averageProgress: Math.round(avgProgress._avg.progress ?? 0),
       completions,
-      coursesByLevel: coursesByLevel.map((l) => ({ level: l.level, count: l._count })),
+      coursesByLevel: coursesByLevel.map((l) => ({
+        level: l.level,
+        count: l._count,
+      })),
       weeklyEnrolments: weeklyData,
     })
   } catch (error) {
     console.error("GET /api/admin/analytics error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

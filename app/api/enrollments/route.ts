@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { createEnrollmentSchema } from "@/lib/validators/enrollments"
 import { z } from "zod"
+import { rateLimit, getRateLimitIdentifier } from "@/lib/rate-limit"
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     if (courseId) {
       const course = await prisma.course.findUnique({
-        where: { id: Number(courseId) },
+        where: { id: courseId },
       })
 
       if (!course) {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
       }
 
       const enrollments = await prisma.enrolment.findMany({
-        where: { courseId: Number(courseId) },
+        where: { courseId: courseId },
         include: {
           user: {
             select: {
@@ -79,9 +80,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    const identifier = `${getRateLimitIdentifier(request)}:enrollment-create`
+    const rl = await rateLimit(identifier, {
+      maxRequests: 20,
+      windowMs: 60_000,
+    })
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+    }
+
     const body = await request.json().catch(() => null)
     if (!body) {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      )
     }
 
     const data = createEnrollmentSchema.parse(body)

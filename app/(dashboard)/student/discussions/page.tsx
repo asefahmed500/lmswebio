@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { LoadingCard } from "@/components/loading-skeleton"
+import { apiGet } from "@/lib/api-client"
 
 interface Discussion {
   id: number
@@ -64,20 +65,21 @@ export default function StudentDiscussionsPage() {
     async function loadInitial() {
       setIsLoading(true)
       try {
-        const [discRes, coursesRes] = await Promise.all([
-          fetch("/api/discussions"),
-          fetch("/api/enrolments/my"),
+        const [discResult, coursesResult] = await Promise.all([
+          apiGet<Record<string, Discussion[]>>("/discussions"),
+          apiGet("/enrolments/my"),
         ])
 
-        if (discRes.ok) {
-          const data = await discRes.json()
-          setDiscussions(data.discussions || [])
+        if (discResult.data) {
+          setDiscussions(discResult.data.discussions || [])
         }
 
-        if (coursesRes.ok) {
-          const data = await coursesRes.json()
-          const enrolments = Array.isArray(data) ? data : data.enrolments || []
-          setCourses(enrolments)
+        if (coursesResult.data) {
+          const data = coursesResult.data
+          const enrolments = Array.isArray(data)
+            ? data
+            : (data as Record<string, unknown>).enrolments || []
+          setCourses(enrolments as EnrolledCourse[])
         }
       } catch (error) {
         console.error("Failed to load data:", error)
@@ -95,10 +97,11 @@ export default function StudentDiscussionsPage() {
         if (searchQuery) params.append("search", searchQuery)
         if (selectedCourse !== "all") params.append("courseId", selectedCourse)
 
-        const response = await fetch(`/api/discussions?${params}`)
-        if (response.ok) {
-          const data = await response.json()
-          setDiscussions(data.discussions || [])
+        const result = await apiGet<Record<string, Discussion[]>>(
+          `/discussions?${params}`
+        )
+        if (result.data) {
+          setDiscussions(result.data.discussions || [])
         }
       } catch (error) {
         console.error("Failed to load discussions:", error)
@@ -112,7 +115,7 @@ export default function StudentDiscussionsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Discussions</h1>
           <p className="mt-1 text-muted-foreground">
@@ -125,7 +128,7 @@ export default function StudentDiscussionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -135,8 +138,8 @@ export default function StudentDiscussionsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/discussions/new">
-            <Plus className="mr-2 h-4 w-4" />
+          <Link href="/student/discussions">
+            <Plus data-icon="inline-start" />
             New Discussion
           </Link>
         </Button>
@@ -146,7 +149,7 @@ export default function StudentDiscussionsPage() {
       <div className="flex gap-4">
         <div className="flex-1">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search discussions..."
               value={searchQuery}

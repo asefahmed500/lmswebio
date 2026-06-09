@@ -15,85 +15,104 @@ const ALLOWED_ROLES: Record<string, string[]> = {
   "/student": ["STUDENT", "ADMIN"],
 }
 
-/**
- * State-changing methods that require CSRF protection
- */
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"])
+
+const CSRF_EXEMPT_PATHS = [
+  "/api/auth/",
+  "/api/csrf-token",
+  "/api/payments/webhook",
+]
 
 function parseToken(token: string) {
   return jwtVerify(token, JWT_SECRET)
 }
 
-/**
- * Validate CSRF token for state-changing requests
- */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let result = 0
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  }
+  return result === 0
+}
+
 function validateCSRF(request: NextRequest): boolean {
-  // Skip CSRF validation for GET requests
   if (!STATE_CHANGING_METHODS.has(request.method)) {
     return true
   }
 
-  // Skip CSRF validation for API routes that handle their own validation
-  if (request.nextUrl.pathname.startsWith("/api/auth")) {
+  const { pathname } = request.nextUrl
+
+  if (CSRF_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
     return true
   }
 
-  // Get CSRF token from header
   const csrfToken = request.headers.get("x-csrf-token")
   if (!csrfToken) {
     return false
   }
 
-  // Get CSRF token from cookie
   const csrfCookie = request.cookies.get("csrf_token")?.value
   if (!csrfCookie) {
     return false
   }
 
-  // Compare tokens (timing-safe comparison would be better, but this is a start)
-  return csrfToken === csrfCookie
+  return timingSafeEqual(csrfToken, csrfCookie)
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Validate CSRF for state-changing requests
   if (!validateCSRF(request)) {
-    return NextResponse.json(
-      { error: "Invalid CSRF token" },
-      { status: 403 }
-    )
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 })
   }
 
-  const token = request.cookies.get("access_token")?.value
+  if (!pathname.startsWith("/api")) {
+    if (
+      pathname === "/" ||
+      pathname.startsWith("/login") ||
+      pathname.startsWith("/register") ||
+      pathname.startsWith("/forgot-password") ||
+      pathname.startsWith("/reset-password")
+    ) {
+      return NextResponse.next()
+    }
 
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url))
-  }
+    const token = request.cookies.get("access_token")?.value
 
-  let role: string | undefined
-
-  try {
-    const { payload } = await parseToken(token)
-    if (!payload.sub || typeof payload.role !== "string") {
+    if (!token) {
       return NextResponse.redirect(new URL("/login", request.url))
     }
-    role = payload.role
-  } catch {
-    return NextResponse.redirect(new URL("/login", request.url))
-  }
 
-  const segment = "/" + pathname.split("/")[1]
+    let role: string | undefined
 
-  const allowed = ALLOWED_ROLES[segment]
-  if (!allowed || !allowed.includes(role)) {
-    const redirectPath = ROLE_PATH_MAP[role] || "/login"
-    return NextResponse.redirect(new URL(redirectPath, request.url))
+    try {
+      const { payload } = await parseToken(token)
+      if (!payload.sub || typeof payload.role !== "string") {
+        return NextResponse.redirect(new URL("/login", request.url))
+      }
+      role = payload.role
+    } catch {
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
+
+    const segment = "/" + pathname.split("/")[1]
+
+    const allowed = ALLOWED_ROLES[segment]
+    if (!allowed || !allowed.includes(role)) {
+      const redirectPath = ROLE_PATH_MAP[role] || "/login"
+      return NextResponse.redirect(new URL(redirectPath, request.url))
+    }
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/instructor/:path*", "/student/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/instructor/:path*",
+    "/student/:path*",
+    "/api/:path*",
+  ],
 }

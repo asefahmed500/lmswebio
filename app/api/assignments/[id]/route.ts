@@ -21,7 +21,7 @@ export async function GET(
     }
 
     const assignment = await prisma.assignment.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: {
         course: {
           select: { id: true, title: true, instructorId: true },
@@ -76,7 +76,7 @@ export async function PUT(
     }
 
     const assignment = await prisma.assignment.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: { course: true },
     })
 
@@ -98,7 +98,7 @@ export async function PUT(
     const data = updateAssignmentSchema.parse(body)
 
     const updatedAssignment = await prisma.assignment.update({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       data: {
         ...data,
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
@@ -132,7 +132,7 @@ export async function DELETE(
     }
 
     const assignment = await prisma.assignment.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: { course: true },
     })
 
@@ -151,7 +151,7 @@ export async function DELETE(
     }
 
     await prisma.assignment.delete({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
     })
 
     return NextResponse.json({ success: true })

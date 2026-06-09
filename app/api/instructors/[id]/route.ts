@@ -30,8 +30,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const instructorId = parseInt(id)
+    const { id: instructorId } = await params
 
     const profile = await prisma.instructorProfile.findUnique({
       where: { userId: instructorId },
@@ -175,8 +174,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const instructorId = parseInt(id)
+    const { id: instructorId } = await params
     const body = await req.json()
     const validatedData = updateProfileSchema.parse(body)
 

@@ -31,6 +31,7 @@ import {
   Filler,
 } from "chart.js"
 import { Line, Bar } from "react-chartjs-2"
+import { apiGet } from "@/lib/api-client"
 
 ChartJS.register(
   CategoryScale,
@@ -49,10 +50,10 @@ interface AnalyticsData {
   totalInstructors: number
   totalStudents: number
   totalCourses: number
-  publishedCourses: number
+  totalPublished: number
   totalEnrollments: number
   averageProgress: number
-  completionCount: number
+  completions: number
   weeklyEnrollments: { week: string; count: number }[]
   coursesByLevel: { level: string; count: number }[]
 }
@@ -62,35 +63,19 @@ export default function AdminAnalyticsPage() {
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
-    loadAnalytics()
-  }, [])
-
-  async function loadAnalytics() {
-    setIsLoading(true)
-    try {
-      const res = await fetch("/api/admin/analytics")
-      if (res.ok) {
-        const result = await res.json()
-        setData(result)
-      }
-    } catch {
-      // Fallback to empty data if API fails
-      setData({
-        totalUsers: 0,
-        totalInstructors: 0,
-        totalStudents: 0,
-        totalCourses: 0,
-        publishedCourses: 0,
-        totalEnrollments: 0,
-        averageProgress: 0,
-        completionCount: 0,
-        weeklyEnrollments: [],
-        coursesByLevel: [],
+    let cancelled = false
+    apiGet<AnalyticsData>("/admin/analytics")
+      .then((res) => {
+        if (!cancelled && res.data) setData(res.data)
       })
-    } finally {
-      setIsLoading(false)
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [])
 
   const weeklyChartData = data
     ? {
@@ -99,8 +84,8 @@ export default function AdminAnalyticsPage() {
           {
             label: "Enrollments",
             data: data.weeklyEnrollments.map((d) => d.count),
-            borderColor: "rgb(99, 102, 241)",
-            backgroundColor: "rgba(99, 102, 241, 0.1)",
+            borderColor: "hsl(var(--chart-1))",
+            backgroundColor: "hsl(var(--chart-1) / 0.1)",
             tension: 0.4,
             fill: true,
           },
@@ -116,9 +101,9 @@ export default function AdminAnalyticsPage() {
             label: "Courses",
             data: data.coursesByLevel.map((d) => d.count),
             backgroundColor: [
-              "rgba(34, 197, 94, 0.8)",
-              "rgba(250, 204, 21, 0.8)",
-              "rgba(239, 68, 68, 0.8)",
+              "hsl(var(--chart-2))",
+              "hsl(var(--chart-3))",
+              "hsl(var(--chart-5))",
             ],
             borderRadius: 0,
           },
@@ -135,7 +120,7 @@ export default function AdminAnalyticsPage() {
     },
     scales: {
       x: { grid: { display: false } },
-      y: { beginAtZero: true, grid: { color: "rgba(0, 0, 0, 0.05)" } },
+      y: { beginAtZero: true, grid: { color: "hsl(var(--border))" } },
     },
     interaction: {
       mode: "nearest" as const,
@@ -153,7 +138,7 @@ export default function AdminAnalyticsPage() {
       x: { grid: { display: false } },
       y: {
         beginAtZero: true,
-        grid: { color: "rgba(0, 0, 0, 0.05)" },
+        grid: { color: "hsl(var(--border))" },
         ticks: { stepSize: 1 },
       },
     },
@@ -185,7 +170,7 @@ export default function AdminAnalyticsPage() {
     { label: "Total Courses", value: data?.totalCourses ?? 0, icon: BookOpen },
     {
       label: "Published",
-      value: data?.publishedCourses ?? 0,
+      value: data?.totalPublished ?? 0,
       icon: BookOpen,
     },
     {
@@ -196,7 +181,7 @@ export default function AdminAnalyticsPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
         <p className="mt-1 text-muted-foreground">
@@ -296,9 +281,7 @@ export default function AdminAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {data?.completionCount ?? 0}
-            </div>
+            <div className="text-3xl font-bold">{data?.completions ?? 0}</div>
           </CardContent>
         </Card>
       </div>

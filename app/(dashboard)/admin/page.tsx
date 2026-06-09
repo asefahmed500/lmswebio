@@ -1,8 +1,3 @@
-/**
- * Admin dashboard page
- * Displays platform overview with KPIs, charts, and recent activity
- */
-
 "use client"
 
 import * as React from "react"
@@ -40,7 +35,6 @@ import {
 } from "chart.js"
 import { Line } from "react-chartjs-2"
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -52,10 +46,6 @@ ChartJS.register(
   Filler
 )
 
-/**
- * KPI card component
- * Displays a metric with optional trend indicator
- */
 function KPICardComponent({ kpi }: { kpi: KPICard }) {
   const isPositive = kpi.trend === "up"
   const isNegative = kpi.trend === "down"
@@ -67,18 +57,24 @@ function KPICardComponent({ kpi }: { kpi: KPICard }) {
           {kpi.label}
         </CardTitle>
         <div className="rounded-full bg-primary/10 p-2">
-          <Activity className="h-4 w-4 text-primary" />
+          <Activity className="size-4 text-primary" />
         </div>
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{kpi.value}</div>
         {kpi.change !== undefined && (
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-            {isPositive && <ArrowUpRight className="h-3 w-3 text-green-500" />}
-            {isNegative && <ArrowDownRight className="h-3 w-3 text-red-500" />}
+            {isPositive && <ArrowUpRight className="text-success size-3" />}
+            {isNegative && (
+              <ArrowDownRight className="size-3 text-destructive" />
+            )}
             <span
               className={
-                isPositive ? "text-green-500" : isNegative ? "text-red-500" : ""
+                isPositive
+                  ? "text-success"
+                  : isNegative
+                    ? "text-destructive"
+                    : ""
               }
             >
               {kpi.change > 0 ? "+" : ""}
@@ -92,9 +88,6 @@ function KPICardComponent({ kpi }: { kpi: KPICard }) {
   )
 }
 
-/**
- * Chart component for weekly enrollments
- */
 function EnrollmentChart({ data }: { data: WeeklyEnrollment[] }) {
   const chartData = {
     labels: data.map((d) => d.week),
@@ -102,8 +95,8 @@ function EnrollmentChart({ data }: { data: WeeklyEnrollment[] }) {
       {
         label: "New Enrollments",
         data: data.map((d) => d.enrollments),
-        borderColor: "rgb(99, 102, 241)",
-        backgroundColor: "rgba(99, 102, 241, 0.1)",
+        borderColor: "hsl(var(--chart-1))",
+        backgroundColor: "hsl(var(--chart-1) / 0.1)",
         tension: 0.4,
         fill: true,
       },
@@ -131,7 +124,7 @@ function EnrollmentChart({ data }: { data: WeeklyEnrollment[] }) {
       y: {
         beginAtZero: true,
         grid: {
-          color: "rgba(0, 0, 0, 0.05)",
+          color: "hsl(var(--border))",
         },
       },
     },
@@ -149,9 +142,6 @@ function EnrollmentChart({ data }: { data: WeeklyEnrollment[] }) {
   )
 }
 
-/**
- * Admin dashboard page component
- */
 export default function AdminDashboardPage() {
   const [kpis, setKpis] = React.useState<KPICard[]>([])
   const [enrollmentData, setEnrollmentData] = React.useState<
@@ -160,52 +150,50 @@ export default function AdminDashboardPage() {
   const [recentUsers, setRecentUsers] = React.useState<UserType[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
 
-  // Load dashboard data
   React.useEffect(() => {
     async function loadData() {
       setIsLoading(true)
       try {
-        // Fetch all data in parallel
         const [analyticsRes, usersRes, coursesRes] = await Promise.all([
-          fetch("/api/analytics?type=platform"),
-          fetch("/api/admin/users"),
-          fetch("/api/courses"),
+          apiGet<{
+            analytics?: {
+              totalUsers?: number
+              totalEnrollments?: number
+              activeUsers?: number
+              enrollmentGrowth?: Array<{ date: string; count: number }>
+            }
+          }>("/analytics?type=platform"),
+          apiGet<{ users: UserType[] }>("/admin/users"),
+          apiGet<{ courses: unknown[] }>("/courses"),
         ])
 
-        // Parse responses
-        const analyticsData = analyticsRes.ok ? await analyticsRes.json() : {}
-        const usersData = usersRes.ok ? await usersRes.json() : { users: [] }
-        const coursesData = coursesRes.ok ? await coursesRes.json() : { courses: [] }
+        const analyticsData = analyticsRes.data ?? {}
+        const usersData = usersRes.data ?? { users: [] }
+        const coursesData = coursesRes.data ?? { courses: [] }
 
-        // Build KPIs from analytics data
         const kpiData: KPICard[] = [
           {
             label: "Total Users",
-            value: analyticsData.analytics?.totalUsers?.toString() || "0",
-            change: 12,
+            value: String(analyticsData.analytics?.totalUsers ?? 0),
             trend: "up",
           },
           {
             label: "Total Courses",
-            value: coursesData.courses?.length?.toString() || "0",
-            change: 8,
+            value: String(coursesData.courses?.length ?? 0),
             trend: "up",
           },
           {
             label: "Total Enrollments",
-            value: analyticsData.analytics?.totalEnrollments?.toString() || "0",
-            change: 15,
+            value: String(analyticsData.analytics?.totalEnrollments ?? 0),
             trend: "up",
           },
           {
             label: "Active Users",
-            value: analyticsData.analytics?.activeUsers?.toString() || "0",
-            change: 5,
+            value: String(analyticsData.analytics?.activeUsers ?? 0),
             trend: "up",
           },
         ]
 
-        // Build enrollment chart data from analytics
         const enrollmentGrowth = analyticsData.analytics?.enrollmentGrowth || []
         const enrollmentChartData: WeeklyEnrollment[] = enrollmentGrowth.map(
           (item: { date: string; count: number }) => ({
@@ -217,7 +205,6 @@ export default function AdminDashboardPage() {
           })
         )
 
-        // Get last 5 users (most recent first)
         const recentUsersData = usersData.users
           ?.sort(
             (a: UserType, b: UserType) =>
@@ -242,7 +229,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
@@ -250,8 +237,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
         <p className="mt-1 text-muted-foreground">
@@ -259,16 +245,13 @@ export default function AdminDashboardPage() {
         </p>
       </div>
 
-      {/* KPI cards grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi, index) => (
           <KPICardComponent key={index} kpi={kpi} />
         ))}
       </div>
 
-      {/* Charts and activity section */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Enrollment chart */}
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>Weekly Enrollments</CardTitle>
@@ -281,7 +264,6 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent users */}
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>Recent Users</CardTitle>
@@ -290,7 +272,7 @@ export default function AdminDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {recentUsers.map((user) => (
                 <div key={user.id} className="flex items-center gap-4">
                   <Avatar className="h-9 w-9">
@@ -320,7 +302,6 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* Quick actions */}
       <Card>
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
@@ -330,19 +311,19 @@ export default function AdminDashboardPage() {
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
               <Link href="/admin/users/new">
-                <Users className="mr-2 h-4 w-4" />
+                <Users data-icon="inline-start" />
                 Add User
               </Link>
             </Button>
             <Button asChild variant="outline">
               <Link href="/admin/courses/new">
-                <BookOpen className="mr-2 h-4 w-4" />
+                <BookOpen data-icon="inline-start" />
                 Add Course
               </Link>
             </Button>
             <Button asChild variant="outline">
               <Link href="/admin/analytics">
-                <TrendingUp className="mr-2 h-4 w-4" />
+                <TrendingUp data-icon="inline-start" />
                 View Reports
               </Link>
             </Button>

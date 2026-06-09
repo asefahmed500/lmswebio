@@ -31,8 +31,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const noteId = parseInt(id)
+    const { id: noteId } = await params
 
     const note = await prisma.note.findUnique({
       where: { id: noteId },
@@ -65,10 +64,7 @@ export async function GET(
     return NextResponse.json({ note })
   } catch (error) {
     console.error("Note fetch error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch note" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch note" }, { status: 500 })
   }
 }
 
@@ -86,8 +82,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const noteId = parseInt(id)
+    const { id: noteId } = await params
     const body = await req.json()
     const validatedData = updateNoteSchema.parse(body)
 
@@ -156,8 +151,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const noteId = parseInt(id)
+    const { id: noteId } = await params
 
     // Check ownership
     const note = await prisma.note.findUnique({

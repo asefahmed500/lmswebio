@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { formatDistanceToNow } from "date-fns"
+import { cn } from "@/lib/utils"
 import { LoadingCard } from "@/components/loading-skeleton"
 
 interface Note {
@@ -62,7 +63,9 @@ interface EnrolledCourse {
 
 export default function StudentNotesPage() {
   const [notes, setNotes] = React.useState<Note[]>([])
-  const [enrolledCourses, setEnrolledCourses] = React.useState<EnrolledCourse[]>([])
+  const [enrolledCourses, setEnrolledCourses] = React.useState<
+    EnrolledCourse[]
+  >([])
   const [selectedNote, setSelectedNote] = React.useState<Note | undefined>()
   const [isLoading, setIsLoading] = React.useState(true)
   const [searchQuery, setSearchQuery] = React.useState("")
@@ -89,13 +92,21 @@ export default function StudentNotesPage() {
           const enrolments = Array.isArray(data) ? data : data.enrolments || []
           // Load full course data with modules/lessons for the lesson picker
           const coursesWithData = await Promise.all(
-            enrolments.map(async (e: any) => {
-              try {
-                const res = await fetch(`/api/courses/${e.courseId}`)
-                if (res.ok) return { courseId: e.courseId, course: await res.json() }
-              } catch {}
-              return { courseId: e.courseId, course: e.course }
-            })
+            enrolments.map(
+              async (e: {
+                courseId: number
+                course: {
+                  modules: Array<{ id: number; lessons: Array<{ id: number }> }>
+                }
+              }) => {
+                try {
+                  const res = await fetch(`/api/courses/${e.courseId}`)
+                  if (res.ok)
+                    return { courseId: e.courseId, course: await res.json() }
+                } catch {}
+                return { courseId: e.courseId, course: e.course }
+              }
+            )
           )
           setEnrolledCourses(coursesWithData)
         }
@@ -130,21 +141,21 @@ export default function StudentNotesPage() {
 
   const handleSaveNote = async (content: string, timestamp?: number) => {
     try {
-      const url = selectedNote
-        ? `/api/notes/${selectedNote.id}`
-        : "/api/notes"
+      const url = selectedNote ? `/api/notes/${selectedNote.id}` : "/api/notes"
       const method = selectedNote ? "PATCH" : "POST"
 
-      const body: any = { content }
+      const body: { content: string; lessonId?: string; timestamp?: number } = {
+        content,
+      }
       if (timestamp !== undefined) body.timestamp = timestamp
       if (!selectedNote && newNoteLessonId) {
-        body.lessonId = parseInt(newNoteLessonId)
+        body.lessonId = newNoteLessonId
       } else if (!selectedNote) {
         // Use first available lesson as fallback
         const firstCourse = enrolledCourses[0]
         const firstLesson = firstCourse?.course?.modules?.[0]?.lessons?.[0]
         if (firstLesson) {
-          body.lessonId = firstLesson.id
+          body.lessonId = String(firstLesson.id)
         } else {
           return // No lessons available
         }
@@ -204,7 +215,7 @@ export default function StudentNotesPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Notes</h1>
           <p className="mt-1 text-muted-foreground">
@@ -217,7 +228,7 @@ export default function StudentNotesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -235,36 +246,48 @@ export default function StudentNotesPage() {
               <DialogTitle>Create New Note</DialogTitle>
             </DialogHeader>
             {/* Lesson picker */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label>Select Lesson</Label>
-              <Select value={newNoteLessonId} onValueChange={setNewNoteLessonId}>
+              <Select
+                value={newNoteLessonId}
+                onValueChange={setNewNoteLessonId}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a lesson..." />
                 </SelectTrigger>
                 <SelectContent>
                   {enrolledCourses.map((e) =>
-                    e.course?.modules?.map((mod: any) =>
-                      mod.lessons?.map((lesson: any) => (
-                        <SelectItem key={lesson.id} value={String(lesson.id)}>
-                          {e.course.title} &gt; {mod.title} &gt; {lesson.title}
-                        </SelectItem>
-                      ))
+                    e.course?.modules?.map(
+                      (mod: {
+                        id: number
+                        title: string
+                        lessons: Array<{ id: number; title: string }>
+                      }) =>
+                        mod.lessons?.map(
+                          (lesson: { id: number; title: string }) => (
+                            <SelectItem
+                              key={lesson.id}
+                              value={String(lesson.id)}
+                            >
+                              {e.course.title} &gt; {mod.title} &gt;{" "}
+                              {lesson.title}
+                            </SelectItem>
+                          )
+                        )
                     )
                   )}
                 </SelectContent>
               </Select>
             </div>
-            {newNoteLessonId && (
-              <NotesEditor onSave={handleSaveNote} />
-            )}
+            {newNoteLessonId && <NotesEditor onSave={handleSaveNote} />}
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Filters */}
       <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative flex-1">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search notes..."
             value={searchQuery}
@@ -293,42 +316,45 @@ export default function StudentNotesPage() {
           <CardContent className="py-12">
             <div className="text-center">
               <Bookmark className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No notes yet</h3>
-              <p className="text-muted-foreground mb-4">
+              <h3 className="mb-2 text-lg font-semibold">No notes yet</h3>
+              <p className="mb-4 text-muted-foreground">
                 Take notes while watching lessons to remember important points.
               </p>
-              <Button onClick={() => setIsNewNote(true)}>Create Your First Note</Button>
+              <Button onClick={() => setIsNewNote(true)}>
+                Create Your First Note
+              </Button>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Notes List */}
-          <div className="lg:col-span-1 space-y-3">
-            <h2 className="font-semibold text-lg">{notes.length} Notes</h2>
+          <div className="flex flex-col gap-3 lg:col-span-1">
+            <h2 className="text-lg font-semibold">{notes.length} Notes</h2>
             {notes.map((note) => (
               <Card
                 key={note.id}
-                className={`cursor-pointer transition-colors hover:bg-accent ${
-                  selectedNote?.id === note.id ? "ring-2 ring-primary" : ""
-                }`}
+                className={cn(
+                  "cursor-pointer transition-colors hover:bg-accent",
+                  selectedNote?.id === note.id && "ring-2 ring-primary"
+                )}
                 onClick={() => setSelectedNote(note)}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-medium line-clamp-1">
+                  <div className="mb-2 flex items-start justify-between">
+                    <h3 className="line-clamp-1 font-medium">
                       {note.lesson.title}
                     </h3>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    <span className="text-xs whitespace-nowrap text-muted-foreground">
                       {formatDistanceToNow(new Date(note.updatedAt), {
                         addSuffix: true,
                       })}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-2">
+                  <p className="mb-2 text-xs text-muted-foreground">
                     {note.lesson.module.title}
                   </p>
-                  <p className="text-sm line-clamp-2">{note.content}</p>
+                  <p className="line-clamp-2 text-sm">{note.content}</p>
                 </CardContent>
               </Card>
             ))}

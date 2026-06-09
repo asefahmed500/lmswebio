@@ -21,6 +21,7 @@ import { BadgeDisplay } from "@/components/badges/badge-display"
 import { CertificateViewer } from "@/components/certificates/certificate-viewer"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
 import type { Enrollment, Course } from "@/types"
 
 interface ApiEnrollment {
@@ -50,7 +51,7 @@ interface ApiEnrollment {
 }
 
 interface BadgeItem {
-  id: number
+  id: string
   name: string
   slug: string
   description: string
@@ -61,12 +62,12 @@ interface BadgeItem {
 }
 
 interface CertificateItem {
-  id: number
+  id: string
   certificateUrl: string
   verificationId: string
   issuedAt: string
   course: {
-    id: number
+    id: string
     title: string
     slug: string
     thumbnail: string | null
@@ -80,17 +81,17 @@ interface CertificateItem {
 function mapEnrollment(api: ApiEnrollment): Enrollment {
   const c = api.course
   const course: Course = {
-    id: c.id as unknown as number,
+    id: c.id,
     title: c.title,
     slug: c.slug,
     description: c.description ?? undefined,
     thumbnail: c.thumbnail ?? undefined,
     level: c.level as Course["level"],
     isPublished: c.isPublished,
-    instructorId: c.instructorId as unknown as number,
+    instructorId: c.instructorId,
     instructor: c.instructor
       ? {
-          id: c.instructor.id as unknown as number,
+          id: c.instructor.id,
           email: "",
           fullName: c.instructor.fullName,
           role: "INSTRUCTOR" as const,
@@ -98,16 +99,16 @@ function mapEnrollment(api: ApiEnrollment): Enrollment {
         }
       : undefined,
     modules: c.modules.map((m) => ({
-      id: m.id as unknown as number,
+      id: m.id,
       title: "",
       order: 0,
-      courseId: c.id as unknown as number,
+      courseId: c.id,
       lessons: Array.from({ length: m.lessonCount }, (_, i) => ({
-        id: i,
+        id: String(i),
         title: "",
         contentType: "text" as const,
         order: i,
-        moduleId: m.id as unknown as number,
+        moduleId: m.id,
       })),
     })),
     category: c.category ?? undefined,
@@ -115,9 +116,9 @@ function mapEnrollment(api: ApiEnrollment): Enrollment {
     createdAt: c.createdAt,
   }
   return {
-    id: api.id as unknown as number,
-    userId: api.userId as unknown as number,
-    courseId: api.courseId as unknown as number,
+    id: api.id,
+    userId: api.userId,
+    courseId: api.courseId,
     status: api.status as Enrollment["status"],
     progress: api.progress,
     lastAccessedAt: api.lastAccessedAt ?? undefined,
@@ -133,12 +134,12 @@ function CertificateCard({ enrollment }: { enrollment: Enrollment }) {
   const { course } = enrollment
 
   return (
-    <Card className="overflow-hidden border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
+    <Card className="border-warning/20 bg-warning/10 overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900">
-              <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div className="bg-warning/10 rounded-full p-2">
+              <Award className="text-warning size-5" />
             </div>
             <div>
               <CardTitle className="text-base">{course.title}</CardTitle>
@@ -149,8 +150,8 @@ function CertificateCard({ enrollment }: { enrollment: Enrollment }) {
               )}
             </div>
           </div>
-          <Badge className="bg-green-500 hover:bg-green-600">
-            <CheckCircle className="mr-1 h-3 w-3" />
+          <Badge className="bg-success hover:bg-success/90">
+            <CheckCircle className="mr-1 size-3" />
             Certificate earned
           </Badge>
         </div>
@@ -159,7 +160,8 @@ function CertificateCard({ enrollment }: { enrollment: Enrollment }) {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>{course.level}</span>
           <span>
-            {course.modules.reduce((sum, m) => sum + m.lessons.length, 0)} lessons
+            {course.modules.reduce((sum, m) => sum + m.lessons.length, 0)}{" "}
+            lessons
           </span>
         </div>
       </CardContent>
@@ -180,25 +182,23 @@ export default function AchievementsPage() {
 
       setIsLoading(true)
       try {
-        const [enrollmentsRes, badgesRes, certificatesRes] = await Promise.all([
-          fetch("/api/enrolments/my"),
-          fetch("/api/badges"),
-          fetch("/api/certificates"),
-        ])
+        const [enrollmentsResult, badgesResult, certificatesResult] =
+          await Promise.all([
+            apiGet<ApiEnrollment[]>("/enrolments/my"),
+            apiGet<Record<string, BadgeItem[]>>("/badges"),
+            apiGet<Record<string, CertificateItem[]>>("/certificates"),
+          ])
 
-        if (enrollmentsRes.ok) {
-          const enrollmentData: ApiEnrollment[] = await enrollmentsRes.json()
-          setEnrollments(enrollmentData.map(mapEnrollment))
+        if (enrollmentsResult.data) {
+          setEnrollments(enrollmentsResult.data.map(mapEnrollment))
         }
 
-        if (badgesRes.ok) {
-          const badgesData = await badgesRes.json()
-          setBadges(badgesData.badges)
+        if (badgesResult.data) {
+          setBadges(badgesResult.data.badges)
         }
 
-        if (certificatesRes.ok) {
-          const certificatesData = await certificatesRes.json()
-          setCertificates(certificatesData.certificates)
+        if (certificatesResult.data) {
+          setCertificates(certificatesResult.data.certificates)
         }
       } catch (error) {
         console.error("Failed to load achievements:", error)
@@ -223,7 +223,10 @@ export default function AchievementsPage() {
         ? enrollments.reduce((sum, e) => sum + e.progress, 0) / enrolled
         : 0
     const earnedBadges = badges.filter((b) => b.earned).length
-    const totalPoints = badges.reduce((sum, b) => sum + (b.earned ? b.points : 0), 0)
+    const totalPoints = badges.reduce(
+      (sum, b) => sum + (b.earned ? b.points : 0),
+      0
+    )
 
     return { enrolled, completed, avgProgress, earnedBadges, totalPoints }
   }, [enrollments, completedCourses, badges])
@@ -232,15 +235,17 @@ export default function AchievementsPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading achievements...</p>
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
+          <p className="text-sm text-muted-foreground">
+            Loading achievements...
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Achievements</h1>
         <p className="mt-1 text-muted-foreground">
@@ -255,7 +260,7 @@ export default function AchievementsPage() {
               Enrolled Courses
             </CardTitle>
             <div className="rounded-full bg-primary/10 p-2">
-              <BookOpen className="h-4 w-4 text-primary" />
+              <BookOpen className="size-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
@@ -267,8 +272,8 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Completed Courses
             </CardTitle>
-            <div className="rounded-full bg-green-100 p-2 dark:bg-green-900">
-              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div className="bg-success/10 rounded-full p-2">
+              <CheckCircle className="text-success size-4" />
             </div>
           </CardHeader>
           <CardContent>
@@ -280,8 +285,8 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Average Progress
             </CardTitle>
-            <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900">
-              <TrendingUp className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <div className="bg-warning/10 rounded-full p-2">
+              <TrendingUp className="text-warning size-4" />
             </div>
           </CardHeader>
           <CardContent>
@@ -295,8 +300,8 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Badges Earned
             </CardTitle>
-            <div className="rounded-full bg-purple-100 p-2 dark:bg-purple-900">
-              <Award className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <div className="rounded-full bg-primary/10 p-2">
+              <Award className="size-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
@@ -308,8 +313,8 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Points
             </CardTitle>
-            <div className="rounded-full bg-yellow-100 p-2 dark:bg-yellow-900">
-              <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <div className="bg-warning/10 rounded-full p-2">
+              <Trophy className="text-warning size-4" />
             </div>
           </CardHeader>
           <CardContent>
@@ -327,7 +332,9 @@ export default function AchievementsPage() {
         </CardHeader>
         <CardContent>
           <Progress
-            value={stats.enrolled > 0 ? (stats.completed / stats.enrolled) * 100 : 0}
+            value={
+              stats.enrolled > 0 ? (stats.completed / stats.enrolled) * 100 : 0
+            }
             className="h-3"
           />
         </CardContent>
@@ -337,11 +344,11 @@ export default function AchievementsPage() {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Award className="h-6 w-6 text-purple-500" />
+            <Award className="size-6 text-primary" />
             <h2 className="text-xl font-semibold">Badges</h2>
           </div>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/achievements">View All Badges</Link>
+            <Link href="/student/achievements/badges">View All Badges</Link>
           </Button>
         </div>
         <BadgeDisplay badges={badges} maxDisplay={8} />
@@ -350,11 +357,11 @@ export default function AchievementsPage() {
       {/* Certificates Section */}
       <div>
         <div className="mb-4 flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-amber-500" />
+          <Trophy className="text-warning size-6" />
           <h2 className="text-xl font-semibold">Certificates</h2>
         </div>
         {certificates.length > 0 ? (
-          <div className="space-y-6">
+          <div className="flex flex-col gap-6">
             {certificates.map((cert) => (
               <CertificateViewer key={cert.id} certificate={cert} />
             ))}
@@ -363,8 +370,10 @@ export default function AchievementsPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="py-8 text-center">
-                <Award className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="mb-2 text-lg font-semibold">No certificates yet</h3>
+                <Award className="mx-auto mb-4 size-12 text-muted-foreground" />
+                <h3 className="mb-2 text-lg font-semibold">
+                  No certificates yet
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   Complete a course to earn your first certificate.
                 </p>

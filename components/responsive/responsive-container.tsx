@@ -130,10 +130,31 @@ interface HideProps {
 
 export function Hide({ children, below, above }: HideProps) {
   if (below) {
-    return <div className={`hidden ${below === "md" ? "md:hidden" : below === "lg" ? "lg:hidden" : below === "xl" ? "xl:hidden" : ""}`}>{children}</div>
+    return (
+      <div
+        className={cn(
+          "hidden",
+          below === "md" && "md:hidden",
+          below === "lg" && "lg:hidden",
+          below === "xl" && "xl:hidden"
+        )}
+      >
+        {children}
+      </div>
+    )
   }
   if (above) {
-    return <div className={`${above === "sm" ? "hidden sm:block" : above === "md" ? "hidden md:block" : above === "lg" ? "hidden lg:block" : ""}`}>{children}</div>
+    return (
+      <div
+        className={cn(
+          above === "sm" && "hidden sm:block",
+          above === "md" && "hidden md:block",
+          above === "lg" && "hidden lg:block"
+        )}
+      >
+        {children}
+      </div>
+    )
   }
   return <>{children}</>
 }
@@ -149,10 +170,32 @@ interface ShowProps {
 
 export function Show({ children, above, below }: ShowProps) {
   if (above) {
-    return <div className={`hidden ${above === "sm" ? "sm:block" : above === "md" ? "md:block" : above === "lg" ? "lg:block" : ""}`}>{children}</div>
+    return (
+      <div
+        className={cn(
+          "hidden",
+          above === "sm" && "sm:block",
+          above === "md" && "md:block",
+          above === "lg" && "lg:block"
+        )}
+      >
+        {children}
+      </div>
+    )
   }
   if (below) {
-    return <div className={`${below === "md" ? "md:hidden" : below === "lg" ? "lg:hidden" : below === "xl" ? "xl:hidden" : ""} block`}>{children}</div>
+    return (
+      <div
+        className={cn(
+          below === "md" && "md:hidden",
+          below === "lg" && "lg:hidden",
+          below === "xl" && "xl:hidden",
+          "block"
+        )}
+      >
+        {children}
+      </div>
+    )
   }
   return <>{children}</>
 }

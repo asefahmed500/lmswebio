@@ -1,28 +1,49 @@
-import DOMPurify from "dompurify"
+import sanitizeHtmlLib from "sanitize-html"
 
-const SAFE_HTML_CONFIG = {
-  ALLOWED_TAGS: [
-    "h1", "h2", "h3", "h4", "h5", "h6",
-    "p", "br", "hr",
-    "ul", "ol", "li",
-    "a", "strong", "em", "b", "i", "u", "s",
-    "blockquote", "pre", "code",
+const SAFE_HTML_CONFIG: sanitizeHtmlLib.IOptions = {
+  allowedTags: [
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "p",
+    "br",
+    "hr",
+    "ul",
+    "ol",
+    "li",
+    "a",
+    "strong",
+    "em",
+    "b",
+    "i",
+    "u",
+    "s",
+    "blockquote",
+    "pre",
+    "code",
     "img",
-    "table", "thead", "tbody", "tr", "th", "td",
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "th",
+    "td",
   ],
-  ALLOWED_ATTR: [
-    "href", "src", "alt", "title",
-    "target", "rel",
-    "width", "height", "loading",
-  ],
-  ALLOW_DATA_ATTR: false,
-  ADD_ATTR: ["target"],
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+    img: ["src", "alt", "title", "width", "height", "loading"],
+    "*": ["class"],
+  },
+  allowVulnerableTags: false,
 }
 
-const STRICT_TEXT_CONFIG = {
-  ALLOWED_TAGS: ["p", "br", "strong", "em"],
-  ALLOWED_ATTR: [],
-  ALLOW_DATA_ATTR: false,
+const STRICT_TEXT_CONFIG: sanitizeHtmlLib.IOptions = {
+  allowedTags: ["p", "br", "strong", "em"],
+  allowedAttributes: {},
+  allowVulnerableTags: false,
 }
 
 /**
@@ -31,7 +52,7 @@ const STRICT_TEXT_CONFIG = {
  */
 export function sanitizeHtml(dirty: string): string {
   if (!dirty) return ""
-  return DOMPurify.sanitize(dirty, SAFE_HTML_CONFIG)
+  return sanitizeHtmlLib(dirty, SAFE_HTML_CONFIG)
 }
 
 /**
@@ -39,7 +60,7 @@ export function sanitizeHtml(dirty: string): string {
  */
 export function sanitizeText(dirty: string): string {
   if (!dirty) return ""
-  return DOMPurify.sanitize(dirty, STRICT_TEXT_CONFIG)
+  return sanitizeHtmlLib(dirty, STRICT_TEXT_CONFIG)
 }
 
 /**

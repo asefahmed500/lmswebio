@@ -1,64 +1,64 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { Button } from '@/components/ui/button'
+import { describe, it, expect, vi } from "vitest"
+import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { Button } from "@/components/ui/button"
 
-describe('Button Component', () => {
-  it('should render button with text', () => {
+describe("Button Component", () => {
+  it("should render button with text", () => {
     render(<Button>Click me</Button>)
-    expect(screen.getByRole('button')).toHaveTextContent('Click me')
+    expect(screen.getByRole("button")).toHaveTextContent("Click me")
   })
 
-  it('should handle click events', async () => {
+  it("should handle click events", async () => {
     const handleClick = vi.fn()
     const user = userEvent.setup()
 
     render(<Button onClick={handleClick}>Click me</Button>)
 
-    await user.click(screen.getByRole('button'))
+    await user.click(screen.getByRole("button"))
     expect(handleClick).toHaveBeenCalledTimes(1)
   })
 
-  it('should be disabled when disabled prop is true', () => {
+  it("should be disabled when disabled prop is true", () => {
     render(<Button disabled>Click me</Button>)
-    expect(screen.getByRole('button')).toBeDisabled()
+    expect(screen.getByRole("button")).toBeDisabled()
   })
 
-  it('should apply variant classes correctly', () => {
+  it("should apply variant classes correctly", () => {
     const { rerender } = render(<Button variant="default">Default</Button>)
-    expect(screen.getByRole('button')).toHaveClass('bg-primary')
+    expect(screen.getByRole("button")).toHaveClass("bg-primary")
 
     rerender(<Button variant="destructive">Destructive</Button>)
-    expect(screen.getByRole('button')).toHaveClass('bg-destructive')
+    expect(screen.getByRole("button")).toHaveClass("bg-destructive/10")
 
     rerender(<Button variant="outline">Outline</Button>)
-    expect(screen.getByRole('button')).toHaveClass('border-input')
+    expect(screen.getByRole("button")).toHaveClass("border-border")
   })
 
-  it('should apply size classes correctly', () => {
+  it("should apply size classes correctly", () => {
     const { rerender } = render(<Button size="default">Default</Button>)
-    expect(screen.getByRole('button')).toHaveClass('h-10')
+    expect(screen.getByRole("button")).toHaveClass("h-10")
 
     rerender(<Button size="sm">Small</Button>)
-    expect(screen.getByRole('button')).toHaveClass('h-9')
+    expect(screen.getByRole("button")).toHaveClass("h-9")
 
     rerender(<Button size="lg">Large</Button>)
-    expect(screen.getByRole('button')).toHaveClass('h-11')
+    expect(screen.getByRole("button")).toHaveClass("h-11")
   })
 
-  it('should render as different element when asChild is true', () => {
+  it("should render as different element when asChild is true", () => {
     render(
       <Button asChild>
         <a href="/test">Link</a>
       </Button>
     )
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/test')
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/test")
   })
 
-  it('should handle loading state visually', () => {
+  it("should handle loading state visually", () => {
     render(<Button disabled>Loading...</Button>)
-    const button = screen.getByRole('button')
+    const button = screen.getByRole("button")
     expect(button).toBeDisabled()
-    expect(button).toHaveTextContent('Loading...')
+    expect(button).toHaveTextContent("Loading...")
   })
 })

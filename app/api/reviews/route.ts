@@ -5,13 +5,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 // Validation schema
 const createReviewSchema = z.object({
-  courseId: z.number(),
+  courseId: z.string(),
   rating: z.number().min(1).max(5),
   review: z.string().optional(),
 })
@@ -31,15 +32,17 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    const where: any = {}
+    const where: Prisma.CourseReviewWhereInput = {}
     if (courseId) {
-      where.courseId = parseInt(courseId)
+      where.courseId = courseId
     }
     if (userId) {
-      where.userId = parseInt(userId)
+      where.userId = userId
     }
 
-    let orderBy: any = { createdAt: "desc" }
+    let orderBy: Prisma.CourseReviewOrderByWithRelationInput = {
+      createdAt: "desc",
+    }
     if (sort === "helpful") {
       orderBy = { helpfulVotes: "desc" }
     } else if (sort === "rating") {

@@ -16,7 +16,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { ModuleLessonTree } from "@/components/course/module-lesson-tree"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { useMediaQuery, Breakpoint } from "@/lib/utils/responsive"
 import { cn } from "@/lib/utils"
 
@@ -67,7 +73,9 @@ export function LessonPlayer({
   const currentModule = modules.find((m) =>
     m.lessons.some((l) => l.id === currentLessonId)
   )
-  const currentLesson = currentModule?.lessons.find((l) => l.id === currentLessonId)
+  const currentLesson = currentModule?.lessons.find(
+    (l) => l.id === currentLessonId
+  )
 
   const allLessons = modules.flatMap((m) => m.lessons)
   const currentIndex = allLessons.findIndex((l) => l.id === currentLessonId)
@@ -82,7 +90,7 @@ export function LessonPlayer({
 
   if (!currentLesson) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Lesson not found</p>
       </div>
     )
@@ -90,16 +98,16 @@ export function LessonPlayer({
 
   // Mobile navigation drawer
   const mobileNav = (
-    <div className="p-4 h-full overflow-y-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-lg">Course Content</h3>
+    <div className="h-full overflow-y-auto p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Course Content</h3>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsSidebarOpen(false)}
           aria-label="Close course content"
         >
-          <X className="h-5 w-5" />
+          <X />
         </Button>
       </div>
       <ModuleLessonTree
@@ -115,7 +123,7 @@ export function LessonPlayer({
   )
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background lg:flex-row">
       {/* Mobile navigation drawer */}
       {isMobile && (
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -125,15 +133,18 @@ export function LessonPlayer({
               size="icon"
               className={cn(
                 "fixed top-20 right-4 z-50 lg:hidden",
-                "h-11 w-11 min-h-[44px] min-w-[44px]",
-                "shadow-md bg-background"
+                "h-11 min-h-[44px] w-11 min-w-[44px]",
+                "bg-background shadow-md"
               )}
               aria-label="Open course content"
             >
-              <Menu className="h-5 w-5" />
+              <Menu />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-full sm:max-w-md p-0">
+          <SheetContent side="right" className="w-full p-0 sm:max-w-md">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Course Content</SheetTitle>
+            </SheetHeader>
             {mobileNav}
           </SheetContent>
         </Sheet>
@@ -143,19 +154,17 @@ export function LessonPlayer({
       {!isMobile && (
         <aside
           className={cn(
-            "transition-all duration-300 border-r bg-muted/30",
+            "border-r bg-muted/30 transition-all duration-300",
             "lg:relative lg:h-screen lg:overflow-hidden",
             // Responsive sidebar width
-            isSidebarOpen
-              ? "w-72 xl:w-80"
-              : "w-0 lg:w-16 overflow-hidden"
+            isSidebarOpen ? "w-72 xl:w-80" : "w-0 overflow-hidden lg:w-16"
           )}
           aria-label="Course content sidebar"
         >
           <div className={cn("p-4", !isSidebarOpen && "lg:hidden")}>
             {isSidebarOpen && (
               <>
-                <h3 className="font-semibold mb-4">Course Content</h3>
+                <h3 className="mb-4 font-semibold">Course Content</h3>
                 <ModuleLessonTree
                   modules={modules}
                   currentLessonId={currentLessonId}
@@ -169,10 +178,10 @@ export function LessonPlayer({
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen lg:h-screen overflow-hidden">
+      <div className="flex min-h-screen flex-1 flex-col overflow-hidden lg:h-screen">
         {/* Header */}
-        <header className="sticky top-0 z-40 border-b bg-background p-3 sm:p-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+        <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b bg-background p-3 sm:p-4">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
             {/* Desktop sidebar toggle */}
             {!isMobile && (
               <Button
@@ -181,22 +190,22 @@ export function LessonPlayer({
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
                 aria-expanded={isSidebarOpen}
-                className="h-10 w-10 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                className="h-10 min-h-[44px] w-10 min-w-[44px] sm:min-h-0 sm:min-w-0"
               >
                 {isSidebarOpen ? (
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="size-4" />
                 ) : (
-                  <List className="w-4 h-4" />
+                  <List className="size-4" />
                 )}
               </Button>
             )}
 
             {/* Title */}
-            <div className="flex-1 min-w-0">
-              <h1 className="font-semibold text-sm sm:text-base truncate">
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-sm font-semibold sm:text-base">
                 {currentLesson.title}
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+              <p className="truncate text-xs text-muted-foreground sm:text-sm">
                 {currentModule?.title}
               </p>
             </div>
@@ -210,12 +219,12 @@ export function LessonPlayer({
                 disabled
                 className={cn(
                   "gap-2",
-                  "h-9 sm:h-10 px-3 sm:px-4",
+                  "h-9 px-3 sm:h-10 sm:px-4",
                   "text-xs sm:text-sm"
                 )}
                 aria-label="Lesson completed"
               >
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle2 className="text-success size-4" />
                 <span className="hidden sm:inline">Completed</span>
               </Button>
             ) : (
@@ -223,13 +232,13 @@ export function LessonPlayer({
                 onClick={handleComplete}
                 className={cn(
                   "gap-2",
-                  "h-9 sm:h-10 px-3 sm:px-4",
+                  "h-9 px-3 sm:h-10 sm:px-4",
                   "text-xs sm:text-sm",
                   "min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                 )}
                 aria-label="Mark lesson as complete"
               >
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle2 className="size-4" />
                 <span className="hidden sm:inline">Mark Complete</span>
               </Button>
             )}
@@ -238,48 +247,53 @@ export function LessonPlayer({
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto" id="lesson-content">
-          <div className="max-w-4xl mx-auto p-3 sm:p-4 lg:p-6">
+          <div className="mx-auto max-w-4xl p-3 sm:p-4 lg:p-6">
             {/* Video player */}
-            {currentLesson.contentType === "video" && currentLesson.videoUrl && (
-              <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 sm:mb-6 shadow-lg">
-                <video
-                  src={currentLesson.videoUrl}
-                  controls
-                  className="w-full h-full"
-                  preload="metadata"
-                  aria-label={`Video: ${currentLesson.title}`}
-                >
-                  <track kind="captions" src="" label="English" />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-            )}
+            {currentLesson.contentType === "video" &&
+              currentLesson.videoUrl && (
+                <div className="mb-4 aspect-video overflow-hidden rounded-lg bg-black shadow-lg sm:mb-6">
+                  <video
+                    src={currentLesson.videoUrl}
+                    controls
+                    className="h-full w-full"
+                    preload="metadata"
+                    aria-label={`Video: ${currentLesson.title}`}
+                  >
+                    <track kind="captions" src="" label="English" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              )}
 
             {/* Lesson info card */}
             <Card>
               <CardHeader className="p-4 sm:p-6">
-                <div className="flex items-center flex-wrap gap-2 text-sm text-muted-foreground mb-2">
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                   {currentLesson.contentType === "video" && (
                     <>
-                      <PlayCircle className="w-4 h-4" aria-hidden="true" />
+                      <PlayCircle className="size-4" aria-hidden="true" />
                       <span>Video Lesson</span>
                     </>
                   )}
                   {currentLesson.contentType === "text" && (
                     <>
-                      <FileText className="w-4 h-4" aria-hidden="true" />
+                      <FileText className="size-4" aria-hidden="true" />
                       <span>Text Content</span>
                     </>
                   )}
                   {currentLesson.contentType === "pdf" && (
                     <>
-                      <FileText className="w-4 h-4" aria-hidden="true" />
+                      <FileText className="size-4" aria-hidden="true" />
                       <span>PDF Document</span>
                     </>
                   )}
                   {currentLesson.duration && (
                     <>
-                      <Separator orientation="vertical" className="h-4" aria-hidden="true" />
+                      <Separator
+                        orientation="vertical"
+                        className="h-4"
+                        aria-hidden="true"
+                      />
                       <span>
                         {Math.floor(currentLesson.duration / 60)} minutes
                       </span>
@@ -290,17 +304,20 @@ export function LessonPlayer({
                   {currentLesson.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0">
-                {currentLesson.contentType === "text" && currentLesson.content && (
-                  <div
-                    className="prose prose-slate max-w-none dark:prose-invert prose-sm sm:prose-base"
-                    dangerouslySetInnerHTML={{ __html: currentLesson.content }}
-                  />
-                )}
+              <CardContent className="p-4 pt-0 sm:p-6">
+                {currentLesson.contentType === "text" &&
+                  currentLesson.content && (
+                    <div
+                      className="prose prose-slate dark:prose-invert prose-sm sm:prose-base max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: currentLesson.content,
+                      }}
+                    />
+                  )}
                 {currentLesson.contentType === "pdf" && (
-                  <div className="text-center py-8">
-                    <FileText className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm sm:text-base text-muted-foreground">
+                  <div className="py-8 text-center">
+                    <FileText className="mx-auto mb-4 size-12 text-muted-foreground sm:size-16" />
+                    <p className="text-sm text-muted-foreground sm:text-base">
                       PDF viewer coming soon
                     </p>
                   </div>
@@ -312,25 +329,27 @@ export function LessonPlayer({
 
         {/* Footer Navigation */}
         <footer className="border-t bg-background p-3 sm:p-4">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+          <div className="mx-auto flex max-w-4xl items-center justify-between gap-2 sm:gap-4">
             <Button
               variant="outline"
-              onClick={() => previousLesson && onLessonChange(previousLesson.id)}
+              onClick={() =>
+                previousLesson && onLessonChange(previousLesson.id)
+              }
               disabled={!previousLesson}
               className={cn(
                 "gap-2",
-                "h-9 sm:h-10 px-3 sm:px-4",
+                "h-9 px-3 sm:h-10 sm:px-4",
                 "text-xs sm:text-sm",
                 "min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
               )}
               aria-label="Go to previous lesson"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="size-4" />
               <span className="hidden sm:inline">Previous</span>
             </Button>
 
             {/* Progress bar - hidden on very small screens */}
-            <div className="flex-1 mx-2 sm:mx-4 hidden xs:block">
+            <div className="xs:block mx-2 hidden flex-1 sm:mx-4">
               <Progress
                 value={(completedLessons.size / allLessons.length) * 100}
                 className="h-2"
@@ -343,14 +362,14 @@ export function LessonPlayer({
               disabled={!nextLesson}
               className={cn(
                 "gap-2",
-                "h-9 sm:h-10 px-3 sm:px-4",
+                "h-9 px-3 sm:h-10 sm:px-4",
                 "text-xs sm:text-sm",
                 "min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
               )}
               aria-label="Go to next lesson"
             >
               <span className="hidden sm:inline">Next</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="size-4" />
             </Button>
           </div>
         </footer>

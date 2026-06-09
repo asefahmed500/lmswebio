@@ -1,12 +1,8 @@
-/**
- * Student course catalogue page
- * Browse and discover available courses
- */
-
 "use client"
 
 import * as React from "react"
-import { BookOpen, Clock, Users, Star, Search } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { BookOpen, Search } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -14,9 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { CourseCard } from "@/components/course/course-card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
@@ -25,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiPost } from "@/lib/api-client"
 
 type SortOption = "popular" | "newest" | "rating"
 type LevelFilter = "ALL" | "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
@@ -33,115 +33,22 @@ type CategoryFilter = "ALL" | string
 interface ApiCourse {
   id: number
   title: string
+  slug?: string
   description: string | null
   level: string
   category: string | null
   thumbnail: string | null
   tags: string[]
+  price?: number | null
   isPublished: boolean
   createdAt: string
-  modules: Array<{
-    id: number
-    lessons: Array<{ id: number }>
-  }>
+  instructor?: { id: number; fullName: string; avatarUrl: string | null }
+  _count?: { modules: number; enrolments: number }
+  modules: Array<{ id: number; lessons: Array<{ id: number }> }>
 }
 
-/**
- * Course card component
- */
-function CourseCard({
-  course,
-  isEnrolled,
-  onEnroll,
-}: {
-  course: ApiCourse
-  isEnrolled: boolean
-  onEnroll: (courseId: number) => void
-}) {
-  const totalLessons = course.modules.reduce(
-    (sum, m) => sum + m.lessons.length,
-    0
-  )
-
-  return (
-    <Card className="group overflow-hidden">
-      <div className="relative aspect-video w-full bg-muted">
-        {course.thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={course.thumbnail}
-            alt={course.title}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <BookOpen className="h-12 w-12 text-muted-foreground" />
-          </div>
-        )}
-        <Badge className="absolute top-2 right-2" variant="secondary">
-          {course.level}
-        </Badge>
-      </div>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <CardTitle className="line-clamp-1 text-base">
-              {course.title}
-            </CardTitle>
-            <CardDescription className="mt-1 line-clamp-2">
-              {course.description}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>{totalLessons} lessons</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>{course.modules.length} modules</span>
-            </div>
-          </div>
-
-          {course.tags && course.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {course.tags.slice(0, 3).map((tag) => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          <Button
-            className="w-full"
-            variant={isEnrolled ? "outline" : "default"}
-            onClick={() => onEnroll(course.id)}
-            disabled={isEnrolled}
-          >
-            {isEnrolled ? (
-              <>
-                <Star className="mr-2 h-4 w-4" />
-                Enrolled
-              </>
-            ) : (
-              "Enroll Now"
-            )}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-/**
- * Course catalogue page component
- */
 export default function CourseCataloguePage() {
+  const router = useRouter()
   const { user } = useAuth()
   const [courses, setCourses] = React.useState<ApiCourse[]>([])
   const [enrolledCourseIds, setEnrolledCourseIds] = React.useState<Set<number>>(
@@ -154,44 +61,48 @@ export default function CourseCataloguePage() {
     React.useState<CategoryFilter>("ALL")
   const [sortBy, setSortBy] = React.useState<SortOption>("popular")
 
-  // Load courses
   React.useEffect(() => {
     async function loadData() {
       if (!user) return
-
       setIsLoading(true)
       try {
-        const [coursesRes, enrollmentsRes] = await Promise.all([
-          fetch("/api/courses"),
-          fetch("/api/enrolments/my"),
+        const [coursesResult, enrollmentsResult] = await Promise.all([
+          apiGet("/courses"),
+          apiGet("/enrolments/my"),
         ])
-
-        if (coursesRes.ok) {
-          const data = await coursesRes.json()
-          setCourses(Array.isArray(data) ? data : data.courses || [])
+        if (coursesResult.data) {
+          const data = coursesResult.data
+          setCourses(
+            (Array.isArray(data)
+              ? data
+              : (data as Record<string, unknown>).courses || []) as ApiCourse[]
+          )
         }
-
-        if (enrollmentsRes.ok) {
-          const enrollments = await enrollmentsRes.json()
+        if (enrollmentsResult.data) {
+          const enrollments = enrollmentsResult.data
           const enrolled = Array.isArray(enrollments)
-            ? enrollments.map((e: any) => e.courseId)
-            : enrollments.enrolments?.map((e: any) => e.courseId) || []
+            ? (enrollments as { courseId: number }[]).map((e) => e.courseId)
+            : (
+                (enrollments as Record<string, unknown>).enrolments as
+                  | { courseId: number }[]
+                  | undefined
+              )?.map((e) => e.courseId) || []
           setEnrolledCourseIds(new Set(enrolled))
         }
-      } catch (error) {
-        console.error("Failed to load courses:", error)
+      } catch {
+        console.error("Failed to load courses")
       } finally {
+        const params = new URLSearchParams(window.location.search)
+        const q = params.get("q") || params.get("search")
+        if (q) setSearchQuery(q)
         setIsLoading(false)
       }
     }
-
     loadData()
   }, [user])
 
-  // Filter and sort courses
   const filteredCourses = React.useMemo(() => {
     let filtered = [...courses]
-
     if (searchQuery) {
       filtered = filtered.filter(
         (c) =>
@@ -202,80 +113,57 @@ export default function CourseCataloguePage() {
           )
       )
     }
-
-    if (levelFilter !== "ALL") {
+    if (levelFilter !== "ALL")
       filtered = filtered.filter((c) => c.level === levelFilter)
-    }
-
-    if (categoryFilter !== "ALL") {
+    if (categoryFilter !== "ALL")
       filtered = filtered.filter((c) => c.category === categoryFilter)
-    }
-
     filtered.sort((a, b) => {
-      if (sortBy === "newest") {
+      if (sortBy === "newest")
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      }
       return b.id - a.id
     })
-
     return filtered
   }, [courses, searchQuery, levelFilter, categoryFilter, sortBy])
 
-  /**
-   * Handle course enrollment
-   */
-  const handleEnroll = async (courseId: number) => {
+  const handleEnroll = async (courseId: number, price?: number | null) => {
+    if (price && price > 0) {
+      router.push(`/student/checkout/${courseId}`)
+      return
+    }
     try {
-      const response = await fetch(`/api/courses/${courseId}/enrol`, {
-        method: "POST",
-      })
-
-      if (response.ok) {
+      const result = await apiPost(`/courses/${courseId}/enrol`)
+      if (result.data) {
         setEnrolledCourseIds((prev) => new Set(prev).add(courseId))
-        window.location.href = `/student/courses/${courseId}`
-      } else {
-        const data = await response.json().catch(() => ({}))
-        console.error("Enrolment failed:", data.error || response.statusText)
+        router.push(`/student/courses/${courseId}`)
       }
-    } catch (error) {
-      console.error("Enrolment error:", error)
+    } catch {
+      console.error("Enrolment error")
     }
   }
 
-  // Get unique categories
   const categories = React.useMemo(() => {
-    const cats = new Set(courses.map((c) => c.category).filter(Boolean) as string[])
+    const cats = new Set(
+      courses.map((c) => c.category).filter(Boolean) as string[]
+    )
     return Array.from(cats)
   }, [courses])
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading courses...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Page header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Course Catalogue</h1>
-        <p className="mt-1 text-muted-foreground">
+        <CardTitle className="text-2xl">Course Catalogue</CardTitle>
+        <CardDescription>
           Discover and enroll in courses to start learning
-        </p>
+        </CardDescription>
       </div>
 
-      {/* Search and filters */}
+      {/* Filter bar — shadcn Card with Select dropdowns */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent>
           <div className="flex flex-col gap-4 lg:flex-row">
-            {/* Search */}
             <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search courses..."
@@ -284,8 +172,6 @@ export default function CourseCataloguePage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-
-            {/* Filters */}
             <div className="flex flex-wrap gap-2">
               <Select
                 value={levelFilter}
@@ -301,7 +187,6 @@ export default function CourseCataloguePage() {
                   <SelectItem value="ADVANCED">Advanced</SelectItem>
                 </SelectContent>
               </Select>
-
               <Select
                 value={categoryFilter}
                 onValueChange={(value) =>
@@ -320,7 +205,6 @@ export default function CourseCataloguePage() {
                   ))}
                 </SelectContent>
               </Select>
-
               <Select
                 value={sortBy}
                 onValueChange={(value) => setSortBy(value as SortOption)}
@@ -339,7 +223,7 @@ export default function CourseCataloguePage() {
         </CardContent>
       </Card>
 
-      {/* Results count */}
+      {/* Result count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {filteredCourses.length}{" "}
@@ -347,39 +231,99 @@ export default function CourseCataloguePage() {
         </p>
       </div>
 
+      {/* Loading state — Skeleton grid */}
+      {isLoading && (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <Skeleton className="aspect-video w-full rounded-t-xl" />
+              <CardHeader>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-48" />
+              </CardContent>
+              <CardContent>
+                <Skeleton className="h-9 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {/* Course grid */}
-      {filteredCourses.length > 0 ? (
+      {!isLoading && filteredCourses.length > 0 && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredCourses.map((course) => (
             <CourseCard
               key={course.id}
-              course={course}
-              isEnrolled={enrolledCourseIds.has(course.id)}
-              onEnroll={handleEnroll}
+              course={{
+                id: course.id,
+                title: course.title,
+                slug: course.slug || String(course.id),
+                description: course.description || undefined,
+                thumbnail: course.thumbnail || undefined,
+                level: course.level as "BEGINNER" | "INTERMEDIATE" | "ADVANCED",
+                category: course.category || undefined,
+                price: course.price,
+                instructor: course.instructor
+                  ? {
+                      id: course.instructor.id,
+                      fullName: course.instructor.fullName,
+                      avatarUrl: course.instructor.avatarUrl ?? undefined,
+                    }
+                  : {
+                      id: 0,
+                      fullName: "Instructor",
+                      avatarUrl: undefined as string | undefined,
+                    },
+                _count: course._count || {
+                  modules: course.modules.length,
+                  enrolments: 0,
+                },
+              }}
+              enrolled={enrolledCourseIds.has(course.id)}
             />
           ))}
         </div>
-      ) : (
+      )}
+
+      {/* Empty state — shadcn Card with icon + message + action */}
+      {!isLoading && filteredCourses.length === 0 && courses.length === 0 && (
         <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No courses found</h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Try adjusting your search or filters to find what you&apos;re
-                looking for.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery("")
-                  setLevelFilter("ALL")
-                  setCategoryFilter("ALL")
-                }}
-              >
-                Clear Filters
-              </Button>
-            </div>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <BookOpen className="mb-4 size-12 text-muted-foreground/40" />
+            <CardTitle className="mb-2">No courses yet</CardTitle>
+            <CardDescription>
+              Courses will appear once instructors publish them. Check back
+              soon.
+            </CardDescription>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No results — filtered empty */}
+      {!isLoading && filteredCourses.length === 0 && courses.length > 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <Search className="mb-4 size-12 text-muted-foreground/40" />
+            <CardTitle className="mb-2">No courses found</CardTitle>
+            <CardDescription className="mb-6">
+              Try adjusting your search or filters to find what you&apos;re
+              looking for.
+            </CardDescription>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchQuery("")
+                setLevelFilter("ALL")
+                setCategoryFilter("ALL")
+              }}
+            >
+              Clear Filters
+            </Button>
           </CardContent>
         </Card>
       )}

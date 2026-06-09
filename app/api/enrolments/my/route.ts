@@ -11,7 +11,10 @@ export async function GET() {
 
     const { role, id: userId } = session.user
     if (role !== "STUDENT") {
-      return NextResponse.json({ error: "Only students have enrollments" }, { status: 403 })
+      return NextResponse.json(
+        { error: "Only students have enrollments" },
+        { status: 403 }
+      )
     }
 
     const enrolments = await prisma.enrolment.findMany({
@@ -19,7 +22,11 @@ export async function GET() {
       include: {
         course: {
           select: {
-            id: true, title: true, slug: true, thumbnail: true, level: true,
+            id: true,
+            title: true,
+            slug: true,
+            thumbnail: true,
+            level: true,
             instructor: { select: { id: true, fullName: true } },
             modules: {
               select: { _count: { select: { lessons: true } } },
@@ -33,6 +40,9 @@ export async function GET() {
     return NextResponse.json(enrolments)
   } catch (error) {
     console.error("GET /api/enrolments/my error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

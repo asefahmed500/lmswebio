@@ -43,6 +43,7 @@ interface ApiCourse {
   category: string | null
   tags: string[]
   modules: ApiModule[]
+  _count?: { modules: number; enrolments: number }
   createdAt: string
   updatedAt: string | null
 }
@@ -67,26 +68,26 @@ interface ApiLesson {
 
 function mapCourse(api: ApiCourse): Course {
   return {
-    id: api.id as unknown as number,
+    id: api.id,
     title: api.title,
     slug: api.slug,
     description: api.description ?? undefined,
     thumbnail: api.thumbnail ?? undefined,
     level: api.level as Course["level"],
     isPublished: api.isPublished,
-    instructorId: api.instructorId as unknown as number,
+    instructorId: api.instructorId,
     modules: api.modules.map((m) => ({
-      id: m.id as unknown as number,
+      id: m.id,
       title: m.title,
       order: m.order,
-      courseId: m.courseId as unknown as number,
+      courseId: m.courseId,
       lessons: m.lessons.map((l) => ({
-        id: l.id as unknown as number,
+        id: l.id,
         title: l.title,
         content: l.content ?? undefined,
         contentType: l.contentType as Module["lessons"][0]["contentType"],
         order: l.order,
-        moduleId: l.moduleId as unknown as number,
+        moduleId: l.moduleId,
         duration: l.duration ?? undefined,
       })),
     })),
@@ -117,18 +118,7 @@ export default function InstructorCourseDetailPage() {
         if (!res.ok) throw new Error("Failed to fetch course")
         const data: ApiCourse = await res.json()
         setCourse(mapCourse(data))
-
-        try {
-          const enrolRes = await fetch(`/api/courses/${courseId}/enrolments`)
-          if (enrolRes.ok) {
-            const enrolments = await enrolRes.json()
-            setStudentCount(
-              Array.isArray(enrolments) ? enrolments.length : 0
-            )
-          }
-        } catch {
-          setStudentCount(0)
-        }
+        setStudentCount(data._count?.enrolments ?? 0)
       } catch (error) {
         console.error("Failed to load course:", error)
       } finally {
@@ -141,9 +131,7 @@ export default function InstructorCourseDetailPage() {
 
   const totalLessons = React.useMemo(
     () =>
-      course
-        ? course.modules.reduce((sum, m) => sum + m.lessons.length, 0)
-        : 0,
+      course ? course.modules.reduce((sum, m) => sum + m.lessons.length, 0) : 0,
     [course]
   )
 
@@ -151,7 +139,7 @@ export default function InstructorCourseDetailPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">Loading course...</p>
         </div>
       </div>
@@ -162,7 +150,7 @@ export default function InstructorCourseDetailPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
           <h3 className="mb-2 text-lg font-semibold">Course not found</h3>
           <p className="mb-4 text-sm text-muted-foreground">
             The course you&apos;re looking for doesn&apos;t exist.
@@ -176,16 +164,18 @@ export default function InstructorCourseDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/instructor/courses">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{course.title}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {course.title}
+            </h1>
             <p className="mt-1 text-muted-foreground">
               Course overview and content
             </p>
@@ -194,13 +184,13 @@ export default function InstructorCourseDetailPage() {
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>
             <Link href={`/student/courses/${course.id}`}>
-              <Eye className="mr-2 h-4 w-4" />
+              <Eye data-icon="inline-start" />
               View as Student
             </Link>
           </Button>
           <Button asChild>
             <Link href={`/instructor/courses/${course.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
+              <Edit data-icon="inline-start" />
               Edit Course
             </Link>
           </Button>
@@ -238,7 +228,7 @@ export default function InstructorCourseDetailPage() {
               Students
             </CardTitle>
             <div className="rounded-full bg-primary/10 p-2">
-              <Users className="h-4 w-4 text-primary" />
+              <Users className="size-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
@@ -251,7 +241,7 @@ export default function InstructorCourseDetailPage() {
               Content
             </CardTitle>
             <div className="rounded-full bg-primary/10 p-2">
-              <Layers className="h-4 w-4 text-primary" />
+              <Layers className="size-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
@@ -269,11 +259,15 @@ export default function InstructorCourseDetailPage() {
         <CardContent>
           {course.description ? (
             <div
-              className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description) }}
+              className="prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(course.description),
+              }}
             />
           ) : (
-            <p className="text-sm text-muted-foreground">No description provided.</p>
+            <p className="text-sm text-muted-foreground">
+              No description provided.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -283,14 +277,18 @@ export default function InstructorCourseDetailPage() {
           <CardHeader>
             <CardTitle>Category &amp; Tags</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Category:</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Category:
+              </span>
               <Badge variant="outline">{course.category}</Badge>
             </div>
             {course.tags && course.tags.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">Tags:</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Tags:
+                </span>
                 <div className="flex flex-wrap gap-1">
                   {course.tags.map((tag) => (
                     <Badge key={tag} variant="secondary">
@@ -313,7 +311,7 @@ export default function InstructorCourseDetailPage() {
         </CardHeader>
         <CardContent>
           {course.modules.length > 0 ? (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {course.modules
                 .sort((a, b) => a.order - b.order)
                 .map((module, index) => (
@@ -321,7 +319,7 @@ export default function InstructorCourseDetailPage() {
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                          <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
                             {index + 1}
                           </div>
                           <div>
@@ -336,7 +334,7 @@ export default function InstructorCourseDetailPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-1">
+                      <div className="flex flex-col gap-1">
                         {module.lessons
                           .sort((a, b) => a.order - b.order)
                           .map((lesson) => (
@@ -344,14 +342,14 @@ export default function InstructorCourseDetailPage() {
                               key={lesson.id}
                               className="flex items-center gap-3 rounded-lg bg-muted/50 p-2 text-sm"
                             >
-                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <FileText className="size-4 text-muted-foreground" />
                               <span className="flex-1">{lesson.title}</span>
                               <Badge variant="outline" className="text-xs">
                                 {lesson.contentType}
                               </Badge>
                               {lesson.duration && (
                                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
+                                  <Clock className="size-3" />
                                   {lesson.duration}m
                                 </span>
                               )}

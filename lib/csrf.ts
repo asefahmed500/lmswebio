@@ -11,9 +11,9 @@ const CSRF_HEADER_NAME = "x-csrf-token"
 const TOKEN_LENGTH = 32
 
 /**
- * Generate a secure random CSRF token
+ * Generate a secure random CSRF token (internal helper)
  */
-function generateCSRFToken(): string {
+function generateRandomToken(): string {
   return randomBytes(TOKEN_LENGTH).toString("hex")
 }
 
@@ -29,11 +29,11 @@ function hashToken(token: string): string {
  * Returns the token that should be embedded in forms/headers
  */
 export async function generateCSRFToken(): Promise<string> {
-  const token = generateCSRFToken()
+  const token = generateRandomToken()
   const cookieStore = await cookies()
 
   cookieStore.set(CSRF_COOKIE_NAME, token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
@@ -88,14 +88,14 @@ export async function clearCSRFToken(): Promise<void> {
 /**
  * Middleware to validate CSRF for state-changing operations
  */
-export function requireCSRF(request: Request) {
+export async function requireCSRF(request: Request) {
   const csrfToken = request.headers.get(CSRF_HEADER_NAME)
 
   if (!csrfToken) {
     return false
   }
 
-  return validateCSRFToken(csrfToken)
+  return await validateCSRFToken(csrfToken)
 }
 
 /**

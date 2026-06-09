@@ -53,7 +53,9 @@ export function FocusTrap({
         if (focusableElements.length === 0) return
 
         const firstElement = focusableElements[0] as HTMLElement
-        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+        const lastElement = focusableElements[
+          focusableElements.length - 1
+        ] as HTMLElement
 
         if (e.shiftKey) {
           if (document.activeElement === firstElement) {
@@ -88,10 +90,7 @@ export function FocusTrap({
   }, [enabled, trapFocus, restoreFocus, onDeactivate])
 
   return (
-    <div
-      ref={containerRef}
-      onKeyDown={handleKeyDown}
-    >
+    <div ref={containerRef} onKeyDown={handleKeyDown}>
       {children}
     </div>
   )

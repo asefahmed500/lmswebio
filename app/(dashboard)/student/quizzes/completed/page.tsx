@@ -1,8 +1,3 @@
-/**
- * Student completed quizzes page
- * Shows quizzes the student has attempted with best scores
- */
-
 "use client"
 
 import * as React from "react"
@@ -32,9 +27,6 @@ interface CompletedQuiz {
   attemptCount: number
 }
 
-/**
- * Completed quiz card
- */
 function QuizCard({ quiz }: { quiz: CompletedQuiz }) {
   return (
     <Card className="overflow-hidden">
@@ -57,7 +49,7 @@ function QuizCard({ quiz }: { quiz: CompletedQuiz }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
@@ -86,9 +78,6 @@ function QuizCard({ quiz }: { quiz: CompletedQuiz }) {
   )
 }
 
-/**
- * Completed quizzes page
- */
 export default function CompletedQuizzesPage() {
   const { user } = useAuth()
   const [quizzes, setQuizzes] = React.useState<CompletedQuiz[]>([])
@@ -131,8 +120,7 @@ export default function CompletedQuizzesPage() {
 
         const completed = allQuizzes
           .map((q, i) => {
-            const attempts: { score: number | null }[] =
-              attemptResults[i] || []
+            const attempts: { score: number | null }[] = attemptResults[i] || []
             if (attempts.length === 0) return null
             const scores = attempts
               .map((a) => a.score)
@@ -184,7 +172,7 @@ export default function CompletedQuizzesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Completed Quizzes</h1>
         <p className="mt-1 text-muted-foreground">

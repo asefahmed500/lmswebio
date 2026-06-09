@@ -1,23 +1,19 @@
-/**
- * Authentication provider component
- * Manages JWT-based authentication state via API endpoints
- */
-
 "use client"
 
 import * as React from "react"
 import type { User, AuthState } from "@/types"
+import { invalidateCSRFToken } from "@/lib/api-client"
 
 type AuthContextType = AuthState & {
   login: (
     email: string,
     password: string
-  ) => Promise<{ success: boolean; error?: string }>
+  ) => Promise<{ success: boolean; error?: string; user?: User }>
   register: (
     fullName: string,
     email: string,
     password: string
-  ) => Promise<{ success: boolean; error?: string }>
+  ) => Promise<{ success: boolean; error?: string; user?: User }>
   logout: () => Promise<void>
   setUser: (user: User | null) => void
 }
@@ -46,12 +42,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: true,
             isLoading: false,
           })
-        } else {
+          return
+        }
+
+        if (res.status !== 401) {
           setAuthState({
             user: null,
             isAuthenticated: false,
             isLoading: false,
           })
+          return
         }
       } catch {
         if (!controller.signal.aborted) {
@@ -61,7 +61,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isLoading: false,
           })
         }
+        return
       }
+
+      try {
+        const refreshRes = await fetch("/api/auth/refresh", {
+          method: "POST",
+          signal: controller.signal,
+        })
+        const refreshData = await refreshRes.json()
+        if (refreshData.user) {
+          setAuthState({
+            user: refreshData.user,
+            isAuthenticated: true,
+            isLoading: false,
+          })
+          return
+        }
+      } catch {}
+
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      })
     }
 
     fetchSession()
@@ -74,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (
     email: string,
     password: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; user?: User }> => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -94,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false,
       })
 
-      return { success: true }
+      return { success: true, user: data.user }
     } catch {
       return { success: false, error: "An error occurred during login" }
     }
@@ -104,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string,
     email: string,
     password: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; user?: User }> => {
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -127,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false,
       })
 
-      return { success: true }
+      return { success: true, user: data.user }
     } catch {
       return { success: false, error: "An error occurred during registration" }
     }
@@ -136,9 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
-    } catch {
-      // Ignore errors on logout — we clear state regardless
-    }
+    } catch {}
+
+    invalidateCSRFToken()
 
     setAuthState({
       user: null,

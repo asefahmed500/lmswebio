@@ -15,13 +15,15 @@ export async function POST(
     const { role, id: userId } = session.user
 
     if (role !== "STUDENT") {
-      return NextResponse.json({ error: "Only students can complete lessons" }, { status: 403 })
+      return NextResponse.json(
+        { error: "Only students can complete lessons" },
+        { status: 403 }
+      )
     }
 
-    const { id } = await params
-    const lessonId = parseInt(id, 10)
+    const { id: lessonId } = await params
 
-    if (isNaN(lessonId)) {
+    if (!lessonId) {
       return NextResponse.json({ error: "Invalid lesson ID" }, { status: 400 })
     }
 
@@ -40,15 +42,21 @@ export async function POST(
 
     const courseId = lesson.module.courseId
 
+    // Check if student is already enrolled
+    const existingEnrolment = await prisma.enrolment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    })
+
+    if (!existingEnrolment || existingEnrolment.status === "DROPPED") {
+      return NextResponse.json(
+        { error: "You must be enrolled in this course to complete lessons" },
+        { status: 403 }
+      )
+    }
+
     await prisma.lessonCompletion.upsert({
       where: { userId_lessonId: { userId, lessonId } },
       create: { userId, lessonId },
-      update: {},
-    })
-
-    await prisma.enrolment.upsert({
-      where: { userId_courseId: { userId, courseId } },
-      create: { userId, courseId, status: "ACTIVE" },
       update: {},
     })
 
@@ -60,13 +68,23 @@ export async function POST(
       where: { userId, lesson: { module: { courseId } } },
     })
 
-    const progress = totalLessons > 0
-      ? Math.round((completedLessons / totalLessons) * 100)
-      : 0
+    const progress =
+      totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+
+    const updateData: Record<string, unknown> = {
+      progress,
+      lastAccessedAt: new Date(),
+    }
+
+    // Auto-complete enrollment when progress reaches 100%
+    if (progress >= 100) {
+      updateData.status = "COMPLETED"
+      updateData.completedAt = new Date()
+    }
 
     await prisma.enrolment.update({
       where: { userId_courseId: { userId, courseId } },
-      data: { progress },
+      data: updateData as never,
     })
 
     return NextResponse.json({ success: true, progress })

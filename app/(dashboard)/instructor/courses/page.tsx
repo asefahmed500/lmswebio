@@ -1,8 +1,3 @@
-/**
- * Instructor courses list page
- * Displays all courses for the current instructor with status filters
- */
-
 "use client"
 
 import * as React from "react"
@@ -54,6 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiPatch, apiDelete } from "@/lib/api-client"
 
 type CourseStatus = "ALL" | "PUBLISHED" | "DRAFT" | "ARCHIVED"
 
@@ -72,9 +68,14 @@ interface ApiCourse {
   }>
 }
 
-/**
- * Instructor courses list page component
- */
+interface CoursesApiResponse {
+  courses?: ApiCourse[]
+}
+
+interface EnrollmentsApiResponse {
+  enrollments?: Array<{ progress?: number }>
+}
+
 export default function InstructorCoursesPage() {
   const { user } = useAuth()
   const [courses, setCourses] = React.useState<ApiCourse[]>([])
@@ -82,34 +83,51 @@ export default function InstructorCoursesPage() {
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<CourseStatus>("ALL")
   const [deleteId, setDeleteId] = React.useState<number | null>(null)
-  const [enrollmentStats, setEnrollmentStats] = React.useState<Record<number, { count: number; avgProgress: number }>>({})
+  const [enrollmentStats, setEnrollmentStats] = React.useState<
+    Record<number, { count: number; avgProgress: number }>
+  >({})
 
-  // Load courses with enrollment stats
   React.useEffect(() => {
     async function loadCourses() {
       if (!user) return
 
       setIsLoading(true)
       try {
-        const res = await fetch("/api/courses")
-        if (!res.ok) throw new Error("Failed to fetch courses")
-        const data = await res.json()
-        const courseList = Array.isArray(data) ? data : data.courses || []
+        const result = await apiGet<CoursesApiResponse | ApiCourse[]>(
+          "/courses"
+        )
+        if (result.error) throw new Error(result.error)
+        const data = result.data
+        const courseList = Array.isArray(data)
+          ? data
+          : (data as CoursesApiResponse).courses || []
         setCourses(courseList)
 
-        // Load enrollment stats per course
         const stats: Record<number, { count: number; avgProgress: number }> = {}
         await Promise.all(
           courseList.map(async (course: ApiCourse) => {
             try {
-              const enrRes = await fetch(`/api/enrollments?courseId=${course.id}`)
-              if (enrRes.ok) {
-                const enrData = await enrRes.json()
-                const enrollments = Array.isArray(enrData) ? enrData : enrData.enrollments || []
+              const enrResult = await apiGet<
+                EnrollmentsApiResponse | Array<{ progress?: number }>
+              >(`/enrollments?courseId=${course.id}`)
+              if (!enrResult.error) {
+                const enrData = enrResult.data
+                const enrollments: Array<{ progress?: number }> = Array.isArray(
+                  enrData
+                )
+                  ? enrData
+                  : (enrData as EnrollmentsApiResponse).enrollments || []
                 const count = enrollments.length
-                const avgProgress = count > 0
-                  ? Math.round(enrollments.reduce((sum: number, e: any) => sum + (e.progress || 0), 0) / count)
-                  : 0
+                const avgProgress =
+                  count > 0
+                    ? Math.round(
+                        enrollments.reduce(
+                          (sum: number, e: { progress?: number }) =>
+                            sum + (e.progress || 0),
+                          0
+                        ) / count
+                      )
+                    : 0
                 stats[course.id] = { count, avgProgress }
               }
             } catch {
@@ -121,6 +139,9 @@ export default function InstructorCoursesPage() {
       } catch (error) {
         console.error("Failed to load courses:", error)
       } finally {
+        const params = new URLSearchParams(window.location.search)
+        const q = params.get("q") || params.get("search")
+        if (q) setSearchQuery(q)
         setIsLoading(false)
       }
     }
@@ -128,7 +149,6 @@ export default function InstructorCoursesPage() {
     loadCourses()
   }, [user])
 
-  // Filter courses
   const filteredCourses = React.useMemo(() => {
     let filtered = [...courses]
 
@@ -151,38 +171,29 @@ export default function InstructorCoursesPage() {
     return filtered
   }, [courses, statusFilter, searchQuery])
 
-  /**
-   * Handle course status toggle (publish/unpublish)
-   */
   const handleStatusToggle = async (id: number) => {
     const course = courses.find((c) => c.id === id)
     if (!course) return
 
     try {
-      const res = await fetch(`/api/courses/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublished: !course.isPublished }),
+      const result = await apiPatch(`/courses/${id}`, {
+        isPublished: !course.isPublished,
       })
-      if (!res.ok) throw new Error("Failed to update course")
-      const updated = await res.json()
+      if (result.error) throw new Error(result.error)
       setCourses((prev) =>
-        prev.map((c) => (c.id === id ? updated : c))
+        prev.map((c) =>
+          c.id === id ? { ...c, isPublished: !course.isPublished } : c
+        )
       )
     } catch (error) {
       console.error("Failed to toggle publish status:", error)
     }
   }
 
-  /**
-   * Handle course deletion
-   */
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`/api/courses/${id}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) throw new Error("Failed to delete course")
+      const result = await apiDelete(`/courses/${id}`)
+      if (result.error) throw new Error(result.error)
       setCourses((prev) => prev.filter((c) => c.id !== id))
       setDeleteId(null)
     } catch (error) {
@@ -194,7 +205,7 @@ export default function InstructorCoursesPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">Loading courses...</p>
         </div>
       </div>
@@ -202,8 +213,7 @@ export default function InstructorCoursesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Courses</h1>
@@ -213,13 +223,12 @@ export default function InstructorCoursesPage() {
         </div>
         <Button asChild>
           <Link href="/instructor/courses/new">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus data-icon="inline-start" />
             New Course
           </Link>
         </Button>
       </div>
 
-      {/* Stats cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
@@ -269,7 +278,6 @@ export default function InstructorCoursesPage() {
         </Card>
       </div>
 
-      {/* Filters and search */}
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -285,7 +293,7 @@ export default function InstructorCoursesPage() {
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as CourseStatus)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -303,14 +311,19 @@ export default function InstructorCoursesPage() {
                 <TableRow>
                   <TableHead>Course</TableHead>
                   <TableHead>Level</TableHead>
-                  <TableHead>Enrollment</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    Enrollment
+                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[70px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCourses.map((course) => {
-                  const stats = enrollmentStats[course.id] || { count: 0, avgProgress: 0 }
+                  const stats = enrollmentStats[course.id] || {
+                    count: 0,
+                    avgProgress: 0,
+                  }
                   const totalLessons = course.modules.reduce(
                     (sum, m) => sum + m.lessons.length,
                     0
@@ -329,14 +342,17 @@ export default function InstructorCoursesPage() {
                               />
                             ) : (
                               <div className="flex h-full items-center justify-center">
-                                <BookOpen className="h-5 w-5 text-muted-foreground" />
+                                <BookOpen className="size-5 text-muted-foreground" />
                               </div>
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate font-medium">{course.title}</p>
+                            <p className="truncate font-medium">
+                              {course.title}
+                            </p>
                             <p className="truncate text-sm text-muted-foreground">
-                              {course.modules.length} modules • {totalLessons} lessons
+                              {course.modules.length} modules • {totalLessons}{" "}
+                              lessons
                             </p>
                           </div>
                         </div>
@@ -354,10 +370,12 @@ export default function InstructorCoursesPage() {
                           {course.level}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <div className="text-sm">
                           <p className="font-medium">{stats.count} students</p>
-                          <p className="text-muted-foreground">{stats.avgProgress}% avg progress</p>
+                          <p className="text-muted-foreground">
+                            {stats.avgProgress}% avg progress
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -367,12 +385,12 @@ export default function InstructorCoursesPage() {
                         >
                           {course.isPublished ? (
                             <>
-                              <Eye className="h-3 w-3" />
+                              <Eye className="size-3" />
                               Published
                             </>
                           ) : (
                             <>
-                              <EyeOff className="h-3 w-3" />
+                              <EyeOff className="size-3" />
                               Draft
                             </>
                           )}
@@ -382,7 +400,7 @@ export default function InstructorCoursesPage() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreHorizontal />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -390,25 +408,29 @@ export default function InstructorCoursesPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
                               <Link href={`/instructor/courses/${course.id}`}>
-                                <BookOpen className="mr-2 h-4 w-4" />
+                                <BookOpen className="mr-2 size-4" />
                                 View Details
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/instructor/courses/${course.id}/edit`}>
-                                <Edit className="mr-2 h-4 w-4" />
+                              <Link
+                                href={`/instructor/courses/${course.id}/edit`}
+                              >
+                                <Edit className="mr-2 size-4" />
                                 Edit Course
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusToggle(course.id)}>
+                            <DropdownMenuItem
+                              onClick={() => handleStatusToggle(course.id)}
+                            >
                               {course.isPublished ? (
                                 <>
-                                  <EyeOff className="mr-2 h-4 w-4" />
+                                  <EyeOff className="mr-2 size-4" />
                                   Unpublish
                                 </>
                               ) : (
                                 <>
-                                  <Eye className="mr-2 h-4 w-4" />
+                                  <Eye className="mr-2 size-4" />
                                   Publish
                                 </>
                               )}
@@ -418,7 +440,7 @@ export default function InstructorCoursesPage() {
                               className="text-destructive"
                               onClick={() => setDeleteId(course.id)}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
+                              <Trash2 className="mr-2 size-4" />
                               Delete Course
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -431,7 +453,7 @@ export default function InstructorCoursesPage() {
             </Table>
           ) : (
             <div className="py-12 text-center">
-              <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No courses found</h3>
               <p className="mb-4 text-sm text-muted-foreground">
                 {searchQuery || statusFilter !== "ALL"
@@ -441,7 +463,7 @@ export default function InstructorCoursesPage() {
               {!searchQuery && statusFilter === "ALL" && (
                 <Button asChild>
                   <Link href="/instructor/courses/new">
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus data-icon="inline-start" />
                     Create Course
                   </Link>
                 </Button>
@@ -451,14 +473,17 @@ export default function InstructorCoursesPage() {
         </CardContent>
       </Card>
 
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Course</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this course? This action cannot be undone.
-              All modules, lessons, and associated data will be permanently removed.
+              Are you sure you want to delete this course? This action cannot be
+              undone. All modules, lessons, and associated data will be
+              permanently removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

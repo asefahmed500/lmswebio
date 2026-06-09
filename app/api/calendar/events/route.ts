@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
@@ -13,11 +14,17 @@ import { z } from "zod"
 const createEventSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().optional(),
-  eventType: z.enum(["live_session", "deadline", "assignment_due", "quiz", "other"]),
+  eventType: z.enum([
+    "live_session",
+    "deadline",
+    "assignment_due",
+    "quiz",
+    "other",
+  ]),
   startTime: z.string().datetime(),
   endTime: z.string().datetime().optional(),
   location: z.string().optional(),
-  courseId: z.number().optional(),
+  courseId: z.string().optional(),
   isRecurring: z.boolean().default(false),
   recurrencePattern: z.string().optional(),
 })
@@ -39,7 +46,7 @@ export async function GET(req: NextRequest) {
     const courseId = searchParams.get("courseId")
     const eventType = searchParams.get("eventType")
 
-    const where: any = {
+    const where: Prisma.CalendarEventWhereInput = {
       OR: [
         { createdBy: session.user.id },
         { courseId: { in: undefined } }, // Will be populated below
@@ -55,7 +62,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (courseId) {
-      where.courseId = parseInt(courseId)
+      where.courseId = courseId
     }
 
     if (eventType) {
@@ -76,7 +83,7 @@ export async function GET(req: NextRequest) {
     const enrolledCourseIds = enrollments.map((e) => e.courseId)
 
     // For instructors, get their courses too
-    let instructorCourseIds: number[] = []
+    let instructorCourseIds: string[] = []
     if (session.user.role === "INSTRUCTOR") {
       const courses = await prisma.course.findMany({
         where: {
@@ -129,9 +136,7 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    const attendeeMap = new Map(
-      userAttendees.map((a) => [a.eventId, a.status])
-    )
+    const attendeeMap = new Map(userAttendees.map((a) => [a.eventId, a.status]))
 
     const eventsWithRsvp = events.map((event) => ({
       ...event,
@@ -177,7 +182,9 @@ export async function POST(req: NextRequest) {
 
       if (!isInstructor && !isAdmin) {
         return NextResponse.json(
-          { error: "You don't have permission to create events for this course" },
+          {
+            error: "You don't have permission to create events for this course",
+          },
           { status: 403 }
         )
       }
@@ -189,9 +196,7 @@ export async function POST(req: NextRequest) {
         description: validatedData.description,
         eventType: validatedData.eventType,
         startTime: new Date(validatedData.startTime),
-        endTime: validatedData.endTime
-          ? new Date(validatedData.endTime)
-          : null,
+        endTime: validatedData.endTime ? new Date(validatedData.endTime) : null,
         location: validatedData.location,
         courseId: validatedData.courseId,
         isRecurring: validatedData.isRecurring,

@@ -6,6 +6,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import {
   FileText,
@@ -58,27 +59,31 @@ export default function QuizDetailPage() {
   )
   const [editAttempts, setEditAttempts] = React.useState(1)
 
-  const loadQuiz = React.useCallback(async () => {
+  React.useEffect(() => {
     if (!user || !params.id) return
-    setIsLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`/api/quizzes/${params.id}`)
-      if (!res.ok) throw new Error("Failed to fetch quiz")
-      const data = await res.json()
-      setQuiz(data)
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load quiz"
-      )
-    } finally {
-      setIsLoading(false)
+
+    let cancelled = false
+
+    fetch(`/api/quizzes/${params.id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch quiz")
+        return res.json()
+      })
+      .then((data) => {
+        if (!cancelled) setQuiz(data)
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : "Failed to load quiz")
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
     }
   }, [user, params.id])
-
-  React.useEffect(() => {
-    loadQuiz()
-  }, [loadQuiz])
 
   const startEditing = () => {
     if (!quiz) return
@@ -138,8 +143,7 @@ export default function QuizDetailPage() {
           <span>
             {answers
               .map(
-                (a) =>
-                  `${a}. ${question.options ? question.options[a] : ""}`
+                (a) => `${a}. ${question.options ? question.options[a] : ""}`
               )
               .join(", ")}
           </span>
@@ -162,7 +166,7 @@ export default function QuizDetailPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">Loading quiz...</p>
         </div>
       </div>
@@ -173,10 +177,8 @@ export default function QuizDetailPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">
-            Error loading quiz
-          </h3>
+          <AlertCircle className="mx-auto mb-4 size-12 text-destructive" />
+          <h3 className="mb-2 text-lg font-semibold">Error loading quiz</h3>
           <p className="mb-4 text-sm text-muted-foreground">
             {error || "Quiz not found"}
           </p>
@@ -188,31 +190,27 @@ export default function QuizDetailPage() {
     )
   }
 
-  const totalPoints = quiz.questions.reduce(
-    (sum, q) => sum + q.points,
-    0
-  )
+  const totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0)
   const totalAttempts = quiz.attempts?.length || 0
-  const averageScore = totalAttempts > 0
-    ? Math.round(
-        (quiz.attempts || []).reduce(
-          (sum, a) => sum + (a.score || 0),
-          0
-        ) / totalAttempts
-      )
-    : 0
+  const averageScore =
+    totalAttempts > 0
+      ? Math.round(
+          (quiz.attempts || []).reduce((sum, a) => sum + (a.score || 0), 0) /
+            totalAttempts
+        )
+      : 0
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <a href="/instructor/quizzes">
-            <ArrowLeft className="h-4 w-4" />
-          </a>
+          <Link href="/instructor/quizzes">
+            <ArrowLeft />
+          </Link>
         </Button>
         <div className="min-w-0 flex-1">
           {isEditing ? (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -227,7 +225,7 @@ export default function QuizDetailPage() {
                 disabled={isSaving}
               />
               <div className="flex items-center gap-4">
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   <Label className="text-xs">Time Limit (min)</Label>
                   <Input
                     type="number"
@@ -235,40 +233,35 @@ export default function QuizDetailPage() {
                     value={editTimeLimit ?? ""}
                     onChange={(e) =>
                       setEditTimeLimit(
-                        e.target.value
-                          ? Number(e.target.value)
-                          : undefined
+                        e.target.value ? Number(e.target.value) : undefined
                       )
                     }
                     className="w-32"
                     disabled={isSaving}
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   <Label className="text-xs">Attempts Allowed</Label>
                   <Input
                     type="number"
                     min={1}
                     max={10}
                     value={editAttempts}
-                    onChange={(e) =>
-                      setEditAttempts(Number(e.target.value))
-                    }
+                    onChange={(e) => setEditAttempts(Number(e.target.value))}
                     className="w-32"
                     disabled={isSaving}
                   />
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={saveEdit}
-                  disabled={isSaving}
-                >
+                <Button size="sm" onClick={saveEdit} disabled={isSaving}>
                   {isSaving && (
-                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    <Loader2
+                      data-icon="inline-start"
+                      className="animate-spin"
+                    />
                   )}
-                  <Save className="mr-2 h-3 w-3" />
+                  <Save data-icon="inline-start" />
                   Save
                 </Button>
                 <Button
@@ -277,7 +270,7 @@ export default function QuizDetailPage() {
                   onClick={cancelEditing}
                   disabled={isSaving}
                 >
-                  <X className="mr-2 h-3 w-3" />
+                  <X data-icon="inline-start" />
                   Cancel
                 </Button>
               </div>
@@ -289,8 +282,7 @@ export default function QuizDetailPage() {
                   {quiz.title}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {quiz.course?.title || `Course #${quiz.courseId}`}{" "}
-                  &middot;{" "}
+                  {quiz.course?.title || `Course #${quiz.courseId}`} &middot;{" "}
                   {quiz.timeLimit
                     ? `${quiz.timeLimit} min time limit`
                     : "No time limit"}{" "}
@@ -298,12 +290,8 @@ export default function QuizDetailPage() {
                   {quiz.attemptsAllowed !== 1 ? "s" : ""} allowed
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={startEditing}
-              >
-                <Edit className="mr-2 h-4 w-4" />
+              <Button variant="outline" size="sm" onClick={startEditing}>
+                <Edit data-icon="inline-start" />
                 Edit
               </Button>
             </div>
@@ -317,7 +305,7 @@ export default function QuizDetailPage() {
             <CardTitle className="text-base">Description</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
               {quiz.description}
             </p>
           </CardContent>
@@ -333,10 +321,8 @@ export default function QuizDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5 text-primary" />
-              <div className="text-2xl font-bold">
-                {quiz.questions.length}
-              </div>
+              <HelpCircle className="size-5 text-primary" />
+              <div className="text-2xl font-bold">{quiz.questions.length}</div>
             </div>
           </CardContent>
         </Card>
@@ -348,7 +334,7 @@ export default function QuizDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-500" />
+              <FileText className="text-info size-5" />
               <div className="text-2xl font-bold">{totalPoints}</div>
             </div>
           </CardContent>
@@ -361,7 +347,7 @@ export default function QuizDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-amber-500" />
+              <Users className="text-warning size-5" />
               <div className="text-2xl font-bold">{totalAttempts}</div>
             </div>
           </CardContent>
@@ -377,13 +363,11 @@ export default function QuizDetailPage() {
               : `${quiz.questions.length} question${quiz.questions.length !== 1 ? "s" : ""} (${totalPoints} total points)`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex flex-col gap-4">
           {quiz.questions.length === 0 ? (
             <div className="py-8 text-center">
-              <HelpCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No questions yet
-              </h3>
+              <HelpCircle className="mx-auto mb-4 size-12 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-semibold">No questions yet</h3>
               <p className="text-sm text-muted-foreground">
                 This quiz has no questions. Edit the quiz to add some.
               </p>
@@ -392,9 +376,9 @@ export default function QuizDetailPage() {
             quiz.questions.map((question, index) => (
               <React.Fragment key={question.id}>
                 {index > 0 && <Separator />}
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
+                    <div className="flex flex-col gap-1">
                       <p className="font-medium">
                         {index + 1}. {question.text}
                       </p>
@@ -413,7 +397,7 @@ export default function QuizDetailPage() {
                   {(question.type === QuestionType.MC_SINGLE ||
                     question.type === QuestionType.MC_MULTI) &&
                     question.options && (
-                      <div className="ml-4 space-y-1">
+                      <div className="ml-4 flex flex-col gap-1">
                         {Object.entries(question.options).map(
                           ([key, value]) => {
                             const isCorrect =
@@ -427,12 +411,12 @@ export default function QuizDetailPage() {
                                 key={key}
                                 className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm ${
                                   isCorrect
-                                    ? "bg-green-50 text-green-700"
+                                    ? "bg-success/10 text-success"
                                     : "text-muted-foreground"
                                 }`}
                               >
                                 {isCorrect ? (
-                                  <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                                  <CheckCircle className="text-success h-3.5 w-3.5" />
                                 ) : (
                                   <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />
                                 )}
@@ -452,17 +436,15 @@ export default function QuizDetailPage() {
                         return (
                           <Badge
                             key={val}
-                            variant={
-                              isCorrect ? "default" : "outline"
-                            }
+                            variant={isCorrect ? "default" : "outline"}
                             className={
                               isCorrect
-                                ? "bg-green-100 text-green-700 hover:bg-green-100"
+                                ? "bg-success/10 text-success hover:bg-success/10"
                                 : ""
                             }
                           >
                             {isCorrect && (
-                              <CheckCircle className="mr-1 h-3 w-3" />
+                              <CheckCircle className="mr-1 size-3" />
                             )}
                             {val}
                           </Badge>
@@ -473,10 +455,7 @@ export default function QuizDetailPage() {
 
                   {question.type === QuestionType.TEXT && (
                     <div className="ml-4">
-                      <Badge
-                        variant="outline"
-                        className="bg-blue-50 text-blue-700"
-                      >
+                      <Badge variant="outline" className="bg-info/10 text-info">
                         Answer: {question.correctAnswer as string}
                       </Badge>
                     </div>
@@ -504,16 +483,14 @@ export default function QuizDetailPage() {
         <CardContent>
           {totalAttempts === 0 ? (
             <div className="py-8 text-center">
-              <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No attempts yet
-              </h3>
+              <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-semibold">No attempts yet</h3>
               <p className="text-sm text-muted-foreground">
                 Students haven&apos;t taken this quiz yet
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {(quiz.attempts || []).map((attempt) => (
                 <div
                   key={attempt.id}
@@ -522,25 +499,19 @@ export default function QuizDetailPage() {
                   <div className="flex items-center gap-3">
                     <div>
                       <p className="text-sm font-medium">
-                        {attempt.user?.fullName ||
-                          `Student #${attempt.userId}`}
+                        {attempt.user?.fullName || `Student #${attempt.userId}`}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(
-                          attempt.submittedAt
-                        ).toLocaleDateString()}{" "}
+                        {new Date(attempt.submittedAt).toLocaleDateString()}{" "}
                         &middot;{" "}
                         {attempt.submittedAt
-                          ? new Date(
-                              attempt.submittedAt
-                            ).toLocaleTimeString()
+                          ? new Date(attempt.submittedAt).toLocaleTimeString()
                           : ""}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {attempt.score !== undefined &&
-                    attempt.score !== null ? (
+                    {attempt.score !== undefined && attempt.score !== null ? (
                       <Badge
                         variant={
                           attempt.score >= 50 ? "default" : "destructive"

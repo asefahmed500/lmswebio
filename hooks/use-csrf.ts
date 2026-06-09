@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react"
-
 /**
  * Hook to manage CSRF tokens for client-side requests
  *
@@ -12,25 +11,28 @@ export function useCSRF() {
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchToken = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const response = await fetch("/api/csrf-token")
-      if (!response.ok) {
-        throw new Error("Failed to fetch CSRF token")
-      }
-      const data = await response.json()
-      setToken(data.token)
-    } catch (error) {
-      console.error("Failed to fetch CSRF token:", error)
-    } finally {
-      setIsLoading(false)
+  useEffect(() => {
+    let cancelled = false
+
+    fetch("/api/csrf-token")
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch CSRF token")
+        return response.json()
+      })
+      .then((data) => {
+        if (!cancelled) setToken(data.token)
+      })
+      .catch((error) => {
+        console.error("Failed to fetch CSRF token:", error)
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
     }
   }, [])
-
-  useEffect(() => {
-    fetchToken()
-  }, [fetchToken])
 
   /**
    * Get headers with CSRF token for fetch requests
@@ -121,7 +123,6 @@ export function useCSRF() {
   return {
     token,
     isLoading,
-    fetchToken,
     getCSRFHeaders,
     postWithCSRF,
     putWithCSRF,

@@ -17,8 +17,7 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { id } = await params
-    const courseId = parseInt(id)
+    const { id: courseId } = await params
 
     const course = await prisma.course.findUnique({ where: { id: courseId } })
     if (!course) {
@@ -41,7 +40,7 @@ export async function POST(
       _max: { order: true },
     })
 
-    const module = await prisma.module.create({
+    const mod = await prisma.module.create({
       data: {
         title,
         order: (maxOrder._max.order ?? -1) + 1,
@@ -50,10 +49,13 @@ export async function POST(
       include: { lessons: true },
     })
 
-    return NextResponse.json(module, { status: 201 })
+    return NextResponse.json(mod, { status: 201 })
   } catch (error) {
     console.error("POST /api/courses/[id]/modules error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
 
@@ -67,8 +69,20 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const courseId = parseInt(id)
+    const { id: courseId } = await params
+
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true, isPublished: true, instructorId: true },
+    })
+
+    if (!course) {
+      return NextResponse.json({ error: "Course not found" }, { status: 404 })
+    }
+
+    if (session.user.role === "STUDENT" && !course.isPublished) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
     const modules = await prisma.module.findMany({
       where: { courseId },
@@ -81,6 +95,9 @@ export async function GET(
     return NextResponse.json(modules)
   } catch (error) {
     console.error("GET /api/courses/[id]/modules error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

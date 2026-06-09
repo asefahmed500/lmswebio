@@ -3,7 +3,13 @@
 import { useState } from "react"
 import { Upload, FileText, X, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -35,11 +41,14 @@ export function AssignmentSubmission({
   onSubmit,
 }: AssignmentSubmissionProps) {
   const [file, setFile] = useState<File | null>(null)
-  const [textAnswer, setTextAnswer] = useState(existingSubmission?.textAnswer || "")
+  const [textAnswer, setTextAnswer] = useState(
+    existingSubmission?.textAnswer || ""
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [dragActive, setDragActive] = useState(false)
 
-  const isPastDue = assignment.dueDate && new Date(assignment.dueDate) < new Date()
+  const isPastDue =
+    assignment.dueDate && new Date(assignment.dueDate) < new Date()
   const hasSubmitted = !!existingSubmission
 
   const handleDrag = (e: React.DragEvent) => {
@@ -75,7 +84,10 @@ export function AssignmentSubmission({
 
     setIsSubmitting(true)
     try {
-      await onSubmit({ file: file || undefined, textAnswer: textAnswer || undefined })
+      await onSubmit({
+        file: file || undefined,
+        textAnswer: textAnswer || undefined,
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -85,15 +97,16 @@ export function AssignmentSubmission({
     return (
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <div className="mb-2 flex items-center gap-2">
+            <CheckCircle2 className="text-success size-5" />
             <CardTitle>Assignment Submitted</CardTitle>
           </div>
           <CardDescription>
-            Submitted on {new Date(existingSubmission!.submittedAt).toLocaleDateString()}
+            Submitted on{" "}
+            {new Date(existingSubmission!.submittedAt).toLocaleDateString()}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex flex-col gap-4">
           {existingSubmission!.fileUrl && (
             <div>
               <Label>Submitted File</Label>
@@ -101,9 +114,9 @@ export function AssignmentSubmission({
                 href={existingSubmission!.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 mt-2 text-primary hover:underline"
+                className="mt-2 flex items-center gap-2 text-primary hover:underline"
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="size-4" />
                 View submitted file
               </a>
             </div>
@@ -112,7 +125,7 @@ export function AssignmentSubmission({
           {existingSubmission!.textAnswer && (
             <div>
               <Label>Text Answer</Label>
-              <p className="mt-2 p-3 bg-muted rounded-md text-sm">
+              <p className="mt-2 rounded-md bg-muted p-3 text-sm">
                 {existingSubmission!.textAnswer}
               </p>
             </div>
@@ -120,9 +133,10 @@ export function AssignmentSubmission({
 
           {existingSubmission!.grade !== undefined && (
             <Alert>
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="size-4" />
               <AlertDescription>
-                <strong>Grade:</strong> {existingSubmission!.grade} / {assignment.maxPoints}
+                <strong>Grade:</strong> {existingSubmission!.grade} /{" "}
+                {assignment.maxPoints}
               </AlertDescription>
             </Alert>
           )}
@@ -130,7 +144,7 @@ export function AssignmentSubmission({
           {existingSubmission!.feedback && (
             <div>
               <Label>Instructor Feedback</Label>
-              <p className="mt-2 p-3 bg-muted rounded-md text-sm">
+              <p className="mt-2 rounded-md bg-muted p-3 text-sm">
                 {existingSubmission!.feedback}
               </p>
             </div>
@@ -147,15 +161,15 @@ export function AssignmentSubmission({
           <div>
             <CardTitle>{assignment.title}</CardTitle>
             {assignment.description && (
-              <CardDescription className="mt-2">{assignment.description}</CardDescription>
+              <CardDescription className="mt-2">
+                {assignment.description}
+              </CardDescription>
             )}
           </div>
-          {isPastDue && (
-            <Badge variant="destructive">Past Due</Badge>
-          )}
+          {isPastDue && <Badge variant="destructive">Past Due</Badge>}
         </div>
         {assignment.dueDate && (
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="mt-2 text-sm text-muted-foreground">
             Due: {new Date(assignment.dueDate).toLocaleString()}
           </p>
         )}
@@ -164,12 +178,12 @@ export function AssignmentSubmission({
         </p>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="flex flex-col gap-6">
         {/* File Upload */}
         <div>
           <Label>Upload File (Optional)</Label>
           <div
-            className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+            className={`mt-2 rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
               dragActive
                 ? "border-primary bg-primary/5"
                 : "border-muted-foreground/25 hover:border-muted-foreground/50"
@@ -182,24 +196,20 @@ export function AssignmentSubmission({
             {file ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-muted-foreground" />
+                  <FileText className="size-5 text-muted-foreground" />
                   <span className="text-sm">{file.name}</span>
                   <span className="text-xs text-muted-foreground">
                     ({(file.size / 1024 / 1024).toFixed(2)} MB)
                   </span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setFile(null)}
-                >
-                  <X className="w-4 h-4" />
+                <Button variant="ghost" size="sm" onClick={() => setFile(null)}>
+                  <X className="size-4" />
                 </Button>
               </div>
             ) : (
               <div>
-                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-2">
+                <Upload className="mx-auto mb-2 size-8 text-muted-foreground" />
+                <p className="mb-2 text-sm text-muted-foreground">
                   Drag and drop your file here, or
                 </p>
                 <Label htmlFor="file-upload" className="cursor-pointer">
@@ -243,7 +253,8 @@ export function AssignmentSubmission({
         {isPastDue && (
           <Alert>
             <AlertDescription>
-              This assignment is past due. Late submissions may be subject to penalties.
+              This assignment is past due. Late submissions may be subject to
+              penalties.
             </AlertDescription>
           </Alert>
         )}

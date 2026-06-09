@@ -8,7 +8,7 @@ import {
   setTokens,
 } from "@/lib/auth/jwt"
 
-export async function POST(_request: NextRequest) {
+export async function POST(_: NextRequest) {
   try {
     const token = await getRefreshToken()
     if (!token) {
@@ -37,15 +37,25 @@ export async function POST(_request: NextRequest) {
       )
     }
 
-    await prisma.refreshToken.delete({ where: { id: storedToken.id } })
-
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, fullName: true, role: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+      },
     })
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 })
+    if (!user || !user.isActive) {
+      await prisma.refreshToken.delete({ where: { id: storedToken.id } })
+      return NextResponse.json(
+        { error: "User not found or inactive" },
+        { status: 401 }
+      )
     }
+
+    await prisma.refreshToken.delete({ where: { id: storedToken.id } })
 
     const accessToken = await signAccessToken(user.id, user.role)
     const refreshToken = await signRefreshToken(user.id)
@@ -54,7 +64,7 @@ export async function POST(_request: NextRequest) {
       data: {
         token: refreshToken,
         userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
     })
 

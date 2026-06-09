@@ -17,8 +17,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const reviewId = parseInt(id)
+    const { id: reviewId } = await params
 
     // Verify review exists
     const review = await prisma.courseReview.findUnique({

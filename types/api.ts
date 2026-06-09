@@ -25,10 +25,10 @@ export interface PaginationMeta {
 /**
  * Paginated API response
  */
-export interface PaginatedApiResponse<T> extends ApiResponse<{
+export type PaginatedApiResponse<T> = ApiResponse<{
   items: T[]
   pagination: PaginationMeta
-}> {}
+}>
 
 /**
  * Query parameters for list endpoints

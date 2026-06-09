@@ -27,8 +27,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const eventId = parseInt(id)
+    const { id: eventId } = await params
     const body = await req.json()
     const { status } = rsvpSchema.parse(body)
 

@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, Home } from "lucide-react"
@@ -9,6 +10,7 @@ interface ErrorDisplayProps {
   message: string
   onRetry?: () => void
   showHome?: boolean
+  homeHref?: string
 }
 
 export function ErrorDisplay({
@@ -16,30 +18,31 @@ export function ErrorDisplay({
   message,
   onRetry,
   showHome = false,
+  homeHref = "/admin",
 }: ErrorDisplayProps) {
   return (
-    <Card className="max-w-md mx-auto my-8">
+    <Card className="mx-auto my-8 max-w-md">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-destructive" />
+          <AlertCircle className="size-5 text-destructive" />
           <CardTitle>{title}</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex flex-col gap-4">
         <p className="text-muted-foreground">{message}</p>
         <div className="flex gap-2">
           {onRetry && (
             <Button onClick={onRetry} variant="outline">
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw className="mr-2 size-4" />
               Try Again
             </Button>
           )}
           {showHome && (
             <Button asChild>
-              <a href="/dashboard">
-                <Home className="w-4 h-4 mr-2" />
+              <Link href={homeHref}>
+                <Home className="mr-2 size-4" />
                 Go to Dashboard
-              </a>
+              </Link>
             </Button>
           )}
         </div>

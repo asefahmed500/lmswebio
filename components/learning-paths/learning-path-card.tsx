@@ -50,13 +50,13 @@ export function LearningPathCard({
   isEnrolled = false,
 }: LearningPathCardProps) {
   const levelColors: Record<string, string> = {
-    BEGINNER: "bg-green-500/10 text-green-500",
-    INTERMEDIATE: "bg-blue-500/10 text-blue-500",
-    ADVANCED: "bg-purple-500/10 text-purple-500",
+    BEGINNER: "bg-success/10 text-success",
+    INTERMEDIATE: "bg-info/10 text-info",
+    ADVANCED: "bg-warning/10 text-warning",
   }
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
       {/* Thumbnail */}
       <div className="relative aspect-video w-full bg-muted">
         {path.thumbnail ? (
@@ -67,7 +67,7 @@ export function LearningPathCard({
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <TrendingUp className="h-12 w-12 text-muted-foreground" />
+            <TrendingUp className="size-12 text-muted-foreground" />
           </div>
         )}
         <Badge className="absolute top-2 right-2" variant="secondary">
@@ -78,27 +78,27 @@ export function LearningPathCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <h3 className="font-semibold text-lg line-clamp-1">{path.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+            <h3 className="line-clamp-1 text-lg font-semibold">{path.title}</h3>
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
               {path.description}
             </p>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="flex flex-col gap-3">
         {/* Stats */}
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            <BookOpen className="h-4 w-4" />
+            <BookOpen className="size-4" />
             <span>{path._count.courses} courses</span>
           </div>
           <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
+            <Clock className="size-4" />
             <span>{path.estimatedDuration}h</span>
           </div>
           <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
+            <Users className="size-4" />
             <span>{path._count.enrollments}</span>
           </div>
         </div>
@@ -115,27 +115,29 @@ export function LearningPathCard({
         )}
 
         {/* Courses Preview */}
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <p className="text-xs font-medium text-muted-foreground">
             Courses in this path:
           </p>
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             {path.courses.slice(0, 3).map((item) => (
               <div
                 key={item.id}
-                className="flex items-center gap-2 text-sm p-2 rounded bg-muted/50"
+                className="flex items-center gap-2 rounded bg-muted/50 p-2 text-sm"
               >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
                   {item.order}
                 </span>
                 <span className="flex-1 truncate">{item.course.title}</span>
                 {!item.isMandatory && (
-                  <Badge variant="outline" className="text-xs">Optional</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Optional
+                  </Badge>
                 )}
               </div>
             ))}
             {path._count.courses > 3 && (
-              <p className="text-xs text-muted-foreground pl-9">
+              <p className="pl-9 text-xs text-muted-foreground">
                 +{path._count.courses - 3} more courses
               </p>
             )}

@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
@@ -34,19 +35,24 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category")
     const earned = searchParams.get("earned") // "true" to get only earned badges
 
-    const where: any = {}
-    if (category) {
-      // Assuming criteria has a category field
-      where.criteria = {
-        path: ["category"],
-        equals: category,
-      }
-    }
+    const where: Prisma.BadgeWhereInput = {}
 
-    const badges = await prisma.badge.findMany({
+    let badges = await prisma.badge.findMany({
       where,
       orderBy: { points: "desc" },
     })
+
+    if (category) {
+      badges = badges.filter((b) => {
+        const c = b.criteria as Record<string, unknown> | null
+        return (
+          c &&
+          typeof c === "object" &&
+          "category" in c &&
+          c.category === category
+        )
+      })
+    }
 
     // Get user's earned badges
     const userBadges = await prisma.userBadge.findMany({
@@ -77,7 +83,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ badges: filteredBadges })
   } catch (error) {
     console.error("Badges fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch badges" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to fetch badges" },
+      { status: 500 }
+    )
   }
 }
 
@@ -89,7 +98,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await req.json()

@@ -12,7 +12,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns"
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  isToday,
+} from "date-fns"
 
 interface CalendarEvent {
   id: number
@@ -79,11 +89,11 @@ export function CalendarView({
   }
 
   const eventTypeColors: Record<string, string> = {
-    live_session: "bg-blue-500",
-    deadline: "bg-red-500",
-    assignment_due: "bg-orange-500",
-    quiz: "bg-purple-500",
-    other: "bg-gray-500",
+    live_session: "bg-info",
+    deadline: "bg-destructive",
+    assignment_due: "bg-warning",
+    quiz: "bg-primary",
+    other: "bg-muted-foreground",
   }
 
   return (
@@ -91,7 +101,7 @@ export function CalendarView({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" />
+            <CalendarIcon className="size-5" />
             {format(viewDate, "MMMM yyyy")}
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -99,10 +109,10 @@ export function CalendarView({
               Today
             </Button>
             <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft />
             </Button>
             <Button variant="outline" size="icon" onClick={handleNextMonth}>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight />
             </Button>
           </div>
         </div>
@@ -129,13 +139,11 @@ export function CalendarView({
             return (
               <div
                 key={day.toISOString()}
-                className={`min-h-[100px] p-2 border rounded-lg transition-colors ${
-                  !isCurrentMonth
-                    ? "bg-muted/30 opacity-50"
-                    : "bg-background"
+                className={`min-h-[100px] rounded-lg border p-2 transition-colors ${
+                  !isCurrentMonth ? "bg-muted/30 opacity-50" : "bg-background"
                 } ${isDayToday ? "ring-2 ring-primary" : ""}`}
               >
-                <div className="flex items-center justify-between mb-1">
+                <div className="mb-1 flex items-center justify-between">
                   <span
                     className={`text-sm font-medium ${
                       isDayToday ? "text-primary" : ""
@@ -151,22 +159,23 @@ export function CalendarView({
                     <div
                       key={event.id}
                       onClick={() => onEventClick?.(event)}
-                      className="text-xs p-1 rounded cursor-pointer hover:opacity-80 transition-opacity"
+                      className="cursor-pointer rounded p-1 text-xs transition-opacity hover:opacity-80"
                       style={{
-                        backgroundColor: eventTypeColors[event.eventType] + "20",
+                        backgroundColor:
+                          eventTypeColors[event.eventType] + "20",
                         borderLeft: `2px solid ${eventTypeColors[event.eventType]}`,
                       }}
                     >
-                      <div className="font-medium truncate">{event.title}</div>
+                      <div className="truncate font-medium">{event.title}</div>
                       <div className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="size-3" />
                         {format(new Date(event.startTime), "HH:mm")}
                       </div>
                     </div>
                   ))}
 
                   {dayEvents.length > 3 && (
-                    <div className="text-xs text-muted-foreground text-center">
+                    <div className="text-center text-xs text-muted-foreground">
                       +{dayEvents.length - 3} more
                     </div>
                   )}
@@ -177,7 +186,7 @@ export function CalendarView({
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+        <div className="mt-4 flex items-center gap-4 border-t pt-4">
           <span className="text-sm font-medium">Event Types:</span>
           <div className="flex items-center gap-3 text-sm">
             {Object.entries(eventTypeColors).map(([type, color]) => (
@@ -185,9 +194,7 @@ export function CalendarView({
                 <div
                   className={`h-3 w-3 rounded ${color.replace("500", "500")}`}
                 />
-                <span className="capitalize">
-                  {type.replace("_", " ")}
-                </span>
+                <span className="capitalize">{type.replace("_", " ")}</span>
               </div>
             ))}
           </div>

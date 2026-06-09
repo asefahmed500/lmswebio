@@ -52,13 +52,15 @@ export function DiscussionList({ discussions, courseId }: DiscussionListProps) {
       <Card>
         <CardContent className="py-12">
           <div className="text-center">
-            <MessageSquare className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <MessageSquare className="mx-auto mb-4 size-12 text-muted-foreground" />
             <h3 className="mb-2 text-lg font-semibold">No discussions yet</h3>
             <p className="mb-4 text-sm text-muted-foreground">
               Be the first to start a discussion!
             </p>
             <Button asChild>
-              <Link href={`/discussions/new${courseId ? `?courseId=${courseId}` : ""}`}>
+              <Link
+                href={`/student/discussions${courseId ? `?courseId=${courseId}` : ""}`}
+              >
                 Start Discussion
               </Link>
             </Button>
@@ -69,7 +71,7 @@ export function DiscussionList({ discussions, courseId }: DiscussionListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {discussions.map((discussion) => (
         <DiscussionCard key={discussion.id} discussion={discussion} />
       ))}
@@ -79,7 +81,7 @@ export function DiscussionList({ discussions, courseId }: DiscussionListProps) {
 
 function DiscussionCard({ discussion }: { discussion: Discussion }) {
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="transition-shadow hover:shadow-md">
       <CardContent className="p-6">
         <div className="flex gap-4">
           <Avatar className="h-10 w-10">
@@ -94,18 +96,18 @@ function DiscussionCard({ discussion }: { discussion: Discussion }) {
             </AvatarFallback>
           </Avatar>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {discussion.isPinned && (
                   <Badge variant="secondary" className="gap-1">
-                    <Pin className="h-3 w-3" />
+                    <Pin className="size-3" />
                     Pinned
                   </Badge>
                 )}
                 {discussion.isResolved && (
                   <Badge variant="outline" className="gap-1">
-                    <CheckCircle className="h-3 w-3" />
+                    <CheckCircle className="size-3" />
                     Resolved
                   </Badge>
                 )}
@@ -113,7 +115,7 @@ function DiscussionCard({ discussion }: { discussion: Discussion }) {
                   <Badge variant="default">Instructor</Badge>
                 )}
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
+              <span className="text-xs whitespace-nowrap text-muted-foreground">
                 {formatDistanceToNow(new Date(discussion.createdAt), {
                   addSuffix: true,
                 })}
@@ -124,10 +126,10 @@ function DiscussionCard({ discussion }: { discussion: Discussion }) {
               href={`/discussions/${discussion.id}`}
               className="group block"
             >
-              <h3 className="font-semibold text-base mb-1 group-hover:text-primary transition-colors">
+              <h3 className="mb-1 text-base font-semibold transition-colors group-hover:text-primary">
                 {discussion.title}
               </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+              <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
                 {discussion.content}
               </p>
             </Link>
@@ -135,26 +137,26 @@ function DiscussionCard({ discussion }: { discussion: Discussion }) {
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-4 text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
+                  <User className="size-4" />
                   {discussion.user.fullName}
                 </span>
                 <span className="flex items-center gap-1">
-                  <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="size-4" />
                   {discussion._count.comments} comments
                 </span>
                 <span
                   className={`flex items-center gap-1 ${
-                    discussion.userVote > 0 ? "text-green-600" : ""
+                    discussion.userVote > 0 ? "text-success" : ""
                   }`}
                 >
-                  <ThumbsUp className="h-4 w-4" />
+                  <ThumbsUp className="size-4" />
                   {discussion._count.votes} helpful
                 </span>
               </div>
 
               <Link
                 href={`/courses/${discussion.course.slug}`}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                className="text-xs text-muted-foreground transition-colors hover:text-primary"
               >
                 {discussion.course.title}
               </Link>

@@ -13,7 +13,7 @@ export async function DELETE(
     }
 
     const enrollment = await prisma.enrolment.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
     })
 
     if (!enrollment) {
@@ -31,7 +31,7 @@ export async function DELETE(
     }
 
     await prisma.enrolment.update({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       data: { status: "DROPPED" },
     })
 
@@ -56,7 +56,7 @@ export async function GET(
     }
 
     const enrollment = await prisma.enrolment.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: {
         course: {
           include: {
@@ -100,10 +100,11 @@ export async function GET(
       0
     )
 
-    const progress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0
+    const progress =
+      totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0
 
     await prisma.enrolment.update({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       data: { progress },
     })
 

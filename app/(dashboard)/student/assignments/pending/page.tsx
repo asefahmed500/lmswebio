@@ -1,17 +1,10 @@
-/**
- * Student pending assignments page
- * Shows unsubmitted assignments with inline submission form
- */
-
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   FileText,
-  BookOpen,
   Calendar,
-  Clock,
   Send,
   HelpCircle,
   CheckCircle2,
@@ -29,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiPost } from "@/lib/api-client"
 
 interface AssignmentItem {
   id: number
@@ -45,9 +39,6 @@ interface SubmissionItem {
   assignmentId: number
 }
 
-/**
- * Inline submission form
- */
 function SubmissionForm({
   assignment,
   onSubmitted,
@@ -70,15 +61,12 @@ function SubmissionForm({
     setError(null)
 
     try {
-      const res = await fetch(`/api/assignments/${assignment.id}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ textAnswer: textAnswer.trim() }),
+      const res = await apiPost(`/assignments/${assignment.id}/submit`, {
+        textAnswer: textAnswer.trim(),
       })
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || "Failed to submit assignment")
+      if (res.error) {
+        throw new Error(res.error || "Failed to submit assignment")
       }
 
       setSuccess(true)
@@ -94,7 +82,7 @@ function SubmissionForm({
 
   if (success) {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950">
+      <div className="bg-success/10 text-success flex items-center gap-2 rounded-lg p-3 text-sm">
         <CheckCircle2 className="h-4 w-4" />
         Assignment submitted successfully!
       </div>
@@ -102,7 +90,7 @@ function SubmissionForm({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <Textarea
         placeholder="Type your answer here..."
         value={textAnswer}
@@ -127,7 +115,7 @@ function SubmissionForm({
           </>
         ) : (
           <>
-            <Send className="mr-2 h-4 w-4" />
+            <Send data-icon="inline-start" />
             Submit Assignment
           </>
         )}
@@ -136,18 +124,13 @@ function SubmissionForm({
   )
 }
 
-/**
- * Due date display
- */
 function DueDateBadge({ dueDate }: { dueDate: string | null }) {
+  const [now] = React.useState(() => Date.now())
   if (!dueDate) return null
-
-  const now = Date.now()
   const due = new Date(dueDate).getTime()
   const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24))
 
-  let variant: "default" | "secondary" | "destructive" | "outline" =
-    "outline"
+  let variant: "default" | "secondary" | "destructive" | "outline" = "outline"
   let label: string
   if (diffDays < 0) {
     variant = "destructive"
@@ -165,64 +148,66 @@ function DueDateBadge({ dueDate }: { dueDate: string | null }) {
   return <Badge variant={variant}>{label}</Badge>
 }
 
-/**
- * Pending assignments page
- */
 export default function PendingAssignmentsPage() {
-  const router = useRouter()
   const { user } = useAuth()
   const [assignments, setAssignments] = React.useState<AssignmentItem[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [openFormId, setOpenFormId] = React.useState<number | null>(null)
-
-  const loadData = React.useCallback(async () => {
-    if (!user) return
-
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const enrolRes = await fetch("/api/enrolments/my")
-      if (!enrolRes.ok) throw new Error("Failed to fetch enrollments")
-      const enrolments: { courseId: number }[] = await enrolRes.json()
-
-      const courseIds = enrolments.map((e) => e.courseId)
-
-      const assignResults = await Promise.all(
-        courseIds.map((cid: number) =>
-          fetch(`/api/assignments?courseId=${cid}`).then((r) =>
-            r.ok ? r.json() : []
-          )
-        )
-      )
-
-      const allAssignments: AssignmentItem[] = assignResults.flat()
-
-      const subRes = await fetch("/api/assignments/my-submissions")
-      const submissions: SubmissionItem[] = subRes.ok
-        ? await subRes.json()
-        : []
-
-      const submittedIds = new Set(submissions.map((s) => s.assignmentId))
-      const pending = allAssignments.filter((a) => !submittedIds.has(a.id))
-
-      setAssignments(pending)
-    } catch (err) {
-      console.error("Failed to load assignments:", err)
-      setError("Failed to load assignments")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [user])
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0)
 
   React.useEffect(() => {
-    loadData()
-  }, [loadData])
+    if (!user) return
+
+    let cancelled = false
+
+    async function load() {
+      try {
+        const enrolResult =
+          await apiGet<{ courseId: number }[]>("/enrolments/my")
+        if (enrolResult.error) throw new Error("Failed to fetch enrollments")
+        const enrolments = enrolResult.data!
+
+        const courseIds = enrolments.map((e) => e.courseId)
+
+        const assignResults = await Promise.all(
+          courseIds.map((cid: number) =>
+            apiGet(`/assignments?courseId=${cid}`).then((r) =>
+              r.data ? r.data : []
+            )
+          )
+        )
+
+        const allAssignments: AssignmentItem[] =
+          assignResults.flat() as AssignmentItem[]
+
+        const subResult = await apiGet<SubmissionItem[]>(
+          "/assignments/my-submissions"
+        )
+        const submissions = subResult.data ?? []
+
+        const submittedIds = new Set(submissions.map((s) => s.assignmentId))
+        const pending = allAssignments.filter((a) => !submittedIds.has(a.id))
+
+        if (!cancelled) setAssignments(pending)
+      } catch (err) {
+        console.error("Failed to load assignments:", err)
+        if (!cancelled) setError("Failed to load assignments")
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    load()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user, refreshTrigger])
 
   const handleSubmitted = () => {
     setOpenFormId(null)
-    loadData()
+    setRefreshTrigger((prev) => prev + 1)
   }
 
   if (isLoading) {
@@ -256,7 +241,7 @@ export default function PendingAssignmentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Pending Assignments
@@ -267,7 +252,7 @@ export default function PendingAssignmentsPage() {
       </div>
 
       {assignments.length > 0 ? (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {assignments.map((assignment) => (
             <Card key={assignment.id} className="overflow-hidden">
               <CardHeader className="pb-3">
@@ -283,7 +268,7 @@ export default function PendingAssignmentsPage() {
                   <DueDateBadge dueDate={assignment.dueDate} />
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="flex flex-col gap-3">
                 {assignment.description && (
                   <p className="text-sm text-muted-foreground">
                     {assignment.description}
@@ -299,8 +284,7 @@ export default function PendingAssignmentsPage() {
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        Due{" "}
-                        {new Date(assignment.dueDate).toLocaleDateString()}
+                        Due {new Date(assignment.dueDate).toLocaleDateString()}
                       </span>
                     </div>
                   )}
@@ -329,7 +313,7 @@ export default function PendingAssignmentsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="py-12 text-center">
-              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
+              <CheckCircle2 className="text-success mx-auto mb-4 h-12 w-12" />
               <h3 className="mb-2 text-lg font-semibold">
                 No pending assignments
               </h3>
@@ -337,7 +321,7 @@ export default function PendingAssignmentsPage() {
                 You&apos;ve submitted all assignments. Great work!
               </p>
               <Button asChild>
-                <a href="/student/assignments">View All Assignments</a>
+                <Link href="/student/assignments">View All Assignments</Link>
               </Button>
             </div>
           </CardContent>

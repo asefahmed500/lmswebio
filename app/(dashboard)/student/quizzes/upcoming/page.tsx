@@ -1,8 +1,3 @@
-/**
- * Student upcoming quizzes page
- * Shows quizzes the student hasn't attempted yet
- */
-
 "use client"
 
 import * as React from "react"
@@ -30,22 +25,17 @@ interface QuizListItem {
   course: { id: number; title: string }
 }
 
-/**
- * Upcoming quiz card
- */
 function QuizCard({ quiz }: { quiz: QuizListItem }) {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="line-clamp-1 text-base">
-          {quiz.title}
-        </CardTitle>
+        <CardTitle className="line-clamp-1 text-base">{quiz.title}</CardTitle>
         <CardDescription className="mt-1 line-clamp-2">
           {quiz.description}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
@@ -71,9 +61,6 @@ function QuizCard({ quiz }: { quiz: QuizListItem }) {
   )
 }
 
-/**
- * Upcoming quizzes page
- */
 export default function UpcomingQuizzesPage() {
   const { user } = useAuth()
   const [quizzes, setQuizzes] = React.useState<QuizListItem[]>([])
@@ -157,7 +144,7 @@ export default function UpcomingQuizzesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Upcoming Quizzes</h1>
         <p className="mt-1 text-muted-foreground">

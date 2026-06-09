@@ -1,12 +1,7 @@
-/**
- * Sidebar navigation component
- * Provides role-based navigation menus with dropdown functionality
- * Uses Lucide React icons and integrates with shadcn/ui sidebar
- */
-
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { Role, SidebarMenuItem } from "@/types"
 import {
@@ -21,34 +16,38 @@ import {
   Edit3,
   ClipboardCheck,
   Trophy,
+  ChevronDown,
+  Search,
+  LogOut,
+  Bell,
+  User,
+  MessageCircle,
+  Wrench,
 } from "lucide-react"
 import {
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem as UISidebarMenuItem,
+  SidebarMenuBadge,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarSeparator,
+  SidebarInput,
 } from "@/components/ui/sidebar"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { useAuth } from "@/components/auth-provider"
 
-/**
- * Role-based sidebar menu configuration
- * Defines navigation structure for Admin, Instructor, and Student roles
- */
 const sidebarConfig: Record<Role, SidebarMenuItem[]> = {
   ADMIN: [
-    {
-      title: "Dashboard",
-      icon: "LayoutDashboard",
-      href: "/admin",
-    },
+    { title: "Dashboard", icon: "LayoutDashboard", href: "/admin" },
     {
       title: "Users",
       icon: "Users",
@@ -94,19 +93,17 @@ const sidebarConfig: Record<Role, SidebarMenuItem[]> = {
         { title: "Integrations", href: "/admin/settings/integrations" },
       ],
     },
+    { title: "Notifications", icon: "Bell", href: "/admin/notifications" },
+    { title: "Profile", icon: "User", href: "/admin/profile" },
   ],
   INSTRUCTOR: [
-    {
-      title: "Dashboard",
-      icon: "LayoutDashboard",
-      href: "/instructor",
-    },
+    { title: "Dashboard", icon: "LayoutDashboard", href: "/instructor" },
     {
       title: "Courses",
       icon: "BookOpen",
       items: [
         { title: "My Courses", href: "/instructor/courses" },
-        { title: "Create New Course", href: "/instructor/courses/new" },
+        { title: "Create New", href: "/instructor/courses/new" },
         { title: "Drafts", href: "/instructor/courses/drafts" },
       ],
     },
@@ -142,20 +139,18 @@ const sidebarConfig: Record<Role, SidebarMenuItem[]> = {
         },
       ],
     },
+    { title: "Notifications", icon: "Bell", href: "/instructor/notifications" },
+    { title: "Profile", icon: "User", href: "/instructor/profile" },
   ],
   STUDENT: [
-    {
-      title: "Dashboard",
-      icon: "LayoutDashboard",
-      href: "/student",
-    },
+    { title: "Dashboard", icon: "LayoutDashboard", href: "/student" },
     {
       title: "My Learning",
       icon: "GraduationCap",
       items: [
-        { title: "Enrolled Courses", href: "/student/courses/enrolled" },
+        { title: "Enrolled Courses", href: "/student/my-learning/enrolled" },
         { title: "Course Catalogue", href: "/student/courses/catalogue" },
-        { title: "Continue Learning", href: "/student/courses/continue" },
+        { title: "Continue Learning", href: "/student/my-learning/continue" },
       ],
     },
     {
@@ -179,18 +174,32 @@ const sidebarConfig: Record<Role, SidebarMenuItem[]> = {
       title: "Achievements",
       icon: "Trophy",
       items: [
-        { title: "Certificates", href: "/student/achievements/certificates" },
+        { title: "Certificates", href: "/student/certificates" },
         { title: "Badges", href: "/student/achievements/badges" },
         { title: "Progress", href: "/student/achievements/progress" },
       ],
     },
+    {
+      title: "Community",
+      icon: "MessageCircle",
+      items: [
+        { title: "Discussions", href: "/student/discussions" },
+        { title: "Learning Paths", href: "/student/learning-paths" },
+      ],
+    },
+    {
+      title: "Tools",
+      icon: "Wrench",
+      items: [
+        { title: "Notes", href: "/student/notes" },
+        { title: "Calendar", href: "/student/calendar" },
+      ],
+    },
+    { title: "Notifications", icon: "Bell", href: "/student/notifications" },
+    { title: "Profile", icon: "User", href: "/student/profile" },
   ],
 }
 
-/**
- * Icon mapping component
- * Maps icon string names to Lucide React icon components
- */
 function Icon({ name, className }: { name: string; className?: string }) {
   const icons: Record<string, React.ComponentType<{ className?: string }>> = {
     LayoutDashboard,
@@ -204,19 +213,16 @@ function Icon({ name, className }: { name: string; className?: string }) {
     ClipboardCheck,
     Trophy,
     HelpCircle,
+    Bell,
+    User,
+    MessageCircle,
+    Wrench,
   }
-
   const IconComponent = icons[name]
-  if (!IconComponent) {
-    return <HelpCircle className={className} />
-  }
+  if (!IconComponent) return <HelpCircle className={className} />
   return <IconComponent className={className} />
 }
 
-/**
- * Sidebar menu item component
- * Renders either a simple link or a collapsible dropdown with sub-items
- */
 function MenuItem({
   item,
   isActive,
@@ -233,7 +239,6 @@ function MenuItem({
 
   const [isOpen, setIsOpen] = React.useState(hasActiveSubItem)
 
-  // If no sub-items, render simple menu button
   if (!item.items || item.items.length === 0) {
     return (
       <UISidebarMenuItem>
@@ -242,23 +247,29 @@ function MenuItem({
           isActive={isActive || item.href === pathname}
           tooltip={item.title}
         >
-          <a href={item.href}>
+          <Link href={item.href ?? "#"}>
             {item.icon && <Icon name={item.icon} />}
             <span>{item.title}</span>
-          </a>
+          </Link>
         </SidebarMenuButton>
       </UISidebarMenuItem>
     )
   }
 
-  // Render collapsible dropdown with sub-items
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
       <UISidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip={item.title}>
+          <SidebarMenuButton tooltip={item.title} isActive={hasActiveSubItem}>
             {item.icon && <Icon name={item.icon} />}
-            <span>{item.title}</span>
+            <span className="flex-1">{item.title}</span>
+            <SidebarMenuBadge>
+              <ChevronDown
+                className={`size-4 transition-transform duration-200 ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              />
+            </SidebarMenuBadge>
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -269,14 +280,9 @@ function MenuItem({
                   asChild
                   isActive={subItem.href === pathname}
                 >
-                  <a href={subItem.href}>
+                  <Link href={subItem.href ?? "#"}>
                     <span>{subItem.title}</span>
-                    {subItem.badge && (
-                      <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                        {subItem.badge}
-                      </span>
-                    )}
-                  </a>
+                  </Link>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             ))}
@@ -287,26 +293,71 @@ function MenuItem({
   )
 }
 
-/**
- * Main sidebar navigation component
- * Renders the appropriate menu based on user role
- */
+function SidebarSearch() {
+  const [query, setQuery] = React.useState("")
+  const { user } = useAuth()
+  const router = React.useMemo(() => {
+    return {
+      push: (url: string) => {
+        window.location.href = url
+      },
+    }
+  }, [])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!query.trim()) return
+    const role = user?.role
+    if (!role) return
+    if (role === "STUDENT") {
+      router.push(
+        `/student/courses/catalogue?search=${encodeURIComponent(query)}`
+      )
+    } else if (role === "INSTRUCTOR") {
+      router.push(`/instructor/courses?search=${encodeURIComponent(query)}`)
+    } else {
+      router.push(`/admin/courses?search=${encodeURIComponent(query)}`)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSearch} className="relative">
+      <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-sidebar-foreground/50" />
+      <SidebarInput
+        placeholder="Search..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="pl-8"
+      />
+    </form>
+  )
+}
+
 export function SidebarNav({ role }: { role: Role }) {
   const pathname = usePathname()
   const menuItems = sidebarConfig[role] || []
-
-  const mainMenu = menuItems
-  const hasMenuItems = mainMenu.length > 0
+  const { logout } = useAuth()
 
   return (
     <>
-      {hasMenuItems && (
+      <SidebarGroup>
+        <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
+          Search
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarSearch />
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarSeparator />
+
+      {menuItems.length > 0 && (
         <SidebarGroup>
           <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
             Navigation
           </SidebarGroupLabel>
           <SidebarMenu>
-            {mainMenu.map((item) => (
+            {menuItems.map((item) => (
               <MenuItem
                 key={item.title}
                 item={item}
@@ -316,6 +367,28 @@ export function SidebarNav({ role }: { role: Role }) {
           </SidebarMenu>
         </SidebarGroup>
       )}
+
+      <SidebarSeparator />
+
+      <SidebarGroup>
+        <SidebarMenu>
+          <UISidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => {
+                logout()
+                window.location.href = "/login"
+              }}
+              tooltip="Log out"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <LogOut />
+              <span className="group-data-[collapsible=icon]:hidden">
+                Log out
+              </span>
+            </SidebarMenuButton>
+          </UISidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
     </>
   )
 }

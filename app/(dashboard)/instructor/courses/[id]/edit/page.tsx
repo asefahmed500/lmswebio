@@ -6,6 +6,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -26,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -43,6 +45,7 @@ import { useAuth } from "@/components/auth-provider"
 import { courseSchema, type CourseFormData } from "@/lib/validators"
 import { Level } from "@/types"
 import type { Course, Module, Lesson } from "@/types"
+import { apiPost, apiPut, apiPatch, apiDelete } from "@/lib/api-client"
 
 interface ApiCourse {
   id: string
@@ -80,26 +83,26 @@ interface ApiLesson {
 
 function mapCourse(api: ApiCourse): Course {
   return {
-    id: api.id as unknown as number,
+    id: api.id,
     title: api.title,
     slug: api.slug,
     description: api.description ?? undefined,
     thumbnail: api.thumbnail ?? undefined,
     level: api.level as Course["level"],
     isPublished: api.isPublished,
-    instructorId: api.instructorId as unknown as number,
+    instructorId: api.instructorId,
     modules: api.modules.map((m) => ({
-      id: m.id as unknown as number,
+      id: m.id,
       title: m.title,
       order: m.order,
-      courseId: m.courseId as unknown as number,
+      courseId: m.courseId,
       lessons: m.lessons.map((l) => ({
-        id: l.id as unknown as number,
+        id: l.id,
         title: l.title,
         content: l.content ?? undefined,
         contentType: l.contentType as "text" | "video" | "pdf",
         order: l.order,
-        moduleId: l.moduleId as unknown as number,
+        moduleId: l.moduleId,
         duration: l.duration ?? undefined,
       })),
     })),
@@ -117,14 +120,14 @@ function LessonEditor({
   onDelete,
 }: {
   lesson: Lesson
-  moduleId: number
-  onUpdate: (lessonId: number, data: Partial<Lesson>) => void
-  onDelete: (lessonId: number) => void
+  moduleId: string
+  onUpdate: (lessonId: string, data: Partial<Lesson>) => void
+  onDelete: (lessonId: string) => void
 }) {
   return (
-    <div className="space-y-3 rounded-lg border bg-card p-4">
+    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 space-y-2">
+        <div className="flex flex-1 flex-col gap-2">
           <Label>Lesson Title</Label>
           <Input
             value={lesson.title}
@@ -138,11 +141,11 @@ function LessonEditor({
           className="mt-6 text-destructive"
           onClick={() => onDelete(lesson.id)}
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 />
         </Button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label>Content Type</Label>
           <Select
             value={lesson.contentType}
@@ -162,7 +165,7 @@ function LessonEditor({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label>Duration (minutes)</Label>
           <Input
             type="number"
@@ -177,7 +180,7 @@ function LessonEditor({
           />
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         <Label>
           {lesson.contentType === "video" ? "Video URL" : "Content"}
         </Label>
@@ -213,20 +216,24 @@ function ModuleEditor({
 }: {
   module: Module
   index: number
-  onUpdate: (moduleId: number, data: Partial<Module>) => void
-  onDelete: (moduleId: number) => void
-  onMoveUp: (moduleId: number) => void
-  onMoveDown: (moduleId: number) => void
-  onAddLesson: (moduleId: number) => void
-  onUpdateLesson: (moduleId: number, lessonId: number, data: Partial<Lesson>) => void
-  onDeleteLesson: (moduleId: number, lessonId: number) => void
+  onUpdate: (moduleId: string, data: Partial<Module>) => void
+  onDelete: (moduleId: string) => void
+  onMoveUp: (moduleId: string) => void
+  onMoveDown: (moduleId: string) => void
+  onAddLesson: (moduleId: string) => void
+  onUpdateLesson: (
+    moduleId: string,
+    lessonId: string,
+    data: Partial<Lesson>
+  ) => void
+  onDeleteLesson: (moduleId: string, lessonId: string) => void
 }) {
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+            <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
               {index + 1}
             </div>
             <div className="flex-1">
@@ -242,26 +249,26 @@ function ModuleEditor({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="size-8"
               onClick={() => onMoveUp(module.id)}
             >
-              <ChevronUp className="h-4 w-4" />
+              <ChevronUp />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="size-8"
               onClick={() => onMoveDown(module.id)}
             >
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-destructive"
+              className="size-8 text-destructive"
               onClick={() => onDelete(module.id)}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 />
             </Button>
           </div>
         </div>
@@ -269,7 +276,7 @@ function ModuleEditor({
           {module.lessons.length} lesson{module.lessons.length !== 1 ? "s" : ""}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex flex-col gap-3">
         {module.lessons
           .sort((a, b) => a.order - b.order)
           .map((lesson) => (
@@ -289,7 +296,7 @@ function ModuleEditor({
           className="w-full"
           onClick={() => onAddLesson(module.id)}
         >
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus data-icon="inline-start" />
           Add Lesson
         </Button>
       </CardContent>
@@ -335,9 +342,7 @@ export default function InstructorCourseEditPage() {
         const data: ApiCourse = await res.json()
         const mapped = mapCourse(data)
         setCourse(mapped)
-        setModules(
-          mapped.modules.sort((a, b) => a.order - b.order)
-        )
+        setModules(mapped.modules.sort((a, b) => a.order - b.order))
 
         form.reset({
           title: mapped.title,
@@ -366,27 +371,20 @@ export default function InstructorCourseEditPage() {
 
     try {
       const data = form.getValues()
-      const res = await fetch(`/api/courses/${courseId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: data.title,
-          description: data.description,
-          level: data.level,
-          category: data.category || undefined,
-          tags,
-          thumbnail: data.thumbnail || undefined,
-        }),
+      const res = await apiPut(`/courses/${courseId}`, {
+        title: data.title,
+        description: data.description,
+        level: data.level,
+        category: data.category || undefined,
+        tags,
+        thumbnail: data.thumbnail || undefined,
       })
 
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to save course")
+      if (res.error) {
+        throw new Error(res.error || "Failed to save course")
       }
     } catch (err) {
-      setSaveError(
-        err instanceof Error ? err.message : "Failed to save course"
-      )
+      setSaveError(err instanceof Error ? err.message : "Failed to save course")
     } finally {
       setIsSaving(false)
     }
@@ -396,12 +394,10 @@ export default function InstructorCourseEditPage() {
     if (!course) return
 
     try {
-      const res = await fetch(`/api/courses/${courseId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublished: !course.isPublished }),
+      const res = await apiPatch(`/courses/${courseId}`, {
+        isPublished: !course.isPublished,
       })
-      if (res.ok) {
+      if (res.data) {
         setCourse((prev) =>
           prev ? { ...prev, isPublished: !prev.isPublished } : prev
         )
@@ -413,23 +409,19 @@ export default function InstructorCourseEditPage() {
 
   const handleAddModule = async () => {
     try {
-      const res = await fetch(`/api/courses/${courseId}/modules`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: `Module ${modules.length + 1}`,
-          order: modules.length,
-        }),
+      const res = await apiPost(`/courses/${courseId}/modules`, {
+        title: `Module ${modules.length + 1}`,
+        order: modules.length,
       })
-      if (!res.ok) throw new Error("Failed to add module")
-      const newModule: ApiModule = await res.json()
+      if (res.error) throw new Error("Failed to add module")
+      const newModule: ApiModule = res.data as ApiModule
       setModules((prev) => [
         ...prev,
         {
-          id: newModule.id as unknown as number,
+          id: newModule.id,
           title: newModule.title,
           order: newModule.order,
-          courseId: newModule.courseId as unknown as number,
+          courseId: newModule.courseId,
           lessons: [],
         },
       ])
@@ -438,35 +430,32 @@ export default function InstructorCourseEditPage() {
     }
   }
 
-  const handleUpdateModule = async (moduleId: number, data: Partial<Module>) => {
+  const handleUpdateModule = async (
+    moduleId: string,
+    data: Partial<Module>
+  ) => {
     setModules((prev) =>
       prev.map((m) => (m.id === moduleId ? { ...m, ...data } : m))
     )
 
     try {
-      await fetch(`/api/modules/${moduleId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
+      await apiPut(`/modules/${moduleId}`, data)
     } catch (error) {
       console.error("Failed to update module:", error)
     }
   }
 
-  const handleDeleteModule = async (moduleId: number) => {
+  const handleDeleteModule = async (moduleId: string) => {
     try {
-      const res = await fetch(`/api/modules/${moduleId}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) throw new Error("Failed to delete module")
+      const res = await apiDelete(`/modules/${moduleId}`)
+      if (res.error) throw new Error("Failed to delete module")
       setModules((prev) => prev.filter((m) => m.id !== moduleId))
     } catch (error) {
       console.error("Failed to delete module:", error)
     }
   }
 
-  const handleMoveModule = (moduleId: number, direction: "up" | "down") => {
+  const handleMoveModule = (moduleId: string, direction: "up" | "down") => {
     setModules((prev) => {
       const index = prev.findIndex((m) => m.id === moduleId)
       if (index === -1) return prev
@@ -483,24 +472,20 @@ export default function InstructorCourseEditPage() {
     })
   }
 
-  const handleAddLesson = async (moduleId: number) => {
+  const handleAddLesson = async (moduleId: string) => {
     try {
-      const module = modules.find((m) => m.id === moduleId)
-      const order = module ? module.lessons.length : 0
+      const mod = modules.find((m) => m.id === moduleId)
+      const order = mod ? mod.lessons.length : 0
 
-      const res = await fetch("/api/lessons", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: "New Lesson",
-          moduleId: moduleId.toString(),
-          contentType: "text",
-          content: "",
-          order,
-        }),
-      })
-      if (!res.ok) throw new Error("Failed to add lesson")
-      const newLesson: ApiLesson = await res.json()
+      const res = await apiPost("/lessons", {
+        title: "New Lesson",
+        moduleId,
+        contentType: "text",
+        content: "",
+        order,
+      } as Record<string, unknown>)
+      if (res.error) throw new Error("Failed to add lesson")
+      const newLesson = (res.data as { lesson: ApiLesson }).lesson
       setModules((prev) =>
         prev.map((m) =>
           m.id === moduleId
@@ -509,12 +494,15 @@ export default function InstructorCourseEditPage() {
                 lessons: [
                   ...m.lessons,
                   {
-                    id: newLesson.id as unknown as number,
+                    id: newLesson.id,
                     title: newLesson.title,
                     content: newLesson.content ?? undefined,
-                    contentType: newLesson.contentType as "text" | "video" | "pdf",
+                    contentType: newLesson.contentType as
+                      | "text"
+                      | "video"
+                      | "pdf",
                     order: newLesson.order,
-                    moduleId: newLesson.moduleId as unknown as number,
+                    moduleId: newLesson.moduleId,
                     duration: newLesson.duration ?? undefined,
                   },
                 ],
@@ -528,8 +516,8 @@ export default function InstructorCourseEditPage() {
   }
 
   const handleUpdateLesson = async (
-    moduleId: number,
-    lessonId: number,
+    moduleId: string,
+    lessonId: string,
     data: Partial<Lesson>
   ) => {
     setModules((prev) =>
@@ -546,22 +534,16 @@ export default function InstructorCourseEditPage() {
     )
 
     try {
-      await fetch(`/api/lessons/${lessonId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
+      await apiPut(`/lessons/${lessonId}`, data as Record<string, unknown>)
     } catch (error) {
       console.error("Failed to update lesson:", error)
     }
   }
 
-  const handleDeleteLesson = async (moduleId: number, lessonId: number) => {
+  const handleDeleteLesson = async (moduleId: string, lessonId: string) => {
     try {
-      const res = await fetch(`/api/lessons/${lessonId}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) throw new Error("Failed to delete lesson")
+      const res = await apiDelete(`/lessons/${lessonId}`)
+      if (res.error) throw new Error("Failed to delete lesson")
       setModules((prev) =>
         prev.map((m) =>
           m.id === moduleId
@@ -593,8 +575,10 @@ export default function InstructorCourseEditPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading course editor...</p>
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
+          <p className="text-sm text-muted-foreground">
+            Loading course editor...
+          </p>
         </div>
       </div>
     )
@@ -606,7 +590,7 @@ export default function InstructorCourseEditPage() {
         <div className="text-center">
           <p className="text-sm text-muted-foreground">Course not found</p>
           <Button className="mt-4" asChild>
-            <a href="/instructor/courses">Back to Courses</a>
+            <Link href="/instructor/courses">Back to Courses</Link>
           </Button>
         </div>
       </div>
@@ -614,13 +598,13 @@ export default function InstructorCourseEditPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <a href={`/instructor/courses/${courseId}`}>
-              <ArrowLeft className="h-4 w-4" />
-            </a>
+            <Link href={`/instructor/courses/${courseId}`}>
+              <ArrowLeft />
+            </Link>
           </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Edit Course</h1>
@@ -631,10 +615,10 @@ export default function InstructorCourseEditPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
-            <a href={`/student/courses/${courseId}`}>
-              <Eye className="mr-2 h-4 w-4" />
+            <Link href={`/student/courses/${courseId}`}>
+              <Eye data-icon="inline-start" />
               Preview
-            </a>
+            </Link>
           </Button>
           <div className="flex items-center gap-2">
             <Label htmlFor="publish-toggle" className="text-sm">
@@ -650,14 +634,14 @@ export default function InstructorCourseEditPage() {
       </div>
 
       {saveError && (
-        <div className="rounded-md bg-destructive/15 p-4 text-sm text-destructive">
-          {saveError}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{saveError}</AlertDescription>
+        </Alert>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left panel - Course Settings */}
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Course Settings</CardTitle>
@@ -665,8 +649,8 @@ export default function InstructorCourseEditPage() {
                 Basic information and configuration
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="title">Course Title *</Label>
                 <Input
                   id="title"
@@ -680,7 +664,7 @@ export default function InstructorCourseEditPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -691,7 +675,7 @@ export default function InstructorCourseEditPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="level">Difficulty Level *</Label>
                   <Select
                     value={form.watch("level")}
@@ -715,7 +699,7 @@ export default function InstructorCourseEditPage() {
                   )}
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="category">Category</Label>
                   <Input
                     id="category"
@@ -725,7 +709,7 @@ export default function InstructorCourseEditPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label>Tags (max 10)</Label>
                 <div className="flex gap-2">
                   <Input
@@ -746,7 +730,7 @@ export default function InstructorCourseEditPage() {
                     onClick={handleAddTag}
                     disabled={tags.length >= 10 || !tagInput.trim()}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus />
                   </Button>
                 </div>
                 {tags.length > 0 && (
@@ -754,20 +738,22 @@ export default function InstructorCourseEditPage() {
                     {tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="gap-1">
                         {tag}
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleRemoveTag(tag)}
-                          className="rounded-full p-0.5 hover:bg-destructive/20"
+                          className="size-5 rounded-full p-0.5 hover:bg-destructive/20"
                         >
                           ×
-                        </button>
+                        </Button>
                       </Badge>
                     ))}
                   </div>
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="thumbnail">Thumbnail URL</Label>
                 <Input
                   id="thumbnail"
@@ -779,9 +765,9 @@ export default function InstructorCourseEditPage() {
 
               <Button onClick={handleSaveCourse} disabled={isSaving}>
                 {isSaving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
                 ) : (
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save data-icon="inline-start" />
                 )}
                 Save Settings
               </Button>
@@ -790,7 +776,7 @@ export default function InstructorCourseEditPage() {
         </div>
 
         {/* Right panel - Module/Lesson Builder */}
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -801,14 +787,14 @@ export default function InstructorCourseEditPage() {
                   </CardDescription>
                 </div>
                 <Button onClick={handleAddModule}>
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus data-icon="inline-start" />
                   Add Module
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {modules.length > 0 ? (
-                <div className="space-y-4">
+                <div className="flex flex-col gap-4">
                   {modules.map((module, index) => (
                     <ModuleEditor
                       key={module.id}

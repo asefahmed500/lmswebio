@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { LoadingCard } from "@/components/loading-skeleton"
+import { apiGet, apiPost } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface CalendarEvent {
   id: number
@@ -38,7 +40,8 @@ export default function StudentCalendarPage() {
   const [events, setEvents] = React.useState<CalendarEvent[]>([])
   const [selectedDate, setSelectedDate] = React.useState<Date>(new Date())
   const [isLoading, setIsLoading] = React.useState(true)
-  const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent | null>(null)
+  const [selectedEvent, setSelectedEvent] =
+    React.useState<CalendarEvent | null>(null)
 
   React.useEffect(() => {
     async function loadEvents() {
@@ -53,10 +56,14 @@ export default function StudentCalendarPage() {
         params.append("startDate", startDate.toISOString())
         params.append("endDate", endDate.toISOString())
 
-        const response = await fetch(`/api/calendar/events?${params}`)
-        if (response.ok) {
-          const data = await response.json()
-          setEvents(data.events)
+        const result = await apiGet<Record<string, CalendarEvent[]>>(
+          `/calendar/events?${params}`
+        )
+        if (result.data) {
+          setEvents(result.data.events)
+        }
+        if (result.error) {
+          toast.error("Failed to load calendar events")
         }
       } catch (error) {
         console.error("Failed to load events:", error)
@@ -70,18 +77,18 @@ export default function StudentCalendarPage() {
 
   const handleRsvp = async (eventId: number, status: string) => {
     try {
-      const response = await fetch(`/api/calendar/events/${eventId}/rsvp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+      const result = await apiPost(`/calendar/events/${eventId}/rsvp`, {
+        status,
       })
 
-      if (response.ok) {
+      if (result.data) {
         setEvents((prev) =>
           prev.map((event) =>
             event.id === eventId ? { ...event, userRsvp: status } : event
           )
         )
+      } else {
+        toast.error("Failed to update RSVP")
       }
     } catch (error) {
       console.error("Failed to RSVP:", error)
@@ -90,7 +97,7 @@ export default function StudentCalendarPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
           <p className="mt-1 text-muted-foreground">
@@ -103,11 +110,11 @@ export default function StudentCalendarPage() {
   }
 
   const eventTypeColors: Record<string, string> = {
-    live_session: "bg-blue-500",
-    deadline: "bg-red-500",
-    assignment_due: "bg-orange-500",
-    quiz: "bg-purple-500",
-    other: "bg-gray-500",
+    live_session: "bg-info",
+    deadline: "bg-destructive",
+    assignment_due: "bg-warning",
+    quiz: "bg-primary",
+    other: "bg-muted-foreground",
   }
 
   const eventTypeLabels: Record<string, string> = {
@@ -119,7 +126,7 @@ export default function StudentCalendarPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Page header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
@@ -142,7 +149,7 @@ export default function StudentCalendarPage() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="mb-4 flex items-center gap-3">
                   <Badge className={eventTypeColors[selectedEvent.eventType]}>
                     {eventTypeLabels[selectedEvent.eventType]}
                   </Badge>
@@ -150,12 +157,12 @@ export default function StudentCalendarPage() {
                 </div>
 
                 {selectedEvent.description && (
-                  <p className="text-muted-foreground mb-4">
+                  <p className="mb-4 text-muted-foreground">
                     {selectedEvent.description}
                   </p>
                 )}
 
-                <div className="space-y-2 text-sm">
+                <div className="flex flex-col gap-2 text-sm">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span>
@@ -191,22 +198,30 @@ export default function StudentCalendarPage() {
                 <div className="flex flex-col gap-2">
                   <Button
                     size="sm"
-                    variant={selectedEvent.userRsvp === "going" ? "default" : "outline"}
+                    variant={
+                      selectedEvent.userRsvp === "going" ? "default" : "outline"
+                    }
                     onClick={() => handleRsvp(selectedEvent.id, "going")}
                   >
-                    <Check className="h-4 w-4 mr-1" />
+                    <Check className="mr-1 h-4 w-4" />
                     Going
                   </Button>
                   <Button
                     size="sm"
-                    variant={selectedEvent.userRsvp === "maybe" ? "default" : "outline"}
+                    variant={
+                      selectedEvent.userRsvp === "maybe" ? "default" : "outline"
+                    }
                     onClick={() => handleRsvp(selectedEvent.id, "maybe")}
                   >
                     Maybe
                   </Button>
                   <Button
                     size="sm"
-                    variant={selectedEvent.userRsvp === "declined" ? "default" : "outline"}
+                    variant={
+                      selectedEvent.userRsvp === "declined"
+                        ? "default"
+                        : "outline"
+                    }
                     onClick={() => handleRsvp(selectedEvent.id, "declined")}
                   >
                     Decline

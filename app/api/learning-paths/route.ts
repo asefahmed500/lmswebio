@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma, Level } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
@@ -20,7 +21,7 @@ const createLearningPathSchema = z.object({
   isPublished: z.boolean().default(false),
   courses: z.array(
     z.object({
-      courseId: z.number(),
+      courseId: z.string(),
       order: z.number(),
       isMandatory: z.boolean().default(true),
     })
@@ -43,15 +44,15 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    const where: any = { isPublished: true }
+    const where: Prisma.LearningPathWhereInput = { isPublished: true }
 
     // Show unpublished paths only to admins/instructors
-    if (!session || (session.user.role === "STUDENT" || !session)) {
+    if (!session || session.user.role === "STUDENT") {
       where.isPublished = true
     }
 
     if (level) {
-      where.level = level
+      where.level = level as Level
     }
 
     const [learningPaths, total] = await Promise.all([
@@ -95,7 +96,7 @@ export async function GET(req: NextRequest) {
     ])
 
     // If user is logged in, get their enrollments
-    let enrolledPathIds: number[] = []
+    let enrolledPathIds: string[] = []
     if (session && myPaths) {
       const userEnrollments = await prisma.learningPathEnrollment.findMany({
         where: {
@@ -137,8 +138,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "INSTRUCTOR")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (
+      !session ||
+      (session.user.role !== "ADMIN" && session.user.role !== "INSTRUCTOR")
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await req.json()

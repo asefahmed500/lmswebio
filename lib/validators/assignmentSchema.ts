@@ -26,10 +26,7 @@ export const assignmentSchema = z.object({
     .number()
     .min(1, "Assignment must be worth at least 1 point")
     .max(1000, "Assignment cannot be worth more than 1000 points"),
-  courseId: z
-    .number()
-    .int("Course ID must be an integer")
-    .positive("Course ID must be positive"),
+  courseId: z.string(),
 })
 
 export type AssignmentFormData = z.infer<typeof assignmentSchema>
@@ -39,10 +36,7 @@ export type AssignmentFormData = z.infer<typeof assignmentSchema>
  */
 export const assignmentSubmissionSchema = z
   .object({
-    assignmentId: z
-      .number()
-      .int("Assignment ID must be an integer")
-      .positive("Assignment ID must be positive"),
+    assignmentId: z.string(),
     textAnswer: z
       .string()
       .max(10000, "Answer must be less than 10000 characters")

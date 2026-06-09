@@ -1,16 +1,13 @@
-/**
- * New assignment creation page
- * Form for instructors to create a new assignment for one of their courses
- */
-
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { assignmentSchema, type AssignmentFormData } from "@/lib/validators"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -47,7 +44,7 @@ export default function NewAssignmentPage() {
       description: "",
       dueDate: "",
       maxPoints: 100,
-      courseId: undefined as unknown as number,
+      courseId: undefined as unknown as string,
     },
   })
 
@@ -83,7 +80,9 @@ export default function NewAssignmentPage() {
       }
       router.push("/instructor/assignments")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create assignment")
+      setError(
+        err instanceof Error ? err.message : "Failed to create assignment"
+      )
       console.error(err)
     } finally {
       setIsSubmitting(false)
@@ -91,12 +90,12 @@ export default function NewAssignmentPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <a href="/instructor/assignments">
-            <ArrowLeft className="h-4 w-4" />
-          </a>
+          <Link href="/instructor/assignments">
+            <ArrowLeft />
+          </Link>
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -108,11 +107,14 @@ export default function NewAssignmentPage() {
         </div>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-6"
+      >
         {error && (
-          <div className="rounded-md bg-destructive/15 p-4 text-sm text-destructive">
-            {error}
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         <Card>
@@ -122,8 +124,8 @@ export default function NewAssignmentPage() {
               Define the assignment parameters and requirements
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="title">Assignment Title *</Label>
               <Input
                 id="title"
@@ -138,7 +140,7 @@ export default function NewAssignmentPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
@@ -155,19 +157,19 @@ export default function NewAssignmentPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="courseId">Course *</Label>
                 <Select
                   value={String(form.watch("courseId") || "")}
-                  onValueChange={(value) =>
-                    form.setValue("courseId", Number(value))
-                  }
+                  onValueChange={(value) => form.setValue("courseId", value)}
                   disabled={isSubmitting || isLoadingCourses}
                 >
                   <SelectTrigger id="courseId">
                     <SelectValue
                       placeholder={
-                        isLoadingCourses ? "Loading courses..." : "Select a course"
+                        isLoadingCourses
+                          ? "Loading courses..."
+                          : "Select a course"
                       }
                     />
                   </SelectTrigger>
@@ -186,7 +188,7 @@ export default function NewAssignmentPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="dueDate">Due Date</Label>
                 <Input
                   id="dueDate"
@@ -202,7 +204,7 @@ export default function NewAssignmentPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="maxPoints">Max Points *</Label>
               <Input
                 id="maxPoints"
@@ -223,9 +225,7 @@ export default function NewAssignmentPage() {
 
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
             Create Assignment
           </Button>
           <Button

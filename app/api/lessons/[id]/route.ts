@@ -23,7 +23,7 @@ export async function PUT(
 
     const { id } = await params
     const lesson = await prisma.lesson.findUnique({
-      where: { id: Number(id) },
+      where: { id: id },
       include: {
         module: {
           include: { course: true },
@@ -46,7 +46,7 @@ export async function PUT(
     const data = updateLessonSchema.parse(body)
 
     const updatedLesson = await prisma.lesson.update({
-      where: { id: Number(id) },
+      where: { id: id },
       data,
     })
 
@@ -78,7 +78,7 @@ export async function DELETE(
 
     const { id } = await params
     const lesson = await prisma.lesson.findUnique({
-      where: { id: Number(id) },
+      where: { id: id },
       include: {
         module: {
           include: { course: true },
@@ -98,7 +98,7 @@ export async function DELETE(
     }
 
     await prisma.lesson.delete({
-      where: { id: Number(id) },
+      where: { id: id },
     })
 
     return NextResponse.json({ success: true })

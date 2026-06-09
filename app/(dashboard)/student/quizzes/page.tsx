@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
 
 interface CourseInfo {
   id: number
@@ -65,7 +66,7 @@ function QuizCard({ quiz }: { quiz: QuizListItem }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
@@ -83,7 +84,10 @@ function QuizCard({ quiz }: { quiz: QuizListItem }) {
             )}
             <div className="flex items-center gap-1">
               <HelpCircle className="h-4 w-4" />
-              <span>{quiz.attemptsAllowed} attempt{quiz.attemptsAllowed > 1 ? "s" : ""}</span>
+              <span>
+                {quiz.attemptsAllowed} attempt
+                {quiz.attemptsAllowed > 1 ? "s" : ""}
+              </span>
             </div>
           </div>
           <Button className="w-full" asChild>
@@ -115,9 +119,10 @@ export default function StudentQuizzesPage() {
       setError(null)
 
       try {
-        const enrolRes = await fetch("/api/enrolments/my")
-        if (!enrolRes.ok) throw new Error("Failed to fetch enrollments")
-        const enrolments = await enrolRes.json()
+        const enrolRes = await apiGet<{ courseId: number }[]>("/enrolments/my")
+        if (enrolRes.error || !enrolRes.data)
+          throw new Error("Failed to fetch enrollments")
+        const enrolments = enrolRes.data
 
         const courseIds = enrolments.map(
           (e: { courseId: number }) => e.courseId
@@ -125,30 +130,33 @@ export default function StudentQuizzesPage() {
 
         const quizResults = await Promise.all(
           courseIds.map((cid: number) =>
-            fetch(`/api/quizzes?courseId=${cid}`).then((r) =>
-              r.ok ? r.json() : []
+            apiGet<QuizListItem[]>(`/quizzes?courseId=${cid}`).then(
+              (r) => r.data ?? []
             )
           )
         )
 
         const allQuizzes: QuizListItem[] = quizResults.flat()
 
-        const attemptResults = await Promise.all(
-          allQuizzes.map((q) =>
-            fetch(`/api/quizzes/${q.id}/attempt`).then((r) =>
-              r.ok ? r.json() : []
-            )
-          )
-        )
+        const attemptsRes = await apiGet<
+          { quizId: number; score: number | null }[]
+        >("/quizzes/my-attempts")
+        const attempts = attemptsRes.data ?? []
 
-        const quizWithAttempts = allQuizzes.map((q, i) => {
-          const attempts: { score: number | null }[] = attemptResults[i] || []
-          const scores = attempts
-            .map((a) => a.score)
-            .filter((s): s is number => s !== null)
+        const attemptsByQuiz: Record<number, { score: number | null }[]> = {}
+        for (const a of attempts) {
+          if (!attemptsByQuiz[a.quizId]) attemptsByQuiz[a.quizId] = []
+          attemptsByQuiz[a.quizId].push(a)
+        }
+
+        const quizWithAttempts = allQuizzes.map((q) => {
+          const quizAttempts = attemptsByQuiz[q.id] || []
+          const scores = quizAttempts
+            .map((a: { score: number | null }) => a.score)
+            .filter((s: number | null): s is number => s !== null)
           return {
             ...q,
-            hasAttempted: attempts.length > 0,
+            hasAttempted: quizAttempts.length > 0,
             bestScore: scores.length > 0 ? Math.max(...scores) : undefined,
           }
         })
@@ -202,7 +210,7 @@ export default function StudentQuizzesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">My Quizzes</h1>
         <p className="mt-1 text-muted-foreground">

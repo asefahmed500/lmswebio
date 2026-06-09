@@ -3,13 +3,18 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { createHmac } from "crypto"
 
-function verifyToken(token: string): { userId: number; email: string; timestamp: number } | null {
+function verifyToken(
+  token: string
+): { userId: string; email: string; timestamp: number } | null {
+  const secret = process.env.JWT_SECRET
+  if (!secret) return null
   try {
     const decoded = JSON.parse(Buffer.from(token, "base64").toString())
     const { sig, ...payload } = decoded
-    if (!sig || !payload.userId || !payload.email || !payload.timestamp) return null
+    if (!sig || !payload.userId || !payload.email || !payload.timestamp)
+      return null
 
-    const hmac = createHmac("sha256", process.env.JWT_SECRET || "fallback-secret")
+    const hmac = createHmac("sha256", secret)
     hmac.update(JSON.stringify(payload))
     const expectedSig = hmac.digest("hex")
 

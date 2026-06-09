@@ -10,6 +10,7 @@ import Link from "next/link"
 import { TrendingUp, BookOpen, Clock, Users } from "lucide-react"
 import { LearningPathCard } from "@/components/learning-paths/learning-path-card"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { LoadingCard } from "@/components/loading-skeleton"
+import { apiGet, apiPost } from "@/lib/api-client"
 
 interface LearningPath {
   id: number
@@ -52,8 +54,12 @@ interface LearningPath {
 
 export default function StudentLearningPathsPage() {
   const [learningPaths, setLearningPaths] = React.useState<LearningPath[]>([])
-  const [enrolledPaths, setEnrolledPaths] = React.useState<Set<number>>(new Set())
-  const [pathProgress, setPathProgress] = React.useState<Map<number, number>>(new Map())
+  const [enrolledPaths, setEnrolledPaths] = React.useState<Set<number>>(
+    new Set()
+  )
+  const [pathProgress, setPathProgress] = React.useState<Map<number, number>>(
+    new Map()
+  )
   const [isLoading, setIsLoading] = React.useState(true)
   const [filter, setFilter] = React.useState<"all" | "my">("all")
   const [levelFilter, setLevelFilter] = React.useState<string>("all")
@@ -66,24 +72,32 @@ export default function StudentLearningPathsPage() {
         params.append("myPaths", filter === "my" ? "true" : "false")
         if (levelFilter !== "all") params.append("level", levelFilter)
 
-        const response = await fetch(`/api/learning-paths?${params}`)
-        if (response.ok) {
-          const data = await response.json()
-          setLearningPaths(data.learningPaths)
+        const result = await apiGet<Record<string, LearningPath[]>>(
+          `/learning-paths?${params}`
+        )
+        if (result.data) {
+          setLearningPaths(result.data.learningPaths)
 
-          // Get enrolled paths and progress
           const enrolledIds = new Set<number>()
           const progressMap = new Map<number, number>()
 
           await Promise.all(
-            data.learningPaths.map(async (path: LearningPath) => {
-              const enrollResponse = await fetch(`/api/learning-paths/${path.id}/enroll`)
-              if (enrollResponse.ok) {
-                const enrollData = await enrollResponse.json()
-                if (enrollData.enrolled) {
-                  enrolledIds.add(path.id)
-                  progressMap.set(path.id, enrollData.enrollment?.progress || 0)
-                }
+            result.data.learningPaths.map(async (path: LearningPath) => {
+              const enrollResult = await apiGet<Record<string, unknown>>(
+                `/learning-paths/${path.id}/enroll`
+              )
+              if (
+                enrollResult.data &&
+                (enrollResult.data as Record<string, unknown>).enrolled
+              ) {
+                enrolledIds.add(path.id)
+                progressMap.set(
+                  path.id,
+                  ((
+                    (enrollResult.data as Record<string, unknown>)
+                      .enrollment as Record<string, unknown>
+                  )?.progress as number) || 0
+                )
               }
             })
           )
@@ -103,11 +117,9 @@ export default function StudentLearningPathsPage() {
 
   const handleEnroll = async (pathId: number) => {
     try {
-      const response = await fetch(`/api/learning-paths/${pathId}/enroll`, {
-        method: "POST",
-      })
+      const result = await apiPost(`/learning-paths/${pathId}/enroll`)
 
-      if (response.ok) {
+      if (result.data) {
         setEnrolledPaths((prev) => new Set([...prev, pathId]))
         setPathProgress((prev) => new Map([...prev, [pathId, 0]]))
       }
@@ -118,7 +130,7 @@ export default function StudentLearningPathsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Learning Paths</h1>
           <p className="mt-1 text-muted-foreground">
@@ -131,7 +143,7 @@ export default function StudentLearningPathsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
@@ -144,51 +156,66 @@ export default function StudentLearningPathsPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="flex items-center gap-4 p-4 border rounded-lg">
-          <div className="p-3 bg-primary/10 rounded-full">
-            <TrendingUp className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-xl font-bold">{learningPaths.length}</p>
-            <p className="text-sm text-muted-foreground">Total Paths</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 p-4 border rounded-lg">
-          <div className="p-3 bg-green-500/10 rounded-full">
-            <BookOpen className="h-5 w-5 text-green-500" />
-          </div>
-          <div>
-            <p className="text-xl font-bold">{enrolledPaths.size}</p>
-            <p className="text-sm text-muted-foreground">Enrolled</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 p-4 border rounded-lg">
-          <div className="p-3 bg-blue-500/10 rounded-full">
-            <Clock className="h-5 w-5 text-blue-500" />
-          </div>
-          <div>
-            <p className="text-xl font-bold">
-              {learningPaths.reduce((sum, p) => sum + p.estimatedDuration, 0)}h
-            </p>
-            <p className="text-sm text-muted-foreground">Total Content</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 p-4 border rounded-lg">
-          <div className="p-3 bg-purple-500/10 rounded-full">
-            <Users className="h-5 w-5 text-purple-500" />
-          </div>
-          <div>
-            <p className="text-xl font-bold">
-              {learningPaths.reduce((sum, p) => sum + p._count.enrollments, 0)}
-            </p>
-            <p className="text-sm text-muted-foreground">Total Learners</p>
-          </div>
-        </div>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="rounded-full bg-primary/10 p-3">
+              <TrendingUp className="size-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">{learningPaths.length}</p>
+              <p className="text-sm text-muted-foreground">Total Paths</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="bg-success/10 rounded-full p-3">
+              <BookOpen className="text-success size-5" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">{enrolledPaths.size}</p>
+              <p className="text-sm text-muted-foreground">Enrolled</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="bg-info/10 rounded-full p-3">
+              <Clock className="text-info size-5" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">
+                {learningPaths.reduce((sum, p) => sum + p.estimatedDuration, 0)}
+                h
+              </p>
+              <p className="text-sm text-muted-foreground">Total Content</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="rounded-full bg-primary/10 p-3">
+              <Users className="size-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">
+                {learningPaths.reduce(
+                  (sum, p) => sum + p._count.enrollments,
+                  0
+                )}
+              </p>
+              <p className="text-sm text-muted-foreground">Total Learners</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
       <div className="flex gap-4">
-        <Select value={filter} onValueChange={(v: "all" | "my") => setFilter(v)}>
+        <Select
+          value={filter}
+          onValueChange={(v: "all" | "my") => setFilter(v)}
+        >
           <SelectTrigger className="w-[150px]">
             <SelectValue />
           </SelectTrigger>
@@ -213,9 +240,11 @@ export default function StudentLearningPathsPage() {
 
       {/* Learning Paths */}
       {learningPaths.length === 0 ? (
-        <div className="text-center py-12">
-          <TrendingUp className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No learning paths found</h3>
+        <div className="py-12 text-center">
+          <TrendingUp className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-semibold">
+            No learning paths found
+          </h3>
           <p className="text-muted-foreground">
             {filter === "my"
               ? "You haven't enrolled in any learning paths yet."

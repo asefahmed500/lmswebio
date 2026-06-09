@@ -6,17 +6,21 @@
 "use client"
 
 import * as React from "react"
-import { Award, Download, Share2 } from "lucide-react"
+import { Award } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import { CertificateViewer } from "@/components/certificates/certificate-viewer"
 import { LoadingCard } from "@/components/loading-skeleton"
+import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface Certificate {
-  id: number
+  id: string
   certificateUrl: string
   verificationId: string
   issuedAt: string
   course: {
-    id: number
+    id: string
     title: string
     slug: string
     thumbnail: string | null
@@ -28,17 +32,22 @@ interface Certificate {
 }
 
 export default function StudentCertificatesPage() {
+  const { user } = useAuth()
   const [certificates, setCertificates] = React.useState<Certificate[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
     async function loadCertificates() {
+      if (!user) return
       setIsLoading(true)
       try {
-        const response = await fetch("/api/certificates")
-        if (response.ok) {
-          const data = await response.json()
-          setCertificates(data.certificates)
+        const result =
+          await apiGet<Record<string, Certificate[]>>("/certificates")
+        if (result.data) {
+          setCertificates(result.data.certificates)
+        }
+        if (result.error) {
+          toast.error("Failed to load certificates")
         }
       } catch (error) {
         console.error("Failed to load certificates:", error)
@@ -48,11 +57,11 @@ export default function StudentCertificatesPage() {
     }
 
     loadCertificates()
-  }, [])
+  }, [user])
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Certificates</h1>
           <p className="mt-1 text-muted-foreground">
@@ -65,8 +74,7 @@ export default function StudentCertificatesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">My Certificates</h1>
         <p className="mt-1 text-muted-foreground">
@@ -74,30 +82,32 @@ export default function StudentCertificatesPage() {
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="flex items-center gap-4 p-6 border rounded-lg">
-          <div className="p-3 bg-primary/10 rounded-full">
-            <Award className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{certificates.length}</p>
-            <p className="text-sm text-muted-foreground">Certificates Earned</p>
-          </div>
-        </div>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-6">
+            <div className="rounded-full bg-primary/10 p-3">
+              <Award className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{certificates.length}</p>
+              <p className="text-sm text-muted-foreground">
+                Certificates Earned
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Certificates */}
       {certificates.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <Award className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No certificates yet</h3>
-          <p className="text-muted-foreground mb-4">
+          <h3 className="mb-2 text-lg font-semibold">No certificates yet</h3>
+          <p className="mb-4 text-muted-foreground">
             Complete a course to earn your first certificate!
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           {certificates.map((certificate) => (
             <CertificateViewer key={certificate.id} certificate={certificate} />
           ))}

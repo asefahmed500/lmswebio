@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiGet, apiPut } from "@/lib/api-client"
 
 interface UserData {
   id: string
@@ -45,37 +46,40 @@ export default function EditUserPage() {
   const [errors, setErrors] = React.useState<Record<string, string>>({})
 
   React.useEffect(() => {
-    loadUser()
-  }, [])
-
-  async function loadUser() {
-    setIsLoading(true)
-    try {
-      const res = await fetch(`/api/admin/users/${params.id}`)
-      if (res.ok) {
-        const data: UserData = await res.json()
-        setFullName(data.fullName)
-        setEmail(data.email)
-        setRole(data.role)
-        setIsActive(data.isActive)
-      } else {
-        toast.error("User not found")
-        router.push("/admin/users")
-      }
-    } catch {
-      toast.error("Failed to load user")
-      router.push("/admin/users")
-    } finally {
-      setIsLoading(false)
+    let cancelled = false
+    apiGet<UserData>(`/admin/users/${params.id}`)
+      .then((res) => {
+        if (!cancelled && res.data) {
+          const data = res.data
+          setFullName(data.fullName)
+          setEmail(data.email)
+          setRole(data.role)
+          setIsActive(data.isActive)
+        }
+        if (!cancelled && res.error) {
+          toast.error("User not found")
+          router.push("/admin/users")
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error("User not found")
+          router.push("/admin/users")
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [params.id, router])
 
   function validate() {
     const errs: Record<string, string> = {}
     if (!fullName.trim()) errs.fullName = "Full name is required"
     if (!email.trim()) errs.email = "Email is required"
-    else if (!/\S+@\S+\.\S+/.test(email))
-      errs.email = "Invalid email address"
+    else if (!/\S+@\S+\.\S+/.test(email)) errs.email = "Invalid email address"
     if (password && password.length < 6)
       errs.password = "Password must be at least 6 characters"
     if (!role) errs.role = "Role is required"
@@ -97,18 +101,13 @@ export default function EditUserPage() {
       }
       if (password) body.password = password
 
-      const res = await fetch(`/api/admin/users/${params.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
+      const res = await apiPut(`/admin/users/${params.id}`, body)
 
-      if (res.ok) {
+      if (!res.error) {
         toast.success("User updated successfully")
         router.push("/admin/users")
       } else {
-        const data = await res.json()
-        toast.error(data.error || "Failed to update user")
+        toast.error(res.error || "Failed to update user")
       }
     } catch {
       toast.error("Failed to update user")
@@ -129,11 +128,11 @@ export default function EditUserPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon-sm" asChild>
           <Link href="/admin/users">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft />
           </Link>
         </Button>
         <div>
@@ -152,8 +151,8 @@ export default function EditUserPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
@@ -167,7 +166,7 @@ export default function EditUserPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -182,10 +181,10 @@ export default function EditUserPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="password">
                 New Password{" "}
-                <span className="font-normal text-muted-foreground normal-case tracking-normal">
+                <span className="font-normal tracking-normal text-muted-foreground normal-case">
                   (leave blank to keep current)
                 </span>
               </Label>
@@ -202,7 +201,7 @@ export default function EditUserPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="role">Role</Label>
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger className="w-full" aria-invalid={!!errors.role}>

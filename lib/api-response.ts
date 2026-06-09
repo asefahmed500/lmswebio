@@ -71,7 +71,11 @@ export const ApiErrors = {
   },
 
   notFound(resource = "Resource", details?: unknown[]) {
-    return createErrorResponse(ApiErrorType.NOT_FOUND, `${resource} not found`, details)
+    return createErrorResponse(
+      ApiErrorType.NOT_FOUND,
+      `${resource} not found`,
+      details
+    )
   },
 
   validationFailed(details: unknown[], message = "Validation failed") {
@@ -87,7 +91,10 @@ export const ApiErrors = {
   },
 
   rateLimitExceeded(message = "Too many requests", retryAfter?: number) {
-    const response = createErrorResponse(ApiErrorType.RATE_LIMIT_EXCEEDED, message)
+    const response = createErrorResponse(
+      ApiErrorType.RATE_LIMIT_EXCEEDED,
+      message
+    )
     if (retryAfter) {
       response.headers.set("Retry-After", retryAfter.toString())
     }
@@ -102,7 +109,9 @@ export const ApiErrors = {
 /**
  * Handle Zod validation errors consistently
  */
-export function handleZodError(error: ZodError): NextResponse<ApiErrorResponse> {
+export function handleZodError(
+  error: ZodError
+): NextResponse<ApiErrorResponse> {
   const details = error.issues.map((issue) => ({
     path: issue.path.join("."),
     message: issue.message,
@@ -115,18 +124,22 @@ export function handleZodError(error: ZodError): NextResponse<ApiErrorResponse> 
 /**
  * Handle unknown errors with logging
  */
-export function handleUnknownError(error: unknown, context?: string): NextResponse<ApiErrorResponse> {
+export function handleUnknownError(
+  error: unknown,
+  context?: string
+): NextResponse<ApiErrorResponse> {
   console.error(`Error${context ? ` in ${context}` : ""}:`, error)
 
   if (error instanceof ZodError) {
     return handleZodError(error)
   }
 
-  const message = process.env.NODE_ENV === "production"
-    ? "An error occurred"
-    : error instanceof Error
-    ? error.message
-    : "Unknown error"
+  const message =
+    process.env.NODE_ENV === "production"
+      ? "An error occurred"
+      : error instanceof Error
+        ? error.message
+        : "Unknown error"
 
   return ApiErrors.internal(message)
 }

@@ -10,8 +10,8 @@ import { Role } from "@prisma/client"
  * Check if user can access a course
  */
 export async function canAccessCourse(
-  userId: number,
-  courseId: number,
+  userId: string,
+  courseId: string,
   userRole: Role
 ): Promise<boolean> {
   const course = await prisma.course.findUnique({
@@ -52,8 +52,8 @@ export async function canAccessCourse(
  * Check if user is enrolled in a course
  */
 export async function isEnrolledInCourse(
-  userId: number,
-  courseId: number
+  userId: string,
+  courseId: string
 ): Promise<boolean> {
   const enrollment = await prisma.enrolment.findUnique({
     where: {
@@ -68,9 +68,9 @@ export async function isEnrolledInCourse(
  * Check if user owns a resource
  */
 export async function ownsResource(
-  userId: number,
+  userId: string,
   resourceType: "submission" | "note" | "bookmark" | "comment" | "discussion",
-  resourceId: number
+  resourceId: string
 ): Promise<boolean> {
   switch (resourceType) {
     case "submission":
@@ -117,8 +117,8 @@ export async function ownsResource(
  * Check if user can modify a course
  */
 export async function canModifyCourse(
-  userId: number,
-  courseId: number,
+  userId: string,
+  courseId: string,
   userRole: Role
 ): Promise<boolean> {
   if (userRole === "ADMIN") {
@@ -141,8 +141,8 @@ export async function canModifyCourse(
  * Check if user can access assignment submissions
  */
 export async function canViewSubmissions(
-  userId: number,
-  assignmentId: number,
+  userId: string,
+  assignmentId: string,
   userRole: Role
 ): Promise<boolean> {
   const assignment = await prisma.assignment.findUnique({
@@ -161,8 +161,8 @@ export async function canViewSubmissions(
  * Check if user can grade a submission
  */
 export async function canGradeSubmission(
-  userId: number,
-  submissionId: number,
+  userId: string,
+  submissionId: string,
   userRole: Role
 ): Promise<boolean> {
   const submission = await prisma.assignmentSubmission.findUnique({
@@ -186,10 +186,7 @@ export async function canGradeSubmission(
 /**
  * Get courses user has access to
  */
-export async function getAccessibleCourses(
-  userId: number,
-  userRole: Role
-) {
+export async function getAccessibleCourses(userId: string, userRole: Role) {
   const where: Record<string, unknown> = {}
 
   if (userRole === "STUDENT") {

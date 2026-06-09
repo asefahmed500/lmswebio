@@ -7,13 +7,16 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, ArrowLeft, Plus } from "lucide-react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import { courseSchema, type CourseFormData } from "@/lib/validators"
+import { apiPost } from "@/lib/api-client"
 import { Level } from "@/types"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -221,22 +224,17 @@ export default function NewCoursePage() {
     setError(null)
 
     try {
-      const res = await fetch("/api/courses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: data.title,
-          description: data.description,
-          level: data.level,
-          category: data.category || undefined,
-          tags,
-          thumbnail: data.thumbnail || undefined,
-        }),
+      const result = await apiPost("/courses", {
+        title: data.title,
+        description: data.description,
+        level: data.level,
+        category: data.category || undefined,
+        tags,
+        thumbnail: data.thumbnail || undefined,
       })
 
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to create course")
+      if (result.error) {
+        throw new Error(result.error || "Failed to create course")
       }
 
       router.push("/instructor/courses")
@@ -267,13 +265,13 @@ export default function NewCoursePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6">
       {/* Page header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <a href="/instructor/courses">
-            <ArrowLeft className="h-4 w-4" />
-          </a>
+          <Link href="/instructor/courses">
+            <ArrowLeft />
+          </Link>
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -285,12 +283,15 @@ export default function NewCoursePage() {
         </div>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-6"
+      >
         {/* Error message */}
         {error && (
-          <div className="rounded-md bg-destructive/15 p-4 text-sm text-destructive">
-            {error}
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {/* Basic information */}
@@ -301,9 +302,9 @@ export default function NewCoursePage() {
               General information about your course
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex flex-col gap-4">
             {/* Title */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="title">Course Title *</Label>
               <Input
                 id="title"
@@ -319,7 +320,7 @@ export default function NewCoursePage() {
             </div>
 
             {/* Description */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="description">Description</Label>
               <RichTextEditor
                 content={form.watch("description") || ""}
@@ -335,7 +336,7 @@ export default function NewCoursePage() {
 
             {/* Level and Category */}
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="level">Difficulty Level *</Label>
                 <Select
                   value={form.watch("level")}
@@ -360,7 +361,7 @@ export default function NewCoursePage() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="category">Category</Label>
                 <Input
                   id="category"
@@ -372,7 +373,7 @@ export default function NewCoursePage() {
             </div>
 
             {/* Tags */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label>Tags (max 10)</Label>
               <div className="flex gap-2">
                 <Input
@@ -393,7 +394,7 @@ export default function NewCoursePage() {
                   onClick={handleAddTag}
                   disabled={isLoading || tags.length >= 10 || !tagInput.trim()}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus />
                 </Button>
               </div>
               {tags.length > 0 && (
@@ -401,14 +402,16 @@ export default function NewCoursePage() {
                   {tags.map((tag) => (
                     <Badge key={tag} variant="secondary" className="gap-1">
                       {tag}
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleRemoveTag(tag)}
-                        className="rounded-full p-0.5 hover:bg-destructive/20"
+                        className="size-5 rounded-full p-0.5 hover:bg-destructive/20"
                         disabled={isLoading}
                       >
                         ×
-                      </button>
+                      </Button>
                     </Badge>
                   ))}
                 </div>
@@ -416,7 +419,7 @@ export default function NewCoursePage() {
             </div>
 
             {/* Thumbnail URL */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="thumbnail">Thumbnail URL</Label>
               <Input
                 id="thumbnail"
@@ -437,7 +440,7 @@ export default function NewCoursePage() {
         {/* Submit buttons */}
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
             Create Course
           </Button>
           <Button

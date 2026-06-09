@@ -20,11 +20,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    let settings = await prisma.settings.findUnique({ where: { id: 1 } })
+    let settings = await prisma.settings.findUnique({
+      where: { id: "singleton" },
+    })
 
     if (!settings) {
       settings = await prisma.settings.create({
-        data: { id: 1 },
+        data: { id: "singleton" },
       })
     }
 
@@ -49,9 +51,9 @@ export async function PUT(request: NextRequest) {
     const data = updateSettingsSchema.parse(body)
 
     const settings = await prisma.settings.upsert({
-      where: { id: 1 },
+      where: { id: "singleton" },
       update: data,
-      create: { id: 1, ...data },
+      create: { id: "singleton", ...data },
     })
 
     return NextResponse.json({

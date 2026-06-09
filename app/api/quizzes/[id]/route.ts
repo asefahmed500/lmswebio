@@ -21,7 +21,7 @@ export async function GET(
     }
 
     const quiz = await prisma.quiz.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: {
         course: {
           select: { id: true, title: true, instructorId: true },
@@ -87,7 +87,7 @@ export async function PUT(
     }
 
     const quiz = await prisma.quiz.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: { course: true },
     })
 
@@ -106,7 +106,7 @@ export async function PUT(
     const data = updateQuizSchema.parse(body)
 
     const updatedQuiz = await prisma.quiz.update({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       data,
     })
 
@@ -137,7 +137,7 @@ export async function DELETE(
     }
 
     const quiz = await prisma.quiz.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: { course: true },
     })
 
@@ -153,7 +153,7 @@ export async function DELETE(
     }
 
     await prisma.quiz.delete({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
     })
 
     return NextResponse.json({ success: true })

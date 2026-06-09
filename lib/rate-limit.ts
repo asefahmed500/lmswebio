@@ -15,15 +15,15 @@ export async function rateLimit(
   try {
     await prisma.rateLimitRecord.deleteMany({
       where: {
-        timestamp: { lt: windowStart }
-      }
+        timestamp: { lt: windowStart },
+      },
     })
 
     const count = await prisma.rateLimitRecord.count({
       where: {
         identifier,
-        timestamp: { gte: windowStart }
-      }
+        timestamp: { gte: windowStart },
+      },
     })
 
     if (count >= config.maxRequests) {
@@ -33,8 +33,8 @@ export async function rateLimit(
     await prisma.rateLimitRecord.create({
       data: {
         identifier,
-        timestamp: new Date(now)
-      }
+        timestamp: new Date(now),
+      },
     })
 
     return { success: true, remaining: config.maxRequests - count - 1 }
@@ -54,7 +54,7 @@ export async function cleanExpiredRateLimits(): Promise<void> {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
   try {
     await prisma.rateLimitRecord.deleteMany({
-      where: { timestamp: { lt: cutoff } }
+      where: { timestamp: { lt: cutoff } },
     })
   } catch (error) {
     console.error("Error cleaning expired rate limits:", error)

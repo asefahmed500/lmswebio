@@ -13,9 +13,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search")
 
     const courses = await prisma.course.findMany({
-      where: search
-        ? { tags: { has: search } }
-        : undefined,
+      where: search ? { tags: { has: search } } : undefined,
       select: { tags: true },
     })
 

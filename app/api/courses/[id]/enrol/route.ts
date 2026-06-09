@@ -14,11 +14,13 @@ export async function POST(
 
     const { role, id: userId } = session.user
     if (role !== "STUDENT") {
-      return NextResponse.json({ error: "Only students can enroll" }, { status: 403 })
+      return NextResponse.json(
+        { error: "Only students can enroll" },
+        { status: 403 }
+      )
     }
 
-    const { id } = await params
-    const courseId = parseInt(id)
+    const { id: courseId } = await params
 
     const course = await prisma.course.findUnique({ where: { id: courseId } })
     if (!course) {
@@ -26,7 +28,24 @@ export async function POST(
     }
 
     if (!course.isPublished) {
-      return NextResponse.json({ error: "Course is not published" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Course is not published" },
+        { status: 400 }
+      )
+    }
+
+    // For paid courses, redirect to checkout instead of direct enrollment
+    if (course.price && course.price > 0) {
+      return NextResponse.json(
+        {
+          error: "This course requires payment",
+          requiresPayment: true,
+          courseId: course.id,
+          price: course.price,
+          checkoutUrl: `/student/checkout/${course.id}`,
+        },
+        { status: 402 }
+      )
     }
 
     const existing = await prisma.enrolment.findUnique({
@@ -47,6 +66,9 @@ export async function POST(
     return NextResponse.json(enrolment, { status: 201 })
   } catch (error) {
     console.error("POST /api/courses/[id]/enrol error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

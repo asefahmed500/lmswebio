@@ -1,25 +1,9 @@
-/**
- * Combined submissions view across all assignments
- * Shows all student submissions with grading status and filtering
- */
-
 "use client"
 
 import * as React from "react"
 import Link from "next/link"
-import {
-  FileText,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Search,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { FileText, Clock, CheckCircle, Search } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -40,9 +24,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/components/auth-provider"
-import type { Assignment, AssignmentSubmission, Course } from "@/types"
+import { apiGet } from "@/lib/api-client"
 
-interface SubmissionWithMeta extends AssignmentSubmission {
+interface SubmissionWithMeta {
+  id: number
+  user?: { id: number; fullName: string; avatarUrl?: string | null }
+  grade?: number | null
+  submittedAt?: string
+  assignmentId?: number
   assignmentTitle?: string
   courseTitle?: string
   courseId?: number
@@ -62,29 +51,33 @@ export default function AllSubmissionsPage() {
       if (!user) return
       setIsLoading(true)
       try {
-        const [assignmentsRes, coursesRes] = await Promise.all([
-          fetch("/api/assignments"),
-          fetch("/api/courses"),
+        const [assignmentsResult, coursesResult] = await Promise.all([
+          apiGet<{
+            assignments: { id: number; title: string; courseId: number }[]
+          }>("/assignments"),
+          apiGet<{ courses: { id: number; title: string }[] }>("/courses"),
         ])
-        if (!assignmentsRes.ok) throw new Error("Failed to fetch assignments")
-        if (!coursesRes.ok) throw new Error("Failed to fetch courses")
 
-        const assignments: Assignment[] = await assignmentsRes.json()
-        const courses: Course[] = await coursesRes.json()
+        if (assignmentsResult.error || !assignmentsResult.data)
+          throw new Error("Failed to fetch assignments")
+        if (coursesResult.error || !coursesResult.data)
+          throw new Error("Failed to fetch courses")
+
+        const assignments = assignmentsResult.data.assignments || []
+        const courses = coursesResult.data.courses || []
 
         const courseMap = new Map(courses.map((c) => [c.id, c.title]))
-        const assignmentMap = new Map(assignments.map((a) => [a.id, a]))
 
         const allSubmissions: SubmissionWithMeta[] = []
         for (const assignment of assignments) {
           try {
-            const subRes = await fetch(
-              `/api/assignments/${assignment.id}`
-            )
-            if (subRes.ok) {
-              const data = await subRes.json()
-              const subs = (data.submissions || data || []).map(
-                (s: AssignmentSubmission) => ({
+            const subResult = await apiGet<{
+              submissions: SubmissionWithMeta[]
+            }>(`/assignments/${assignment.id}`)
+            if (subResult.data) {
+              const subs = (subResult.data.submissions || []).map(
+                (s: SubmissionWithMeta) => ({
+                  ...s,
                   ...s,
                   assignmentTitle: assignment.title,
                   courseTitle: courseMap.get(assignment.courseId) || undefined,
@@ -93,9 +86,7 @@ export default function AllSubmissionsPage() {
               )
               allSubmissions.push(...subs)
             }
-          } catch {
-            // skip assignments that fail to load
-          }
+          } catch {}
         }
         setSubmissions(allSubmissions)
       } catch (error) {
@@ -124,9 +115,7 @@ export default function AllSubmissionsPage() {
       const q = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (s) =>
-          (s.user?.fullName || "")
-            .toLowerCase()
-            .includes(q) ||
+          (s.user?.fullName || "").toLowerCase().includes(q) ||
           (s.assignmentTitle || "").toLowerCase().includes(q) ||
           (s.courseTitle || "").toLowerCase().includes(q)
       )
@@ -144,7 +133,7 @@ export default function AllSubmissionsPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">
             Loading submissions...
           </p>
@@ -154,11 +143,9 @@ export default function AllSubmissionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          All Submissions
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">All Submissions</h1>
         <p className="mt-1 text-muted-foreground">
           View and manage all student submissions across your courses
         </p>
@@ -173,7 +160,7 @@ export default function AllSubmissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
+              <FileText className="size-5 text-primary" />
               <div className="text-2xl font-bold">{submissions.length}</div>
             </div>
           </CardContent>
@@ -186,7 +173,7 @@ export default function AllSubmissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="text-success size-5" />
               <div className="text-2xl font-bold">{gradedCount}</div>
             </div>
           </CardContent>
@@ -199,7 +186,7 @@ export default function AllSubmissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" />
+              <Clock className="text-warning size-5" />
               <div className="text-2xl font-bold">{pendingCount}</div>
             </div>
           </CardContent>
@@ -210,7 +197,7 @@ export default function AllSubmissionsPage() {
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative max-w-sm flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search submissions..."
@@ -221,9 +208,7 @@ export default function AllSubmissionsPage() {
             </div>
             <Select
               value={gradeFilter}
-              onValueChange={(value) =>
-                setGradeFilter(value as GradeFilter)
-              }
+              onValueChange={(value) => setGradeFilter(value as GradeFilter)}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
@@ -256,9 +241,7 @@ export default function AllSubmissionsPage() {
                       <div className="flex items-center gap-2">
                         <Avatar className="h-7 w-7">
                           <AvatarFallback className="text-xs">
-                            {(
-submission.user?.fullName || "S"
-                            )
+                            {(submission.user?.fullName || "S")
                               .split(" ")
                               .map((n: string) => n[0])
                               .join("")
@@ -273,29 +256,33 @@ submission.user?.fullName || "S"
                     </TableCell>
                     <TableCell>
                       <span className="text-sm">
-                        {submission.assignmentTitle || `Assignment #${submission.assignmentId}`}
+                        {submission.assignmentTitle ||
+                          `Assignment #${submission.assignmentId}`}
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {submission.courseTitle || `Course #${submission.courseId}`}
+                        {submission.courseTitle ||
+                          `Course #${submission.courseId}`}
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {new Date(submission.submittedAt).toLocaleDateString()}
+                        {new Date(
+                          submission.submittedAt || ""
+                        ).toLocaleDateString()}
                       </span>
                     </TableCell>
                     <TableCell>
                       {submission.grade !== null &&
                       submission.grade !== undefined ? (
                         <Badge variant="default" className="gap-1">
-                          <CheckCircle className="h-3 w-3" />
+                          <CheckCircle className="size-3" />
                           {submission.grade} pts
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="gap-1 text-amber-600">
-                          <Clock className="h-3 w-3" />
+                        <Badge variant="outline" className="text-warning gap-1">
+                          <Clock className="size-3" />
                           Pending
                         </Badge>
                       )}
@@ -318,7 +305,7 @@ submission.user?.fullName || "S"
             </Table>
           ) : (
             <div className="py-12 text-center">
-              <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">
                 No submissions found
               </h3>

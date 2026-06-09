@@ -1,27 +1,20 @@
-import '@testing-library/jest-dom'
-import { cleanup } from '@testing-library/react'
-import { afterEach, vi } from 'vitest'
+// Mock must be at the very top (hoisted by vi.mock)
+import { vi } from "vitest"
 
-afterEach(() => {
-  cleanup()
-})
-
-// Mock Next.js router
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
     prefetch: vi.fn(),
     back: vi.fn(),
-    pathname: '/',
+    pathname: "/",
     query: {},
   }),
-  usePathname: () => '/',
+  usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
 }))
 
-// Mock Next.js headers
-vi.mock('next/headers', () => ({
+vi.mock("next/headers", () => ({
   cookies: () => ({
     get: vi.fn(),
     set: vi.fn(),
@@ -29,7 +22,16 @@ vi.mock('next/headers', () => ({
   }),
 }))
 
+import "@testing-library/jest-dom/vitest"
+import { cleanup } from "@testing-library/react"
+import { afterEach } from "vitest"
+
+afterEach(() => {
+  cleanup()
+})
+
 // Mock environment variables
-process.env.NODE_ENV = 'test'
-process.env.JWT_SECRET = 'test-secret-key-that-is-at-least-32-characters-long'
-process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-that-is-at-least-32-characters-long'
+process.env.NODE_ENV = "test"
+process.env.JWT_SECRET = "test-secret-key-that-is-at-least-32-characters-long"
+process.env.JWT_REFRESH_SECRET =
+  "test-refresh-secret-key-that-is-at-least-32-characters-long"

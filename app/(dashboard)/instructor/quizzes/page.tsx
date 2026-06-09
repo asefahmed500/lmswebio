@@ -1,8 +1,3 @@
-/**
- * Instructor quizzes list page
- * Displays all quizzes for the instructor's courses with stats and actions
- */
-
 "use client"
 
 import * as React from "react"
@@ -69,7 +64,7 @@ export default function InstructorQuizzesPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL")
-  const [deleteId, setDeleteId] = React.useState<number | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     async function loadQuizzes() {
@@ -89,7 +84,7 @@ export default function InstructorQuizzesPage() {
     loadQuizzes()
   }, [user])
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/quizzes/${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete quiz")
@@ -105,7 +100,8 @@ export default function InstructorQuizzesPage() {
     if (statusFilter !== "ALL") {
       filtered = filtered.filter((q) => {
         if (statusFilter === "HAS_QUESTIONS") return (q.questionsCount ?? 0) > 0
-        if (statusFilter === "NO_QUESTIONS") return (q.questionsCount ?? 0) === 0
+        if (statusFilter === "NO_QUESTIONS")
+          return (q.questionsCount ?? 0) === 0
         if (statusFilter === "HAS_ATTEMPTS") return (q.attemptsCount ?? 0) > 0
         return true
       })
@@ -134,7 +130,7 @@ export default function InstructorQuizzesPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">Loading quizzes...</p>
         </div>
       </div>
@@ -142,7 +138,7 @@ export default function InstructorQuizzesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Quizzes</h1>
@@ -152,7 +148,7 @@ export default function InstructorQuizzesPage() {
         </div>
         <Button asChild>
           <Link href="/instructor/quizzes/new">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus data-icon="inline-start" />
             New Quiz
           </Link>
         </Button>
@@ -167,7 +163,7 @@ export default function InstructorQuizzesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
+              <FileText className="size-5 text-primary" />
               <div className="text-2xl font-bold">{quizzes.length}</div>
             </div>
           </CardContent>
@@ -180,7 +176,7 @@ export default function InstructorQuizzesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5 text-blue-500" />
+              <HelpCircle className="text-info size-5" />
               <div className="text-2xl font-bold">{totalQuestions}</div>
             </div>
           </CardContent>
@@ -193,7 +189,7 @@ export default function InstructorQuizzesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-amber-500" />
+              <Users className="text-warning size-5" />
               <div className="text-2xl font-bold">{totalAttempts}</div>
             </div>
           </CardContent>
@@ -273,7 +269,7 @@ export default function InstructorQuizzesPage() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -281,7 +277,7 @@ export default function InstructorQuizzesPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
                             <Link href={`/instructor/quizzes/${quiz.id}`}>
-                              <Edit className="mr-2 h-4 w-4" />
+                              <Edit className="mr-2 size-4" />
                               Edit
                             </Link>
                           </DropdownMenuItem>
@@ -289,7 +285,7 @@ export default function InstructorQuizzesPage() {
                             <Link
                               href={`/instructor/quizzes/results?quizId=${quiz.id}`}
                             >
-                              <BarChart3 className="mr-2 h-4 w-4" />
+                              <BarChart3 className="mr-2 size-4" />
                               View Results
                             </Link>
                           </DropdownMenuItem>
@@ -298,7 +294,7 @@ export default function InstructorQuizzesPage() {
                             className="text-destructive"
                             onClick={() => setDeleteId(quiz.id)}
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            <Trash2 className="mr-2 size-4" />
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -310,7 +306,7 @@ export default function InstructorQuizzesPage() {
             </Table>
           ) : (
             <div className="py-12 text-center">
-              <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No quizzes found</h3>
               <p className="mb-4 text-sm text-muted-foreground">
                 {searchQuery || statusFilter !== "ALL"
@@ -320,7 +316,7 @@ export default function InstructorQuizzesPage() {
               {!searchQuery && statusFilter === "ALL" && (
                 <Button asChild>
                   <Link href="/instructor/quizzes/new">
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus data-icon="inline-start" />
                     Create Quiz
                   </Link>
                 </Button>
@@ -330,13 +326,17 @@ export default function InstructorQuizzesPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Quiz</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this quiz? This action cannot be undone.
-              All questions and student attempts will be permanently removed.
+              Are you sure you want to delete this quiz? This action cannot be
+              undone. All questions and student attempts will be permanently
+              removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

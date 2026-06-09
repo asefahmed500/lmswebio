@@ -11,8 +11,8 @@ import { z } from "zod"
 
 // Validation schema
 const awardBadgeSchema = z.object({
-  userId: z.number(),
-  badgeId: z.number(),
+  userId: z.string(),
+  badgeId: z.string(),
 })
 
 /**
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get("userId")
-    const targetUserId = userId ? parseInt(userId) : session.user.id
+    const targetUserId = userId || session.user.id
 
     // Users can only view their own badges unless they're admins
     if (targetUserId !== session.user.id && session.user.role !== "ADMIN") {
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const body = await req.json()

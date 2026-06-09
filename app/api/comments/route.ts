@@ -1,5 +1,6 @@
 /**
  * Comments API endpoints
+ * GET /api/comments - List comments
  * POST /api/comments - Create a new comment
  */
 
@@ -11,10 +12,102 @@ import { z } from "zod"
 
 // Validation schema
 const createCommentSchema = z.object({
-  discussionId: z.number().int().positive(),
+  discussionId: z.string().min(1),
   content: z.string().min(1).max(10000),
-  parentId: z.number().int().positive().optional(),
+  parentId: z.string().min(1).optional(),
 })
+
+/**
+ * GET /api/comments
+ * List comments for a discussion with pagination
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(req.url)
+    const discussionId = searchParams.get("discussionId")
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "20")
+
+    if (!discussionId) {
+      return NextResponse.json(
+        { error: "discussionId is required" },
+        { status: 400 }
+      )
+    }
+
+    const discussion = await prisma.discussion.findUnique({
+      where: { id: discussionId },
+    })
+
+    if (!discussion) {
+      return NextResponse.json(
+        { error: "Discussion not found" },
+        { status: 404 }
+      )
+    }
+
+    const skip = (page - 1) * limit
+
+    const [comments, total] = await Promise.all([
+      prisma.comment.findMany({
+        where: { discussionId: discussionId, parentId: null },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              avatarUrl: true,
+              role: true,
+            },
+          },
+          _count: {
+            select: { replies: true },
+          },
+          replies: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  avatarUrl: true,
+                  role: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+        skip,
+        take: limit,
+      }),
+      prisma.comment.count({
+        where: { discussionId: discussionId, parentId: null },
+      }),
+    ])
+
+    return NextResponse.json({
+      comments,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    })
+  } catch (error) {
+    console.error("Comment fetch error:", error)
+    return NextResponse.json(
+      { error: "Failed to fetch comments" },
+      { status: 500 }
+    )
+  }
+}
 
 /**
  * POST /api/comments
@@ -29,7 +122,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => null)
     if (!body) {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      )
     }
 
     const validatedData = createCommentSchema.parse(body)
@@ -43,7 +139,10 @@ export async function POST(req: NextRequest) {
     })
 
     if (!discussion) {
-      return NextResponse.json({ error: "Discussion not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Discussion not found" },
+        { status: 404 }
+      )
     }
 
     const enrollment = await prisma.enrolment.findUnique({
@@ -68,7 +167,10 @@ export async function POST(req: NextRequest) {
         where: { id: validatedData.parentId },
       })
 
-      if (!parentComment || parentComment.discussionId !== validatedData.discussionId) {
+      if (
+        !parentComment ||
+        parentComment.discussionId !== validatedData.discussionId
+      ) {
         return NextResponse.json(
           { error: "Parent comment not found" },
           { status: 404 }

@@ -23,12 +23,15 @@ export async function PUT(
     const data = updateAnnouncementSchema.parse(body)
 
     const existing = await prisma.announcement.findUnique({
-      where: { id: Number(id) },
+      where: { id: id },
       include: { course: true },
     })
 
     if (!existing) {
-      return NextResponse.json({ error: "Announcement not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Announcement not found" },
+        { status: 404 }
+      )
     }
 
     if (
@@ -39,7 +42,7 @@ export async function PUT(
     }
 
     const announcement = await prisma.announcement.update({
-      where: { id: Number(id) },
+      where: { id: id },
       data: {
         ...(data.title !== undefined && { title: data.title }),
         ...(data.content !== undefined && { content: data.content }),
@@ -75,12 +78,15 @@ export async function DELETE(
     const { id } = await params
 
     const existing = await prisma.announcement.findUnique({
-      where: { id: Number(id) },
+      where: { id: id },
       include: { course: true },
     })
 
     if (!existing) {
-      return NextResponse.json({ error: "Announcement not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Announcement not found" },
+        { status: 404 }
+      )
     }
 
     if (
@@ -91,7 +97,7 @@ export async function DELETE(
     }
 
     await prisma.announcement.delete({
-      where: { id: Number(id) },
+      where: { id: id },
     })
 
     return NextResponse.json({ success: true })

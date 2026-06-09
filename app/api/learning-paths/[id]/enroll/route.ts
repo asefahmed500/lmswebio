@@ -23,8 +23,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const learningPathId = parseInt(id)
+    const { id: learningPathId } = await params
 
     const enrollment = await prisma.learningPathEnrollment.findUnique({
       where: {
@@ -77,11 +76,10 @@ export async function POST(
   try {
     const session = await getSession()
     if (!session || session.user.role !== "STUDENT") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { id } = await params
-    const learningPathId = parseInt(id)
+    const { id: learningPathId } = await params
 
     // Verify learning path exists and is published
     const learningPath = await prisma.learningPath.findUnique({
@@ -172,8 +170,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const learningPathId = parseInt(id)
+    const { id: learningPathId } = await params
 
     // Check if enrolled
     const enrollment = await prisma.learningPathEnrollment.findUnique({

@@ -16,10 +16,10 @@ const loginBodySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const identifier = getRateLimitIdentifier(request)
-    const rateLimitResult = rateLimit(identifier, {
-      maxRequests: 5,
-      windowMs: 15 * 60 * 1000,
+    const identifier = `${getRateLimitIdentifier(request)}:login`
+    const rateLimitResult = await rateLimit(identifier, {
+      maxRequests: 10,
+      windowMs: 60 * 1000,
     })
 
     if (!rateLimitResult.success) {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       data: {
         token: refreshToken,
         userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
     })
 

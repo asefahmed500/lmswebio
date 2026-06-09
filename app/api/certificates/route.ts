@@ -5,13 +5,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 // Validation schema
 const generateCertificateSchema = z.object({
-  courseId: z.number(),
+  courseId: z.string(),
 })
 
 /**
@@ -28,9 +29,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const courseId = searchParams.get("courseId")
 
-    const where: any = { userId: session.user.id }
+    const where: Prisma.CertificateWhereInput = { userId: session.user.id }
     if (courseId) {
-      where.courseId = parseInt(courseId)
+      where.courseId = courseId
     }
 
     const certificates = await prisma.certificate.findMany({

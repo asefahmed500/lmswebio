@@ -66,11 +66,11 @@ export function NotesEditor({
   }
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bookmark className="h-5 w-5 text-primary" />
+            <Bookmark className="size-5 text-primary" />
             <CardTitle className="text-lg">
               {note ? "Edit Note" : "New Note"}
             </CardTitle>
@@ -90,7 +90,7 @@ export function NotesEditor({
                     onClick={onDelete}
                     className="text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 />
                   </Button>
                 )}
                 <Button
@@ -98,7 +98,7 @@ export function NotesEditor({
                   onClick={handleSave}
                   disabled={!content.trim() || isSaving}
                 >
-                  <Save className="h-4 w-4 mr-1" />
+                  <Save className="mr-1 size-4" />
                   {isSaving ? "Saving..." : "Save"}
                 </Button>
               </>
@@ -107,7 +107,7 @@ export function NotesEditor({
         </div>
 
         {note && (
-          <div className="flex items-center gap-2 mt-2">
+          <div className="mt-2 flex items-center gap-2">
             <Badge variant="outline">{note.lesson.module.title}</Badge>
             <span className="text-sm text-muted-foreground">
               {note.lesson.title}
@@ -116,10 +116,11 @@ export function NotesEditor({
         )}
 
         {timestamp !== undefined && (
-          <div className="flex items-center gap-2 mt-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <div className="mt-2 flex items-center gap-2">
+            <Clock className="size-4 text-muted-foreground" />
             <Badge variant="secondary">
-              {Math.floor(timestamp / 60)}:{(timestamp % 60).toString().padStart(2, "0")}
+              {Math.floor(timestamp / 60)}:
+              {(timestamp % 60).toString().padStart(2, "0")}
             </Badge>
           </div>
         )}
@@ -135,8 +136,8 @@ export function NotesEditor({
         />
 
         {content && (
-          <div className="mt-4 p-4 bg-muted rounded-lg">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
+          <div className="mt-4 rounded-lg bg-muted p-4">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">
               Preview
             </p>
             <div className="prose prose-sm max-w-none">

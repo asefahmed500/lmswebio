@@ -76,36 +76,36 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="overflow-hidden rounded-lg border">
       {editable && (
-        <div className="border-b bg-muted/30 p-2 flex flex-wrap items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1 border-b bg-muted/30 p-2">
           <Toggle
             size="sm"
             pressed={editor.isActive("bold")}
             onPressedChange={() => editor.chain().focus().toggleBold().run()}
           >
-            <Bold className="w-4 h-4" />
+            <Bold className="size-4" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={editor.isActive("italic")}
             onPressedChange={() => editor.chain().focus().toggleItalic().run()}
           >
-            <Italic className="w-4 h-4" />
+            <Italic className="size-4" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={editor.isActive("strike")}
             onPressedChange={() => editor.chain().focus().toggleStrike().run()}
           >
-            <Strikethrough className="w-4 h-4" />
+            <Strikethrough className="size-4" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={editor.isActive("code")}
             onPressedChange={() => editor.chain().focus().toggleCode().run()}
           >
-            <Code className="w-4 h-4" />
+            <Code className="size-4" />
           </Toggle>
 
           <Separator orientation="vertical" className="h-8" />
@@ -115,10 +115,10 @@ export function RichTextEditor({
               editor.isActive("heading", { level: 1 })
                 ? "h1"
                 : editor.isActive("heading", { level: 2 })
-                ? "h2"
-                : editor.isActive("heading", { level: 3 })
-                ? "h3"
-                : "p"
+                  ? "h2"
+                  : editor.isActive("heading", { level: 3 })
+                    ? "h3"
+                    : "p"
             }
             onValueChange={(value: string) => {
               if (value === "p") {
@@ -132,7 +132,7 @@ export function RichTextEditor({
               }
             }}
           >
-            <SelectTrigger className="w-16 h-8">
+            <SelectTrigger className="h-8 w-16">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -148,16 +148,20 @@ export function RichTextEditor({
           <Toggle
             size="sm"
             pressed={editor.isActive("bulletList")}
-            onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+            onPressedChange={() =>
+              editor.chain().focus().toggleBulletList().run()
+            }
           >
-            <List className="w-4 h-4" />
+            <List className="size-4" />
           </Toggle>
           <Toggle
             size="sm"
             pressed={editor.isActive("orderedList")}
-            onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+            onPressedChange={() =>
+              editor.chain().focus().toggleOrderedList().run()
+            }
           >
-            <ListOrdered className="w-4 h-4" />
+            <ListOrdered className="size-4" />
           </Toggle>
 
           <Separator orientation="vertical" className="h-8" />
@@ -168,36 +172,46 @@ export function RichTextEditor({
             onClick={() => editor.chain().focus().extendMarkRange("left").run()}
             className={editor.isActive({ textAlign: "left" }) ? "bg-muted" : ""}
           >
-            <AlignLeft className="w-4 h-4" />
+            <AlignLeft className="size-4" />
           </Button>
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => editor.chain().focus().extendMarkRange("center").run()}
-            className={editor.isActive({ textAlign: "center" }) ? "bg-muted" : ""}
+            onClick={() =>
+              editor.chain().focus().extendMarkRange("center").run()
+            }
+            className={
+              editor.isActive({ textAlign: "center" }) ? "bg-muted" : ""
+            }
           >
-            <AlignCenter className="w-4 h-4" />
+            <AlignCenter className="size-4" />
           </Button>
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => editor.chain().focus().extendMarkRange("right").run()}
-            className={editor.isActive({ textAlign: "right" }) ? "bg-muted" : ""}
+            onClick={() =>
+              editor.chain().focus().extendMarkRange("right").run()
+            }
+            className={
+              editor.isActive({ textAlign: "right" }) ? "bg-muted" : ""
+            }
           >
-            <AlignRight className="w-4 h-4" />
+            <AlignRight className="size-4" />
           </Button>
           <Toggle
             size="sm"
             pressed={editor.isActive("blockquote")}
-            onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
+            onPressedChange={() =>
+              editor.chain().focus().toggleBlockquote().run()
+            }
           >
-            <Quote className="w-4 h-4" />
+            <Quote className="size-4" />
           </Toggle>
 
           <Separator orientation="vertical" className="h-8" />
 
           <Button size="sm" variant="ghost" onClick={setLink}>
-            <Link className="w-4 h-4" />
+            <Link className="size-4" />
           </Button>
 
           <Separator orientation="vertical" className="h-8" />
@@ -208,7 +222,7 @@ export function RichTextEditor({
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
           >
-            <Undo className="w-4 h-4" />
+            <Undo className="size-4" />
           </Button>
           <Button
             size="sm"
@@ -216,13 +230,13 @@ export function RichTextEditor({
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
           >
-            <Redo className="w-4 h-4" />
+            <Redo className="size-4" />
           </Button>
         </div>
       )}
 
       <EditorContent
-        className="prose prose-sm sm:prose lg:prose-lg max-w-none min-h-[200px] p-4 focus:outline-none"
+        className="prose prose-sm sm:prose lg:prose-lg min-h-[200px] max-w-none p-4 focus:outline-none"
         editor={editor}
       />
 

@@ -29,8 +29,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const discussionId = parseInt(id)
+    const { id: discussionId } = await params
     const body = await req.json()
     const { value } = voteSchema.parse(body)
 
@@ -40,7 +39,10 @@ export async function POST(
     })
 
     if (!discussion) {
-      return NextResponse.json({ error: "Discussion not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Discussion not found" },
+        { status: 404 }
+      )
     }
 
     // Check if user is enrolled in the course

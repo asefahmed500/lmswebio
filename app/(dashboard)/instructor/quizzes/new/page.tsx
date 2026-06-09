@@ -1,19 +1,10 @@
-/**
- * New quiz creation page
- * Form for instructors to create a new quiz with dynamic questions
- */
-
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import {
-  Loader2,
-  ArrowLeft,
-  Plus,
-  Trash2,
-  GripVertical,
-} from "lucide-react"
+import { Loader2, ArrowLeft, Plus, Trash2, GripVertical } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -73,7 +64,9 @@ export default function NewQuizPage() {
   const [title, setTitle] = React.useState("")
   const [description, setDescription] = React.useState("")
   const [courseId, setCourseId] = React.useState<number | undefined>(undefined)
-  const [timeLimit, setTimeLimit] = React.useState<number | undefined>(undefined)
+  const [timeLimit, setTimeLimit] = React.useState<number | undefined>(
+    undefined
+  )
   const [attemptsAllowed, setAttemptsAllowed] = React.useState(1)
   const [titleError, setTitleError] = React.useState<string | null>(null)
   const [courseError, setCourseError] = React.useState<string | null>(null)
@@ -89,7 +82,7 @@ export default function NewQuizPage() {
         const res = await fetch("/api/courses")
         if (!res.ok) throw new Error("Failed to fetch courses")
         const data = await res.json()
-        setCourses(data)
+        setCourses(data.courses || data)
       } catch (err) {
         console.error("Failed to load courses:", err)
       } finally {
@@ -111,11 +104,7 @@ export default function NewQuizPage() {
     })
   }
 
-  const updateOption = (
-    qIndex: number,
-    key: string,
-    value: string
-  ) => {
+  const updateOption = (qIndex: number, key: string, value: string) => {
     setQuestions((prev) => {
       const updated = [...prev]
       updated[qIndex] = {
@@ -160,14 +149,17 @@ export default function NewQuizPage() {
         q.type === QuestionType.MC_SINGLE ||
         q.type === QuestionType.MC_MULTI
       ) {
-        const filledOptions = Object.entries(q.options).filter(
-          ([, v]) => v.trim()
+        const filledOptions = Object.entries(q.options).filter(([, v]) =>
+          v.trim()
         )
         if (filledOptions.length < 2) {
           valid = false
           break
         }
-        if (!q.correctAnswer || (Array.isArray(q.correctAnswer) && q.correctAnswer.length === 0)) {
+        if (
+          !q.correctAnswer ||
+          (Array.isArray(q.correctAnswer) && q.correctAnswer.length === 0)
+        ) {
           valid = false
           break
         }
@@ -221,9 +213,7 @@ export default function NewQuizPage() {
       }
       router.push("/instructor/quizzes")
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create quiz"
-      )
+      setError(err instanceof Error ? err.message : "Failed to create quiz")
       console.error(err)
     } finally {
       setIsSubmitting(false)
@@ -234,7 +224,7 @@ export default function NewQuizPage() {
     switch (q.type) {
       case QuestionType.MC_SINGLE:
         return (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label>Correct Answer</Label>
             <Select
               value={String(q.correctAnswer || "")}
@@ -259,7 +249,7 @@ export default function NewQuizPage() {
         )
       case QuestionType.MC_MULTI:
         return (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label>Correct Answers (select all that apply)</Label>
             <div className="flex flex-wrap gap-2">
               {Object.entries(q.options)
@@ -289,7 +279,7 @@ export default function NewQuizPage() {
         )
       case QuestionType.TRUE_FALSE:
         return (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label>Correct Answer</Label>
             <div className="flex gap-2">
               {["True", "False"].map((val) => (
@@ -314,7 +304,7 @@ export default function NewQuizPage() {
         )
       case QuestionType.TEXT:
         return (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label>Correct Answer</Label>
             <Input
               placeholder="Enter the correct answer"
@@ -331,28 +321,26 @@ export default function NewQuizPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <a href="/instructor/quizzes">
-            <ArrowLeft className="h-4 w-4" />
-          </a>
+          <Link href="/instructor/quizzes">
+            <ArrowLeft />
+          </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Create New Quiz
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Create New Quiz</h1>
           <p className="mt-1 text-muted-foreground">
             Fill in the details and add questions to create a new quiz
           </p>
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={onSubmit} className="flex flex-col gap-6">
         {error && (
-          <div className="rounded-md bg-destructive/15 p-4 text-sm text-destructive">
-            {error}
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         <Card>
@@ -362,8 +350,8 @@ export default function NewQuizPage() {
               Define the quiz parameters and settings
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="title">Quiz Title *</Label>
               <Input
                 id="title"
@@ -380,7 +368,7 @@ export default function NewQuizPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
@@ -393,7 +381,7 @@ export default function NewQuizPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="courseId">Course *</Label>
                 <Select
                   value={courseId ? String(courseId) : ""}
@@ -425,7 +413,7 @@ export default function NewQuizPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
                 <Input
                   id="timeLimit"
@@ -442,7 +430,7 @@ export default function NewQuizPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="attemptsAllowed">Attempts Allowed *</Label>
                 <Input
                   id="attemptsAllowed"
@@ -450,9 +438,7 @@ export default function NewQuizPage() {
                   min={1}
                   max={10}
                   value={attemptsAllowed}
-                  onChange={(e) =>
-                    setAttemptsAllowed(Number(e.target.value))
-                  }
+                  onChange={(e) => setAttemptsAllowed(Number(e.target.value))}
                   disabled={isSubmitting}
                 />
               </div>
@@ -477,19 +463,19 @@ export default function NewQuizPage() {
                 onClick={addQuestion}
                 disabled={isSubmitting || questions.length >= 50}
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus data-icon="inline-start" />
                 Add Question
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="flex flex-col gap-6">
             {questions.map((q, qIndex) => (
               <React.Fragment key={qIndex}>
                 {qIndex > 0 && <Separator />}
-                <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                <div className="flex flex-col gap-4 rounded-lg border bg-muted/20 p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      <GripVertical className="size-4 text-muted-foreground" />
                       <span className="text-sm font-medium">
                         Question {qIndex + 1}
                       </span>
@@ -502,13 +488,13 @@ export default function NewQuizPage() {
                         onClick={() => removeQuestion(qIndex)}
                         disabled={isSubmitting}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="size-4 text-destructive" />
                       </Button>
                     )}
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2 md:col-span-2">
+                    <div className="flex flex-col gap-2 md:col-span-2">
                       <Label>Question Text *</Label>
                       <Input
                         placeholder="Enter your question"
@@ -520,7 +506,7 @@ export default function NewQuizPage() {
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label>Question Type *</Label>
                       <Select
                         value={q.type}
@@ -559,7 +545,7 @@ export default function NewQuizPage() {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label>Points *</Label>
                       <Input
                         type="number"
@@ -580,7 +566,7 @@ export default function NewQuizPage() {
 
                   {(q.type === QuestionType.MC_SINGLE ||
                     q.type === QuestionType.MC_MULTI) && (
-                    <div className="space-y-3">
+                    <div className="flex flex-col gap-3">
                       <Label>Options *</Label>
                       {["A", "B", "C", "D"].map((key) => (
                         <div key={key} className="flex items-center gap-2">
@@ -609,9 +595,7 @@ export default function NewQuizPage() {
 
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
             Create Quiz
           </Button>
           <Button

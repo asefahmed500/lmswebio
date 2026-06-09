@@ -18,18 +18,18 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const module = await prisma.module.findUnique({
-      where: { id: Number((await params).id) },
+    const mod = await prisma.module.findUnique({
+      where: { id: (await params).id },
       include: { course: true },
     })
 
-    if (!module) {
+    if (!mod) {
       return NextResponse.json({ error: "Module not found" }, { status: 404 })
     }
 
     if (
       session.user.role === "INSTRUCTOR" &&
-      module.course.instructorId !== session.user.id
+      mod.course.instructorId !== session.user.id
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
@@ -38,7 +38,7 @@ export async function PUT(
     const data = updateModuleSchema.parse(body)
 
     const updatedModule = await prisma.module.update({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       data,
       include: {
         lessons: {
@@ -73,24 +73,24 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const module = await prisma.module.findUnique({
-      where: { id: Number((await params).id) },
+    const mod = await prisma.module.findUnique({
+      where: { id: (await params).id },
       include: { course: true },
     })
 
-    if (!module) {
+    if (!mod) {
       return NextResponse.json({ error: "Module not found" }, { status: 404 })
     }
 
     if (
       session.user.role === "INSTRUCTOR" &&
-      module.course.instructorId !== session.user.id
+      mod.course.instructorId !== session.user.id
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     await prisma.module.delete({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
     })
 
     return NextResponse.json({ success: true })

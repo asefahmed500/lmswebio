@@ -16,23 +16,18 @@ const nextConfig = {
   async headers() {
     const ContentSecurityPolicy = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' https:
-        https://cdn.jsdelivr.net
-        https://*.vercel-scripts.com;
-      style-src 'self' 'unsafe-inline' https:
-        https://fonts.googleapis.com
-        https://cdn.jsdelivr.net;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' data: https: blob: http:;
-      font-src 'self' data: https:
-        https://fonts.gstatic.com
-        https://cdn.jsdelivr.net;
+      font-src 'self' data: https: https://fonts.gstatic.com;
       object-src 'none';
       base-uri 'self';
       form-action 'self';
       frame-ancestors 'self';
+      frame-src 'self' https:;
       upgrade-insecure-requests;
-      connect-src 'self' https://*.vercel.com https://*.vercel.app;
-      media-src 'self' https:;
+      connect-src 'self' https: wss:;
+      media-src 'self' https: blob:;
       worker-src 'self' blob:;
       manifest-src 'self';
     `.replace(/\s{2,}/g, ' ').trim()

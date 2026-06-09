@@ -25,11 +25,13 @@ export const Role = {
  * User account information
  */
 export interface User {
-  id: number
+  id: string
   email: string
   fullName: string
   role: Role
   avatarUrl?: string
+  isActive?: boolean
+  isEmailVerified?: boolean
   createdAt: string
 }
 
@@ -64,14 +66,14 @@ export const Level = {
  * Main course object
  */
 export interface Course {
-  id: number
+  id: string
   title: string
   slug: string
   description?: string
   thumbnail?: string
   level: Level
   isPublished: boolean
-  instructorId: number
+  instructorId: string
   instructor?: User // Populated when needed
   modules: Module[]
   category?: string
@@ -84,10 +86,10 @@ export interface Course {
  * Module within a course (container for lessons)
  */
 export interface Module {
-  id: number
+  id: string
   title: string
   order: number
-  courseId: number
+  courseId: string
   lessons: Lesson[]
   lessonCount?: number // Optional count for mock data compatibility
 }
@@ -110,12 +112,12 @@ export const LessonContentType = {
  * Individual lesson within a module
  */
 export interface Lesson {
-  id: number
+  id: string
   title: string
   content?: string // HTML content or video URL
   contentType: LessonContentType
   order: number
-  moduleId: number
+  moduleId: string
   duration?: number // in minutes (for video)
   isCompleted?: boolean // For student view
 }
@@ -142,10 +144,10 @@ export const EnrolmentStatus = {
  * Student enrollment in a course
  */
 export interface Enrollment {
-  id: number
-  userId: number
+  id: string
+  userId: string
   user?: User
-  courseId: number
+  courseId: string
   course?: Course
   enrolledAt: string
   status: EnrolmentStatus
@@ -158,9 +160,9 @@ export interface Enrollment {
  * Lesson completion record
  */
 export interface LessonCompletion {
-  id: number
-  userId: number
-  lessonId: number
+  id: string
+  userId: string
+  lessonId: string
   completedAt: string
 }
 
@@ -187,10 +189,10 @@ export const QuestionType = {
  * Quiz object
  */
 export interface Quiz {
-  id: number
+  id: string
   title: string
   description?: string
-  courseId: number
+  courseId: string
   course?: Course
   timeLimit?: number // in minutes
   attemptsAllowed: number
@@ -202,8 +204,8 @@ export interface Quiz {
  * Individual quiz question
  */
 export interface QuizQuestion {
-  id: number
-  quizId: number
+  id: string
+  quizId: string
   text: string
   type: QuestionType
   points: number
@@ -215,14 +217,14 @@ export interface QuizQuestion {
  * Student quiz attempt
  */
 export interface QuizAttempt {
-  id: number
-  quizId: number
+  id: string
+  quizId: string
   quiz?: Quiz
-  userId: number
+  userId: string
   user?: User
   score?: number // 0-100 or points
   submittedAt: string
-  answers: Record<number, string | string[]> // Question ID -> answer(s)
+  answers: Record<string, string | string[]> // Question ID -> answer(s)
   feedback?: string
 }
 
@@ -234,12 +236,12 @@ export interface QuizAttempt {
  * Assignment object
  */
 export interface Assignment {
-  id: number
+  id: string
   title: string
   description?: string
   dueDate?: string
   maxPoints: number
-  courseId: number
+  courseId: string
   course?: Course
   createdAt: string
 }
@@ -248,10 +250,10 @@ export interface Assignment {
  * Student assignment submission
  */
 export interface AssignmentSubmission {
-  id: number
-  assignmentId: number
+  id: string
+  assignmentId: string
   assignment?: Assignment
-  userId: number
+  userId: string
   user?: User
   fileUrl?: string
   textAnswer?: string
@@ -295,7 +297,7 @@ export interface WeeklyEnrollment {
  * Course performance data
  */
 export interface CoursePerformance {
-  courseId: number
+  courseId: string
   courseName: string
   totalStudents: number
   averageProgress: number
@@ -306,7 +308,7 @@ export interface CoursePerformance {
  * Student progress summary
  */
 export interface StudentProgress {
-  courseId: number
+  courseId: string
   courseName: string
   progress: number
   lastLesson: string
@@ -376,7 +378,7 @@ export interface LessonFormData {
 export interface QuizFormData {
   title: string
   description?: string
-  courseId: number
+  courseId: string
   timeLimit?: number
   attemptsAllowed: number
 }
@@ -400,7 +402,7 @@ export interface AssignmentFormData {
   description?: string
   dueDate?: string
   maxPoints: number
-  courseId: number
+  courseId: string
 }
 
 /**

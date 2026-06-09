@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { createSubmissionSchema } from "@/lib/validators/submissions"
+import { z } from "zod"
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
       const submissions = await prisma.assignmentSubmission.findMany({
         where: {
           userId: session.user.id,
-          ...(assignmentId && { assignmentId: Number(assignmentId) }),
+          ...(assignmentId && { assignmentId: assignmentId }),
         },
         include: {
           assignment: {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     const assignment = await prisma.assignment.findUnique({
-      where: { id: Number(assignmentId) },
+      where: { id: assignmentId! },
       include: { course: true },
     })
 
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     const submissions = await prisma.assignmentSubmission.findMany({
-      where: { assignmentId: Number(assignmentId) },
+      where: { assignmentId: assignmentId! },
       include: {
         user: {
           select: { id: true, fullName: true, email: true, avatarUrl: true },

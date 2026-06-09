@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getRefreshToken, clearTokens } from "@/lib/auth/jwt"
+import { clearCSRFToken } from "@/lib/csrf"
 
-export async function POST(_request: NextRequest) {
+export async function POST(_: NextRequest) {
   try {
     const token = await getRefreshToken()
 
@@ -10,7 +11,7 @@ export async function POST(_request: NextRequest) {
       await prisma.refreshToken.deleteMany({ where: { token } })
     }
 
-    await clearTokens()
+    await Promise.all([clearTokens(), clearCSRFToken()])
 
     return NextResponse.json({ success: true })
   } catch (error) {

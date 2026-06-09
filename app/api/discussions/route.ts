@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { sanitizeHtml, stripHtml } from "@/lib/sanitize"
@@ -12,7 +13,7 @@ import { z } from "zod"
 
 // Validation schema
 const createDiscussionSchema = z.object({
-  courseId: z.number().int().positive(),
+  courseId: z.string().min(1),
   title: z.string().min(1).max(200),
   content: z.string().min(1).max(10000),
 })
@@ -31,14 +32,17 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const courseId = searchParams.get("courseId")
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"))
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")))
+    const limit = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get("limit") || "20"))
+    )
     const search = searchParams.get("search")
 
     const skip = (page - 1) * limit
 
-    const where: any = {}
+    const where: Prisma.DiscussionWhereInput = {}
     if (courseId) {
-      where.courseId = parseInt(courseId)
+      where.courseId = courseId
     }
     if (search) {
       where.OR = [
@@ -73,10 +77,7 @@ export async function GET(req: NextRequest) {
             },
           },
         },
-        orderBy: [
-          { isPinned: "desc" },
-          { createdAt: "desc" },
-        ],
+        orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
         skip,
         take: limit,
       }),
@@ -94,9 +95,7 @@ export async function GET(req: NextRequest) {
         })
       : []
 
-    const userVoteMap = new Map(
-      userVotes.map((v) => [v.discussionId, v.value])
-    )
+    const userVoteMap = new Map(userVotes.map((v) => [v.discussionId, v.value]))
 
     const discussionsWithVotes = discussions.map((discussion) => ({
       ...discussion,
@@ -134,7 +133,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => null)
     if (!body) {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      )
     }
 
     const validatedData = createDiscussionSchema.parse(body)

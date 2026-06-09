@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma, Role } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
@@ -19,12 +20,12 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get("id")
 
     if (id) {
-      if (session.user.role !== "ADMIN" && session.user.id !== Number(id)) {
+      if (session.user.role !== "ADMIN" && session.user.id !== id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
 
       const user = await prisma.user.findUnique({
-        where: { id: Number(id) },
+        where: { id: id },
         select: {
           id: true,
           email: true,
@@ -52,8 +53,8 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get("role")
     const search = searchParams.get("search")
 
-    const where: any = {}
-    if (role) where.role = role
+    const where: Prisma.UserWhereInput = {}
+    if (role) where.role = role as Role
     if (search) {
       where.OR = [
         { email: { contains: search, mode: "insensitive" } },
@@ -107,7 +108,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "User ID required" }, { status: 400 })
     }
 
-    if (session.user.role !== "ADMIN" && session.user.id !== Number(id)) {
+    if (session.user.role !== "ADMIN" && session.user.id !== id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -115,7 +116,7 @@ export async function PUT(request: NextRequest) {
     const data = updateUserSchema.parse(body)
 
     const user = await prisma.user.update({
-      where: { id: Number(id) },
+      where: { id: id },
       data,
       select: {
         id: true,
@@ -158,7 +159,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "User ID required" }, { status: 400 })
     }
 
-    if (Number(id) === session.user.id) {
+    if (id === session.user.id) {
       return NextResponse.json(
         { error: "Cannot delete your own account" },
         { status: 400 }
@@ -166,7 +167,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.user.delete({
-      where: { id: Number(id) },
+      where: { id: id },
     })
 
     return NextResponse.json({ success: true })

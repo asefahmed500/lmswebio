@@ -1,8 +1,3 @@
-/**
- * API client utility functions for making authenticated requests
- */
-
-import { getSession } from "./auth/jwt"
 import type {
   ApiResponse,
   UploadResponse,
@@ -11,185 +6,168 @@ import type {
   CourseFormData,
 } from "@/types/api"
 
-/**
- * Make an authenticated GET request
- */
+let csrfTokenCache: string | null = null
+
+async function fetchCSRFToken(): Promise<string> {
+  if (csrfTokenCache) return csrfTokenCache
+
+  try {
+    const res = await fetch("/api/csrf-token", { credentials: "include" })
+    if (!res.ok) throw new Error("Failed to fetch CSRF token")
+    const data = await res.json()
+    csrfTokenCache = data.token as string
+    return csrfTokenCache!
+  } catch (err) {
+    console.error("CSRF token fetch failed:", err)
+    return ""
+  }
+}
+
+export function invalidateCSRFToken(): void {
+  csrfTokenCache = null
+}
+
+async function csrfHeaders(): Promise<Record<string, string>> {
+  const token = await fetchCSRFToken()
+  return token ? { "X-CSRF-Token": token } : {}
+}
+
+async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+  if (response.status === 403) {
+    const body = await response
+      .clone()
+      .json()
+      .catch(() => ({}))
+    if (body.error === "Invalid CSRF token") {
+      invalidateCSRFToken()
+    }
+  }
+
+  if (!response.ok) {
+    const errorData = await response
+      .json()
+      .catch(() => ({ error: "Unknown error" }))
+    return { error: errorData.error || response.statusText }
+  }
+  return { data: await response.json() }
+}
+
 export async function apiGet<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
   try {
-    const session = await getSession()
-    if (!session) {
-      return { error: "Unauthorized" }
-    }
-
     const response = await fetch(`/api${endpoint}`, {
       ...options,
+      credentials: "include",
       headers: {
         ...options?.headers,
         "Content-Type": "application/json",
       },
     })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-      return { error: errorData.error || response.statusText }
-    }
-
-    return { data: await response.json() }
+    return handleResponse<T>(response)
   } catch (error) {
     console.error(`API GET ${endpoint} error:`, error)
     return { error: "Network error" }
   }
 }
 
-/**
- * Make an authenticated POST request
- */
 export async function apiPost<T>(
   endpoint: string,
   body?: Record<string, unknown> | FormData,
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
   try {
-    const session = await getSession()
-    if (!session) {
-      return { error: "Unauthorized" }
-    }
-
     const isFormData = body instanceof FormData
+    const headers = {
+      ...options?.headers,
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...(await csrfHeaders()),
+    }
     const response = await fetch(`/api${endpoint}`, {
       ...options,
       method: "POST",
-      headers: {
-        ...options?.headers,
-        ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      },
+      credentials: "include",
+      headers,
       body: isFormData ? body : JSON.stringify(body),
     })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-      return { error: errorData.error || response.statusText }
-    }
-
-    return { data: await response.json() }
+    return handleResponse<T>(response)
   } catch (error) {
     console.error(`API POST ${endpoint} error:`, error)
     return { error: "Network error" }
   }
 }
 
-/**
- * Make an authenticated PUT request
- */
 export async function apiPut<T>(
   endpoint: string,
   body?: Record<string, unknown>,
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
   try {
-    const session = await getSession()
-    if (!session) {
-      return { error: "Unauthorized" }
-    }
-
     const response = await fetch(`/api${endpoint}`, {
       ...options,
       method: "PUT",
+      credentials: "include",
       headers: {
         ...options?.headers,
         "Content-Type": "application/json",
+        ...(await csrfHeaders()),
       },
       body: JSON.stringify(body),
     })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-      return { error: errorData.error || response.statusText }
-    }
-
-    return { data: await response.json() }
+    return handleResponse<T>(response)
   } catch (error) {
     console.error(`API PUT ${endpoint} error:`, error)
     return { error: "Network error" }
   }
 }
 
-/**
- * Make an authenticated PATCH request
- */
 export async function apiPatch<T>(
   endpoint: string,
   body?: Record<string, unknown>,
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
   try {
-    const session = await getSession()
-    if (!session) {
-      return { error: "Unauthorized" }
-    }
-
     const response = await fetch(`/api${endpoint}`, {
       ...options,
       method: "PATCH",
+      credentials: "include",
       headers: {
         ...options?.headers,
         "Content-Type": "application/json",
+        ...(await csrfHeaders()),
       },
       body: JSON.stringify(body),
     })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-      return { error: errorData.error || response.statusText }
-    }
-
-    return { data: await response.json() }
+    return handleResponse<T>(response)
   } catch (error) {
     console.error(`API PATCH ${endpoint} error:`, error)
     return { error: "Network error" }
   }
 }
 
-/**
- * Make an authenticated DELETE request
- */
 export async function apiDelete<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
   try {
-    const session = await getSession()
-    if (!session) {
-      return { error: "Unauthorized" }
-    }
-
     const response = await fetch(`/api${endpoint}`, {
       ...options,
       method: "DELETE",
+      credentials: "include",
       headers: {
         ...options?.headers,
         "Content-Type": "application/json",
+        ...(await csrfHeaders()),
       },
     })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-      return { error: errorData.error || response.statusText }
-    }
-
-    return { data: await response.json() }
+    return handleResponse<T>(response)
   } catch (error) {
     console.error(`API DELETE ${endpoint} error:`, error)
     return { error: "Network error" }
   }
 }
 
-/**
- * Upload a file
- */
 export async function uploadFile(
   file: File,
   type: "avatar" | "course-thumbnail" | "lesson-video" | "assignment"
@@ -202,10 +180,13 @@ export async function uploadFile(
     const response = await fetch("/api/upload", {
       method: "POST",
       body: formData,
+      credentials: "include",
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Upload failed" }))
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: "Upload failed" }))
       return { error: errorData.error || "Upload failed" }
     }
 
@@ -216,48 +197,35 @@ export async function uploadFile(
   }
 }
 
-/**
- * Login user
- */
-export async function login(data: LoginFormData): Promise<ApiResponse<{ user: unknown }>> {
-  return apiPost("/auth/login", data)
+export async function login(
+  data: LoginFormData
+): Promise<ApiResponse<{ user: unknown }>> {
+  return apiPost("/auth/login", data as unknown as Record<string, unknown>)
 }
 
-/**
- * Register user
- */
-export async function register(data: RegisterFormData): Promise<ApiResponse<{ user: unknown }>> {
-  return apiPost("/auth/register", data)
+export async function register(
+  data: RegisterFormData
+): Promise<ApiResponse<{ user: unknown }>> {
+  return apiPost("/auth/register", data as unknown as Record<string, unknown>)
 }
 
-/**
- * Logout user
- */
 export async function logout(): Promise<ApiResponse<void>> {
   return apiPost("/auth/logout")
 }
 
-/**
- * Create course
- */
-export async function createCourse(data: CourseFormData): Promise<ApiResponse<{ course: unknown }>> {
-  return apiPost("/courses", data)
+export async function createCourse(
+  data: CourseFormData
+): Promise<ApiResponse<{ course: unknown }>> {
+  return apiPost("/courses", data as unknown as Record<string, unknown>)
 }
 
-/**
- * Update course
- */
 export async function updateCourse(
-  id: number,
+  id: string,
   data: Partial<CourseFormData>
 ): Promise<ApiResponse<{ course: unknown }>> {
-  return apiPut(`/courses/${id}`, data)
+  return apiPut(`/courses/${id}`, data as Record<string, unknown>)
 }
 
-/**
- * Delete course
- */
-export async function deleteCourse(id: number): Promise<ApiResponse<void>> {
+export async function deleteCourse(id: string): Promise<ApiResponse<void>> {
   return apiDelete(`/courses/${id}`)
 }
-

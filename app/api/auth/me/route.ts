@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/auth/jwt"
 
-export async function GET(_request: NextRequest) {
+export async function GET(_: NextRequest) {
   try {
     const session = await getSession()
 

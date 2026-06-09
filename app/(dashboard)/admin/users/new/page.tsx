@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiPost } from "@/lib/api-client"
 
 export default function NewUserPage() {
   const router = useRouter()
@@ -36,11 +37,10 @@ export default function NewUserPage() {
     const errs: Record<string, string> = {}
     if (!fullName.trim()) errs.fullName = "Full name is required"
     if (!email.trim()) errs.email = "Email is required"
-    else if (!/\S+@\S+\.\S+/.test(email))
-      errs.email = "Invalid email address"
+    else if (!/\S+@\S+\.\S+/.test(email)) errs.email = "Invalid email address"
     if (!password) errs.password = "Password is required"
-    else if (password.length < 6)
-      errs.password = "Password must be at least 6 characters"
+    else if (password.length < 8)
+      errs.password = "Password must be at least 8 characters"
     if (!role) errs.role = "Role is required"
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -52,18 +52,18 @@ export default function NewUserPage() {
 
     setIsSubmitting(true)
     try {
-      const res = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, email, password, role }),
+      const res = await apiPost("/admin/users", {
+        fullName,
+        email,
+        password,
+        role,
       })
 
-      if (res.ok) {
+      if (!res.error) {
         toast.success("User created successfully")
         router.push("/admin/users")
       } else {
-        const data = await res.json()
-        toast.error(data.error || "Failed to create user")
+        toast.error(res.error || "Failed to create user")
       }
     } catch {
       toast.error("Failed to create user")
@@ -73,11 +73,11 @@ export default function NewUserPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon-sm" asChild>
           <Link href="/admin/users">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft />
           </Link>
         </Button>
         <div>
@@ -96,8 +96,8 @@ export default function NewUserPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
@@ -111,7 +111,7 @@ export default function NewUserPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -126,12 +126,12 @@ export default function NewUserPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Minimum 6 characters"
+                placeholder="Minimum 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 aria-invalid={!!errors.password}
@@ -141,7 +141,7 @@ export default function NewUserPage() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="role">Role</Label>
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger className="w-full" aria-invalid={!!errors.role}>

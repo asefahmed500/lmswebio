@@ -1,18 +1,7 @@
-/**
- * Instructor analytics page
- * Displays course performance KPIs, student data, and charts
- */
-
 "use client"
 
 import * as React from "react"
-import {
-  BookOpen,
-  Users,
-  TrendingUp,
-  Eye,
-  BarChart3,
-} from "lucide-react"
+import { BookOpen, Users, TrendingUp, Eye, BarChart3 } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -31,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -42,14 +32,7 @@ import {
 } from "chart.js"
 import { Bar } from "react-chartjs-2"
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 interface CourseWithStats {
   id: number
@@ -77,7 +60,7 @@ function KPICard({
           {label}
         </CardTitle>
         <div className="rounded-full bg-primary/10 p-2">
-          <Icon className="h-4 w-4 text-primary" />
+          <Icon className="size-4 text-primary" />
         </div>
       </CardHeader>
       <CardContent>
@@ -98,53 +81,42 @@ export default function InstructorAnalyticsPage() {
 
       setIsLoading(true)
       try {
-        const coursesRes = await fetch("/api/courses")
-        if (!coursesRes.ok) throw new Error("Failed to fetch courses")
-        const apiCourses = await coursesRes.json()
+        const analyticsResult = await apiGet<{
+          coursePerformance: {
+            courseId: number
+            courseTitle: string
+            enrolled: number
+            completed: number
+            avgProgress: number
+          }[]
+          completionRates: {
+            courseId: number
+            courseTitle: string
+            completionRate: number
+          }[]
+        }>("/instructors/analytics")
 
-        const enriched: CourseWithStats[] = await Promise.all(
-          apiCourses.map(async (c: { id: string; title: string; level: string; isPublished: boolean; modules: { lessonCount?: number }[] }) => {
-            let studentCount = 0
-            let avgProgress = 0
-            let completionRate = 0
+        if (analyticsResult.error || !analyticsResult.data) {
+          console.error("Failed to load analytics:", analyticsResult.error)
+          return
+        }
 
-            try {
-              const enrolRes = await fetch(`/api/courses/${c.id}/enrolments`)
-              if (enrolRes.ok) {
-                const enrolments = await enrolRes.json()
-                const arr = Array.isArray(enrolments) ? enrolments : []
-                studentCount = arr.length
-                avgProgress =
-                  arr.length > 0
-                    ? Math.round(
-                        arr.reduce((s: number, e: { progress: number }) => s + e.progress, 0) /
-                          arr.length
-                      )
-                    : 0
-                const completed = arr.filter(
-                  (e: { status?: string; progress: number }) =>
-                    e.status === "COMPLETED" || e.progress >= 100
-                ).length
-                completionRate =
-                  arr.length > 0
-                    ? Math.round((completed / arr.length) * 100)
-                    : 0
-              }
-            } catch {
-              // enrolment fetch failed, leave defaults
-            }
-
-            return {
-              id: c.id as unknown as number,
-              title: c.title,
-              level: c.level,
-              isPublished: c.isPublished,
-              studentCount,
-              avgProgress,
-              completionRate,
-            }
-          })
+        const data = analyticsResult.data
+        const performance = data.coursePerformance || []
+        const rates = data.completionRates || []
+        const rateMap = new Map(
+          rates.map((r) => [r.courseId, r.completionRate])
         )
+
+        const enriched: CourseWithStats[] = performance.map((p) => ({
+          id: p.courseId,
+          title: p.courseTitle,
+          level: "INTERMEDIATE",
+          isPublished: true,
+          studentCount: p.enrolled,
+          avgProgress: p.avgProgress,
+          completionRate: rateMap.get(p.courseId) ?? 0,
+        }))
 
         setCourses(enriched)
       } catch (error) {
@@ -185,8 +157,8 @@ export default function InstructorAnalyticsPage() {
         {
           label: "Students Enrolled",
           data: courses.map((c) => c.studentCount),
-          backgroundColor: "rgba(59, 130, 246, 0.6)",
-          borderColor: "rgb(59, 130, 246)",
+          backgroundColor: "hsl(var(--chart-1) / 0.6)",
+          borderColor: "hsl(var(--chart-1))",
           borderWidth: 1,
         },
       ],
@@ -215,7 +187,7 @@ export default function InstructorAnalyticsPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">Loading analytics...</p>
         </div>
       </div>
@@ -223,7 +195,7 @@ export default function InstructorAnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
         <p className="mt-1 text-muted-foreground">
@@ -232,26 +204,14 @@ export default function InstructorAnalyticsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          label="Total Courses"
-          value={courses.length}
-          icon={BookOpen}
-        />
-        <KPICard
-          label="Total Students"
-          value={totalStudents}
-          icon={Users}
-        />
+        <KPICard label="Total Courses" value={courses.length} icon={BookOpen} />
+        <KPICard label="Total Students" value={totalStudents} icon={Users} />
         <KPICard
           label="Avg Completion Rate"
           value={`${avgCompletion}%`}
           icon={TrendingUp}
         />
-        <KPICard
-          label="Published Courses"
-          value={publishedCount}
-          icon={Eye}
-        />
+        <KPICard label="Published Courses" value={publishedCount} icon={Eye} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -269,7 +229,7 @@ export default function InstructorAnalyticsPage() {
               </div>
             ) : (
               <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-                <BarChart3 className="mr-2 h-5 w-5" />
+                <BarChart3 className="mr-2 size-5" />
                 No course data available
               </div>
             )}
@@ -279,9 +239,7 @@ export default function InstructorAnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Course Performance</CardTitle>
-            <CardDescription>
-              Detailed metrics per course
-            </CardDescription>
+            <CardDescription>Detailed metrics per course</CardDescription>
           </CardHeader>
           <CardContent>
             {courses.length > 0 ? (
@@ -303,14 +261,19 @@ export default function InstructorAnalyticsPage() {
                       <TableCell>{course.studentCount}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Progress value={course.avgProgress} className="h-2 w-16" />
+                          <Progress
+                            value={course.avgProgress}
+                            className="h-2 w-16"
+                          />
                           <span className="text-sm">{course.avgProgress}%</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            course.completionRate >= 50 ? "default" : "secondary"
+                            course.completionRate >= 50
+                              ? "default"
+                              : "secondary"
                           }
                         >
                           {course.completionRate}%

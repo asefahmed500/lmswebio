@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
     }
 
     const results: {
-      courses?: any[]
-      users?: any[]
+      courses?: Record<string, unknown>[]
+      users?: Record<string, unknown>[]
     } = {}
 
     if (type === "courses" || type === "all") {
@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
             session.user.role === "STUDENT"
               ? { isPublished: true }
               : session.user.role === "INSTRUCTOR"
-              ? { instructorId: session.user.id }
-              : {},
+                ? { instructorId: session.user.id }
+                : {},
             {
               OR: [
                 { title: { contains: query, mode: "insensitive" } },

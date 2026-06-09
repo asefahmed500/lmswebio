@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
@@ -6,9 +7,20 @@ import { z } from "zod"
 const createQuizSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
-  courseId: z.number(),
+  courseId: z.string(),
   timeLimit: z.number().optional(),
   attemptsAllowed: z.number().default(1),
+  questions: z
+    .array(
+      z.object({
+        text: z.string().min(1),
+        type: z.enum(["MC_SINGLE", "MC_MULTI", "TEXT", "TRUE_FALSE"]),
+        points: z.number().min(0).default(1),
+        options: z.record(z.string(), z.string()).optional(),
+        correctAnswer: z.unknown().optional(),
+      })
+    )
+    .optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -21,26 +33,40 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const courseId = searchParams.get("courseId")
 
-    const where: any = {}
-    if (courseId) {
-      where.courseId = Number(courseId)
-    }
+    const where: Prisma.QuizWhereInput = {}
 
     if (session.user.role === "INSTRUCTOR") {
       const courses = await prisma.course.findMany({
         where: { instructorId: session.user.id },
         select: { id: true },
       })
-      where.courseId = { in: courses.map((c) => c.id) }
+      const allowedIds = courses.map((c) => c.id)
+      if (courseId) {
+        const cid = courseId
+        if (!allowedIds.includes(cid)) {
+          return NextResponse.json({ quizzes: [], pagination: { total: 0 } })
+        }
+        where.courseId = cid
+      } else {
+        where.courseId = { in: allowedIds }
+      }
     } else if (session.user.role === "STUDENT") {
       const enrollments = await prisma.enrolment.findMany({
-        where: {
-          userId: session.user.id,
-          status: "ACTIVE",
-        },
+        where: { userId: session.user.id, status: "ACTIVE" },
         select: { courseId: true },
       })
-      where.courseId = { in: enrollments.map((e) => e.courseId) }
+      const allowedIds = enrollments.map((e) => e.courseId)
+      if (courseId) {
+        const cid = courseId
+        if (!allowedIds.includes(cid)) {
+          return NextResponse.json({ quizzes: [], pagination: { total: 0 } })
+        }
+        where.courseId = cid
+      } else {
+        where.courseId = { in: allowedIds }
+      }
+    } else if (courseId) {
+      where.courseId = courseId
     }
 
     const quizzes = await prisma.quiz.findMany({
@@ -105,6 +131,31 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Create questions if provided
+    if (data.questions && data.questions.length > 0) {
+      await prisma.quizQuestion.createMany({
+        data: data.questions.map(
+          (
+            q
+          ): {
+            quizId: string
+            text: string
+            type: "MC_SINGLE" | "MC_MULTI" | "TEXT" | "TRUE_FALSE"
+            points: number
+            options?: Record<string, string>
+            correctAnswer?: Prisma.InputJsonValue
+          } => ({
+            quizId: quiz.id,
+            text: q.text,
+            type: q.type as "MC_SINGLE" | "MC_MULTI" | "TEXT" | "TRUE_FALSE",
+            points: q.points,
+            options: q.options as Record<string, string> | undefined,
+            correctAnswer: q.correctAnswer as Prisma.InputJsonValue | undefined,
+          })
+        ),
+      })
+    }
 
     return NextResponse.json({ quiz }, { status: 201 })
   } catch (error) {

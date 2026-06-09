@@ -1,8 +1,3 @@
-/**
- * Student course player page
- * Displays course content with lesson viewer and progress tracking
- */
-
 "use client"
 
 import * as React from "react"
@@ -12,51 +7,51 @@ import {
   CheckCircle,
   Circle,
   Lock,
-  BookOpen,
   Clock,
   ChevronRight,
   ChevronLeft,
   Menu,
   X,
+  Loader2,
 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { useAuth } from "@/components/auth-provider"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { sanitizeHtml } from "@/lib/sanitize"
+import { cn } from "@/lib/utils"
+import { apiGet, apiPost } from "@/lib/api-client"
 
 interface ApiLesson {
-  id: number
+  id: string
   title: string
   content: string | null
   contentType: string
   duration: number | null
   order: number
-  moduleId: number
+  moduleId: string
 }
-
 interface ApiModule {
-  id: number
+  id: string
   title: string
   order: number
   lessons: ApiLesson[]
 }
-
 interface ApiCourse {
-  id: number
+  id: string
   title: string
   description: string | null
   level: string
   modules: ApiModule[]
 }
 
-/**
- * Lesson item component for sidebar
- */
 function LessonItem({
   lesson,
   isCompleted,
@@ -72,296 +67,265 @@ function LessonItem({
 }) {
   return (
     <button
+      type="button"
       onClick={isLocked ? undefined : onClick}
       disabled={isLocked}
       className={cn(
-        "flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors",
-        "hover:bg-accent/50",
-        isActive && "bg-accent",
-        isLocked && "cursor-not-allowed opacity-50"
+        "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
+        isActive && "bg-[var(--color-ink)] text-[var(--color-canvas)]",
+        !isActive && "hover:bg-[var(--color-soft-cloud)]",
+        isLocked && "cursor-not-allowed opacity-30"
       )}
     >
-      <div className="mt-0.5 flex-shrink-0">
+      <div className="shrink-0">
         {isLocked ? (
-          <Lock className="h-4 w-4 text-muted-foreground" />
+          <Lock className="size-4" />
         ) : isCompleted ? (
-          <CheckCircle className="h-4 w-4 text-green-500" />
+          <CheckCircle
+            className={cn(
+              "size-4",
+              isActive
+                ? "text-[var(--color-success-bright)]"
+                : "text-[var(--color-success)]"
+            )}
+          />
         ) : (
-          <Circle className="h-4 w-4 text-muted-foreground" />
+          <Circle className="size-4 opacity-40" />
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-sm font-medium">{lesson.title}</p>
-        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-          {lesson.duration && (
-            <>
-              <Clock className="h-3 w-3" />
-              {lesson.duration}m
-            </>
+        <p className="line-clamp-1 text-[14px] font-medium">{lesson.title}</p>
+        <div
+          className={cn(
+            "mt-0.5 flex items-center gap-2 text-[12px]",
+            isActive ? "text-white/60" : "text-[var(--color-mute)]"
           )}
-          <Badge variant="outline" className="text-xs">
-            {lesson.contentType}
-          </Badge>
+        >
+          <span>{lesson.contentType}</span>
+          {lesson.duration && <span>· {lesson.duration}m</span>}
         </div>
       </div>
-      {isActive && !isLocked && (
-        <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-      )}
+      {isActive && <ChevronRight className="size-4 shrink-0 opacity-60" />}
     </button>
   )
 }
 
-/**
- * Video lesson player component
- */
-function VideoPlayer({ url }: { url: string }) {
-  return (
-    <div className="aspect-video overflow-hidden rounded-lg bg-black">
-      <iframe
-        src={url}
-        className="h-full w-full"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-    </div>
-  )
-}
-
-/**
- * Text lesson content component
- */
-function TextContent({ content }: { content: string }) {
-  return (
-    <div
-      className="prose prose-sm dark:prose-invert max-w-none"
-      dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
-    />
-  )
-}
-
-/**
- * Course player page component
- */
 export default function CoursePlayerPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
   const isMobile = useIsMobile()
+  const courseId = params.id as string
 
-  const courseId = parseInt(params.id as string)
   const [course, setCourse] = React.useState<ApiCourse | null>(null)
   const [activeLesson, setActiveLesson] = React.useState<ApiLesson | null>(null)
-  const [completedLessons, setCompletedLessons] = React.useState<Set<number>>(
+  const [completedLessons, setCompletedLessons] = React.useState<Set<string>>(
     new Set()
   )
   const [isLoading, setIsLoading] = React.useState(true)
+  const [isEnrolled, setIsEnrolled] = React.useState(false)
+  const [isEnrolling, setIsEnrolling] = React.useState(false)
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
-  // Load course and enrollment data
   React.useEffect(() => {
-    async function loadData() {
-      if (!courseId || !user) return
-
+    if (!courseId || !user) return
+    ;(async () => {
       setIsLoading(true)
       try {
-        const [courseRes, progressRes] = await Promise.all([
-          fetch(`/api/courses/${courseId}`),
-          fetch(`/api/progress?courseId=${courseId}`),
+        const [cr, pr, er] = await Promise.all([
+          apiGet<{ course?: ApiCourse; modules?: ApiModule[] }>(
+            `/courses/${courseId}`
+          ),
+          apiGet<{ completedLessonIds?: string[] }>(
+            `/progress?courseId=${courseId}`
+          ),
+          apiGet<{ courseId: string }[]>("/enrolments/my"),
         ])
-
-        if (!courseRes.ok) {
+        if (cr.error || !cr.data) {
           router.push("/student/courses/catalogue")
           return
         }
-
-        const courseData = await courseRes.json()
-        setCourse(courseData)
-
-        // Load completed lessons
-        if (progressRes.ok) {
-          const progressData = await progressRes.json()
-          if (progressData.completedLessonIds) {
-            setCompletedLessons(new Set(progressData.completedLessonIds))
-          }
+        const c = (cr.data.course || cr.data) as ApiCourse
+        setCourse(c)
+        if (!er.error && er.data) {
+          setIsEnrolled(
+            Array.isArray(er.data)
+              ? er.data.some(
+                  (e: { courseId: string }) => e.courseId === courseId
+                )
+              : false
+          )
         }
-
-        // Set first lesson as active if available
-        if (
-          courseData.modules?.length > 0 &&
-          courseData.modules[0].lessons?.length > 0
-        ) {
-          setActiveLesson(courseData.modules[0].lessons[0])
+        if (!pr.error && pr.data?.completedLessonIds) {
+          setCompletedLessons(new Set(pr.data.completedLessonIds))
         }
-      } catch (error) {
-        console.error("Failed to load course:", error)
+        if (c.modules?.[0]?.lessons?.[0])
+          setActiveLesson(c.modules[0].lessons[0])
+      } catch {
       } finally {
         setIsLoading(false)
       }
-    }
-
-    loadData()
+    })()
   }, [courseId, user, router])
 
-  /**
-   * Calculate overall course progress
-   */
-  const courseProgress = React.useMemo(() => {
-    if (!course) return 0
-
-    const totalLessons = course.modules.reduce(
-      (sum, m) => sum + (m.lessons?.length || 0),
-      0
-    )
-    const completedCount = completedLessons.size
-
-    return totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0
-  }, [course, completedLessons])
-
-  /**
-   * Handle lesson completion toggle
-   */
-  const handleToggleComplete = async (lessonId: number) => {
+  const handleEnrol = async () => {
+    setIsEnrolling(true)
     try {
-      if (completedLessons.has(lessonId)) {
-        // Cannot un-complete via API, just update local state
-        return
-      }
-
-      const res = await fetch(`/api/lessons/${lessonId}/complete`, {
-        method: "POST",
-      })
-
-      if (res.ok) {
-        setCompletedLessons((prev) => new Set(prev).add(lessonId))
-      }
-    } catch (error) {
-      console.error("Failed to mark lesson complete:", error)
+      const r = await apiPost(`/courses/${courseId}/enrol`)
+      if (!r.error) setIsEnrolled(true)
+    } catch {
+    } finally {
+      setIsEnrolling(false)
     }
   }
 
-  /**
-   * Navigate to next lesson
-   */
-  const handleNextLesson = () => {
-    if (!course || !activeLesson) return
+  const isLessonLocked = React.useCallback(
+    (lesson: ApiLesson, module: ApiModule): boolean => {
+      const idx = module.lessons.findIndex((l) => l.id === lesson.id)
+      if (idx <= 0) return false
+      return !completedLessons.has(module.lessons[idx - 1].id)
+    },
+    [completedLessons]
+  )
 
-    for (const mod of course.modules) {
-      const lessonIndex = mod.lessons.findIndex((l) => l.id === activeLesson.id)
-      if (lessonIndex !== -1) {
-        if (lessonIndex < mod.lessons.length - 1) {
-          setActiveLesson(mod.lessons[lessonIndex + 1])
-          return
-        }
-        const moduleIndex = course.modules.findIndex((m) => m.id === mod.id)
-        if (moduleIndex < course.modules.length - 1) {
-          const nextModule = course.modules[moduleIndex + 1]
-          if (nextModule.lessons.length > 0) {
-            setActiveLesson(nextModule.lessons[0])
-          }
-        }
-        return
-      }
-    }
+  const totalLessons =
+    course?.modules.reduce((s, m) => s + m.lessons.length, 0) ?? 0
+  const progress =
+    totalLessons > 0 ? (completedLessons.size / totalLessons) * 100 : 0
+
+  const handleComplete = async (lessonId: string) => {
+    if (completedLessons.has(lessonId)) return
+    try {
+      const r = await apiPost(`/lessons/${lessonId}/complete`)
+      if (!r.error) setCompletedLessons((p) => new Set(p).add(lessonId))
+    } catch {}
   }
 
-  /**
-   * Navigate to previous lesson
-   */
-  const handlePrevLesson = () => {
+  const navigate = (dir: "next" | "prev") => {
     if (!course || !activeLesson) return
-
     for (let i = 0; i < course.modules.length; i++) {
       const mod = course.modules[i]
-      const lessonIndex = mod.lessons.findIndex((l) => l.id === activeLesson.id)
-      if (lessonIndex !== -1) {
-        if (lessonIndex > 0) {
-          setActiveLesson(mod.lessons[lessonIndex - 1])
+      const idx = mod.lessons.findIndex((l) => l.id === activeLesson.id)
+      if (idx === -1) continue
+      if (dir === "next") {
+        if (idx < mod.lessons.length - 1) {
+          setActiveLesson(mod.lessons[idx + 1])
+          return
+        }
+        if (i < course.modules.length - 1 && course.modules[i + 1].lessons[0]) {
+          setActiveLesson(course.modules[i + 1].lessons[0])
+        }
+      } else {
+        if (idx > 0) {
+          setActiveLesson(mod.lessons[idx - 1])
           return
         }
         if (i > 0) {
-          const prevModule = course.modules[i - 1]
-          if (prevModule.lessons.length > 0) {
-            setActiveLesson(prevModule.lessons[prevModule.lessons.length - 1])
-          }
+          setActiveLesson(
+            course.modules[i - 1].lessons[
+              course.modules[i - 1].lessons.length - 1
+            ]
+          )
         }
-        return
       }
+      return
     }
   }
 
-  if (isLoading) {
+  if (isLoading)
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="size-8 animate-spin rounded-full border-2 border-[var(--color-ink)]/20 border-t-[var(--color-ink)]" />
+      </div>
+    )
+  if (!course || !activeLesson)
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading course...</p>
+          <h3 className="mb-2 text-[24px] font-medium">Not found</h3>
+          <Button asChild className="nike-pill bg-[var(--color-ink)]">
+            <Link href="/student/courses/catalogue">Browse</Link>
+          </Button>
         </div>
       </div>
     )
-  }
 
-  if (!course || !activeLesson) {
+  if (!isEnrolled) {
+    const tl = course.modules.reduce((s, m) => s + m.lessons.length, 0)
     return (
-      <div className="flex h-96 items-center justify-center">
+      <div className="mx-auto max-w-3xl p-6">
+        <Button variant="ghost" asChild className="nike-pill-sm mb-6">
+          <Link href="/student/courses/catalogue">
+            <ChevronLeft /> Catalogue
+          </Link>
+        </Button>
         <div className="text-center">
-          <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-semibold">Course not found</h3>
-          <p className="mb-4 text-sm text-muted-foreground">
-            The course you&apos;re looking for doesn&apos;t exist or you
-            don&apos;t have access to it.
-          </p>
-          <Button asChild>
-            <Link href="/student/courses/catalogue">Browse Courses</Link>
+          <h1 className="mb-3 text-[32px] font-medium">{course.title}</h1>
+          <p className="mb-8 text-[var(--color-mute)]">{course.description}</p>
+          <div className="mx-auto mb-8 grid max-w-sm grid-cols-2 gap-4">
+            <div>
+              <p className="text-[32px] font-medium">{course.modules.length}</p>
+              <p className="text-[14px] text-[var(--color-mute)]">Modules</p>
+            </div>
+            <div>
+              <p className="text-[32px] font-medium">{tl}</p>
+              <p className="text-[14px] text-[var(--color-mute)]">Lessons</p>
+            </div>
+          </div>
+          <Button
+            onClick={handleEnrol}
+            disabled={isEnrolling}
+            className="nike-pill min-w-[200px] bg-[var(--color-ink)] text-[var(--color-canvas)]"
+          >
+            {isEnrolling ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : null}
+            {isEnrolling ? "Enrolling..." : "Enrol Now"}
           </Button>
         </div>
       </div>
     )
   }
 
-  const isLessonCompleted = completedLessons.has(activeLesson.id)
+  const isCompleted = completedLessons.has(activeLesson.id)
 
-  // Sidebar content
   const sidebarContent = (
     <div className="flex h-full flex-col">
-      {/* Course info */}
-      <div className="border-b p-4">
-        <h3 className="font-semibold">{course.title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {course.modules.length} modules •{" "}
-          {course.modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0)} lessons
+      <div className="border-b border-[var(--color-hairline)] p-5">
+        <h3 className="text-[16px] font-medium">{course.title}</h3>
+        <p className="mt-1 text-[14px] text-[var(--color-mute)]">
+          {course.modules.length} modules · {totalLessons} lessons
         </p>
-        <div className="mt-3">
-          <div className="mb-1 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium">{Math.round(courseProgress)}%</span>
+        <div className="mt-4">
+          <div className="mb-1.5 flex justify-between text-[14px]">
+            <span className="text-[var(--color-mute)]">Progress</span>
+            <span className="font-medium">{Math.round(progress)}%</span>
           </div>
-          <Progress value={courseProgress} className="h-2" />
+          <div className="h-[3px] bg-[var(--color-soft-cloud)]">
+            <div
+              className="h-full bg-[var(--color-ink)]"
+              style={{ width: `${Math.round(progress)}%` }}
+            />
+          </div>
         </div>
       </div>
-
-      {/* Modules and lessons */}
       <ScrollArea className="flex-1">
-        <div className="space-y-4 p-4">
-          {course.modules.map((module, moduleIndex) => (
-            <div key={module.id}>
-              <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                <span className="text-muted-foreground">
-                  Module {moduleIndex + 1}
-                </span>
-                <span>{module.title}</span>
-              </h4>
-              <div className="space-y-1">
-                {module.lessons.map((lesson) => (
-                  <LessonItem
-                    key={lesson.id}
-                    lesson={lesson}
-                    isCompleted={completedLessons.has(lesson.id)}
-                    isLocked={false}
-                    isActive={activeLesson.id === lesson.id}
-                    onClick={() => setActiveLesson(lesson)}
-                  />
-                ))}
+        <div className="flex flex-col">
+          {course.modules.map((mod, mi) => (
+            <div key={mod.id}>
+              <div className="px-5 pt-5 pb-2 text-[12px] font-medium tracking-wider text-[var(--color-mute)] uppercase">
+                {String(mi + 1).padStart(2, "0")} — {mod.title}
               </div>
+              {mod.lessons.map((l) => (
+                <LessonItem
+                  key={l.id}
+                  lesson={l}
+                  isCompleted={completedLessons.has(l.id)}
+                  isLocked={isLessonLocked(l, mod)}
+                  isActive={activeLesson.id === l.id}
+                  onClick={() => setActiveLesson(l)}
+                />
+              ))}
             </div>
           ))}
         </div>
@@ -372,111 +336,102 @@ export default function CoursePlayerPage() {
   return (
     <div className="h-[calc(100vh-8rem)]">
       <div className="flex h-full">
-        {/* Desktop sidebar */}
         {!isMobile && (
-          <aside className="w-80 flex-shrink-0 border-r">
+          <aside className="w-80 shrink-0 border-r border-[var(--color-hairline)]">
             {sidebarContent}
           </aside>
         )}
-
-        {/* Mobile sidebar */}
         {isMobile && (
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
               <Button
-                variant="outline"
                 size="icon"
-                className="fixed right-4 bottom-4 z-50 h-12 w-12 rounded-full shadow-lg"
+                className="fixed right-4 bottom-4 z-50 size-12 rounded-full border-0 bg-[var(--color-ink)] text-[var(--color-canvas)] shadow-none"
               >
-                {sidebarOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
+                {sidebarOpen ? <X /> : <Menu />}
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-80 p-0">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Sidebar</SheetTitle>
+              </SheetHeader>
               {sidebarContent}
             </SheetContent>
           </Sheet>
         )}
-
-        {/* Main content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-4xl space-y-6 p-6">
-            {/* Lesson header */}
+          <div className="mx-auto flex max-w-4xl flex-col gap-8 p-6 sm:p-8">
             <div>
-              <Badge variant="outline" className="mb-2">
+              <span className="text-[14px] font-medium tracking-wide text-[var(--color-mute)] uppercase">
                 {activeLesson.contentType}
-              </Badge>
-              <h1 className="text-2xl font-bold">{activeLesson.title}</h1>
+              </span>
+              <h1 className="mt-2 text-[32px] leading-tight font-medium text-[var(--color-ink)]">
+                {activeLesson.title}
+              </h1>
               {activeLesson.duration && (
-                <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
+                <p className="mt-2 flex items-center gap-1 text-[14px] text-[var(--color-mute)]">
+                  <Clock className="size-3" />
                   {activeLesson.duration} minutes
                 </p>
               )}
             </div>
 
-            {/* Lesson content */}
-            {activeLesson.contentType === "VIDEO" && activeLesson.content ? (
-              <VideoPlayer url={activeLesson.content} />
-            ) : activeLesson.contentType === "TEXT" && activeLesson.content ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <TextContent content={activeLesson.content} />
-                </CardContent>
-              </Card>
+            {activeLesson.contentType === "video" && activeLesson.content ? (
+              <div className="aspect-video overflow-hidden bg-[var(--color-ink)]">
+                <iframe
+                  src={activeLesson.content}
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : activeLesson.contentType === "text" && activeLesson.content ? (
+              <div
+                className="prose prose-sm prose-headings:font-medium prose-a:underline prose-a:text-[var(--color-ink)] max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(activeLesson.content),
+                }}
+              />
             ) : (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="py-8 text-center">
-                    <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <h3 className="mb-2 text-lg font-semibold">
-                      {activeLesson.contentType === "PDF"
-                        ? "PDF Content"
-                        : "Lesson Content"}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {activeLesson.content
-                        ? "Content available"
-                        : "No content available for this lesson yet."}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="py-12 text-center text-[var(--color-mute)]">
+                <p className="text-[16px]">
+                  No content available for this lesson.
+                </p>
+              </div>
             )}
 
-            {/* Action buttons */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-t border-[var(--color-hairline)] pt-4">
               <Button
                 variant="outline"
-                onClick={handlePrevLesson}
+                onClick={() => navigate("prev")}
+                className="nike-pill-sm border-[var(--color-hairline)]"
               >
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Previous
+                <ChevronLeft /> Previous
               </Button>
-
               <Button
-                variant={isLessonCompleted ? "outline" : "default"}
-                onClick={() => handleToggleComplete(activeLesson.id)}
+                onClick={() => handleComplete(activeLesson.id)}
+                className={cn(
+                  "nike-pill-sm",
+                  isCompleted
+                    ? "border border-[var(--color-hairline)] bg-transparent text-[var(--color-ink)]"
+                    : "bg-[var(--color-ink)] text-[var(--color-canvas)]"
+                )}
               >
-                {isLessonCompleted ? (
+                {isCompleted ? (
                   <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Completed
+                    <CheckCircle /> Completed
                   </>
                 ) : (
                   <>
-                    <Circle className="mr-2 h-4 w-4" />
-                    Mark Complete
+                    <Circle /> Mark Complete
                   </>
                 )}
               </Button>
-
-              <Button onClick={handleNextLesson}>
-                Next
-                <ChevronRight className="ml-2 h-4 w-4" />
+              <Button
+                onClick={() => navigate("next")}
+                className="nike-pill-sm bg-[var(--color-ink)] text-[var(--color-canvas)]"
+              >
+                Next <ChevronRight />
               </Button>
             </div>
           </div>

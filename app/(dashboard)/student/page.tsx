@@ -1,8 +1,3 @@
-/**
- * Student dashboard page
- * Displays enrolled courses, progress, upcoming deadlines, and recommendations
- */
-
 "use client"
 
 import * as React from "react"
@@ -11,24 +6,31 @@ import {
   BookOpen,
   Clock,
   TrendingUp,
-  Play,
   Calendar,
-  Award,
   CheckCircle,
 } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/components/auth-provider"
+import { CourseCard } from "@/components/course/course-card"
 import { apiGet } from "@/lib/api-client"
 import type { KPICard, Enrollment, Course, Assignment } from "@/types"
+
+interface EnrollmentsApiResponse {
+  enrollments: Enrollment[]
+}
+
+interface CoursesApiResponse {
+  courses: ApiCourse[]
+}
+
+interface ProgressApiResponse {
+  overallProgress?: number
+}
+
+interface AssignmentsApiResponse {
+  assignments: Assignment[]
+}
 
 interface ApiCourse {
   id: string
@@ -39,6 +41,7 @@ interface ApiCourse {
   level: string
   isPublished: boolean
   instructorId: string
+  instructor?: { id: string; fullName: string; avatarUrl: string | null }
   category: string | null
   tags: string[]
   moduleCount: number
@@ -48,25 +51,35 @@ interface ApiCourse {
 
 function mapApiCoursesToMock(apiCourses: ApiCourse[]): Course[] {
   return apiCourses.map((c) => ({
-    id: c.id as unknown as number,
+    id: c.id,
     title: c.title,
     slug: c.slug,
     description: c.description ?? undefined,
     thumbnail: c.thumbnail ?? undefined,
     level: c.level as Course["level"],
     isPublished: c.isPublished,
-    instructorId: c.instructorId as unknown as number,
-    modules: c.modules.map((m) => ({
-      id: m.id as unknown as number,
+    instructorId: c.instructorId,
+    instructor: c.instructor
+      ? {
+          id: c.instructor.id,
+          fullName: c.instructor.fullName,
+          avatarUrl: c.instructor.avatarUrl ?? undefined,
+          email: "",
+          role: "INSTRUCTOR" as const,
+          createdAt: "",
+        }
+      : undefined,
+    modules: (c.modules || []).map((m) => ({
+      id: m.id,
       title: "",
       order: 0,
-      courseId: c.id as unknown as number,
+      courseId: c.id,
       lessons: Array.from({ length: m.lessonCount }, (_, i) => ({
-        id: i,
+        id: String(i),
         title: "",
         contentType: "text" as const,
         order: i,
-        moduleId: m.id as unknown as number,
+        moduleId: m.id,
       })),
     })),
     category: c.category ?? undefined,
@@ -75,9 +88,6 @@ function mapApiCoursesToMock(apiCourses: ApiCourse[]): Course[] {
   }))
 }
 
-/**
- * KPI card component
- */
 function KPICardComponent({
   kpi,
   icon: Icon,
@@ -92,7 +102,7 @@ function KPICardComponent({
           {kpi.label}
         </CardTitle>
         <div className="rounded-full bg-primary/10 p-2">
-          <Icon className="h-4 w-4 text-primary" />
+          <Icon className="size-4 text-primary" />
         </div>
       </CardHeader>
       <CardContent>
@@ -102,103 +112,25 @@ function KPICardComponent({
   )
 }
 
-/**
- * Enrolled course card component
- */
-function EnrolledCourseCard({ enrollment }: { enrollment: Enrollment }) {
-  if (!enrollment.course) return null
-
-  const { course } = enrollment
-  const totalLessons = course.modules.reduce(
-    (sum, m) => sum + m.lessons.length,
-    0
-  )
-  const completedLessons = Math.round(
-    (enrollment.progress / 100) * totalLessons
-  )
-
-  return (
-    <Card className="overflow-hidden">
-      <div className="relative aspect-video w-full bg-muted">
-        {course.thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={course.thumbnail}
-            alt={course.title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <BookOpen className="h-12 w-12 text-muted-foreground" />
-          </div>
-        )}
-        <Badge className="absolute top-2 right-2" variant="secondary">
-          {course.level}
-        </Badge>
-      </div>
-      <CardHeader className="pb-3">
-        <CardTitle className="line-clamp-1 text-base">{course.title}</CardTitle>
-        <CardDescription className="line-clamp-2">
-          {course.description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div>
-            <div className="mb-1 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium">
-                {enrollment.progress.toFixed(0)}%
-              </span>
-            </div>
-            <Progress value={enrollment.progress} className="h-2" />
-          </div>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-              {completedLessons} of {totalLessons} lessons
-            </span>
-            <span>{course.modules.length} modules</span>
-          </div>
-          <Button className="w-full" asChild>
-            <Link href={`/student/courses/${course.id}`}>
-              <Play className="mr-2 h-4 w-4" />
-              Continue Learning
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-/**
- * Upcoming deadline item component
- */
 function UpcomingDeadlineItem({
   title,
   courseTitle,
-  dueDate,
+  daysUntilDue,
 }: {
   title: string
   courseTitle: string
-  dueDate: string
+  daysUntilDue: number
 }) {
-  const daysUntilDue = React.useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity
-    const diff = new Date(dueDate).getTime() - Date.now()
-    return Math.ceil(diff / (1000 * 60 * 60 * 24))
-  }, [dueDate])
-
   return (
     <div className="flex items-start gap-3 rounded-lg border bg-card p-3">
       <div className="mt-0.5 rounded-full bg-destructive/10 p-2">
-        <Clock className="h-4 w-4 text-destructive" />
+        <Clock className="size-4 text-destructive" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm leading-none font-medium">{title}</p>
         <p className="mt-1 text-xs text-muted-foreground">{courseTitle}</p>
         <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
-          <Calendar className="h-3 w-3" />
+          <Calendar className="size-3" />
           Due in {daysUntilDue} {daysUntilDue === 1 ? "day" : "days"}
         </p>
       </div>
@@ -209,62 +141,10 @@ function UpcomingDeadlineItem({
   )
 }
 
-/**
- * Recommended course card component
- */
-function RecommendedCourseCard({ course }: { course: Course }) {
-  return (
-    <Card className="overflow-hidden">
-      <div className="relative aspect-video w-full bg-muted">
-        {course.thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={course.thumbnail}
-            alt={course.title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <BookOpen className="h-12 w-12 text-muted-foreground" />
-          </div>
-        )}
-        <Badge className="absolute top-2 right-2" variant="secondary">
-          {course.level}
-        </Badge>
-      </div>
-      <CardHeader className="pb-3">
-        <CardTitle className="line-clamp-1 text-base">{course.title}</CardTitle>
-        <CardDescription className="line-clamp-2">
-          {course.description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Award className="h-4 w-4" />
-            <span>{course.modules.length} modules</span>
-            <span>•</span>
-            <span>
-              {course.modules.reduce((sum, m) => sum + m.lessons.length, 0)}{" "}
-              lessons
-            </span>
-          </div>
-          <Button className="w-full" variant="outline" asChild>
-            <Link href="/student/courses/catalogue">View Course</Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-/**
- * Student dashboard page component
- */
 interface DeadlineItem {
   title: string
   courseTitle: string
-  dueDate: string
+  daysUntilDue: number
 }
 
 export default function StudentDashboardPage() {
@@ -279,55 +159,46 @@ export default function StudentDashboardPage() {
   >([])
   const [isLoading, setIsLoading] = React.useState(true)
 
-  // Load dashboard data
   React.useEffect(() => {
     async function loadData() {
       if (!user) return
 
       setIsLoading(true)
       try {
-        // Fetch all data in parallel
         const [enrollmentsRes, coursesRes, progressRes, assignmentsRes] =
           await Promise.all([
-            fetch("/api/enrollments"),
-            fetch("/api/courses"),
-            fetch("/api/progress"),
-            fetch("/api/assignments"),
+            apiGet("/enrollments"),
+            apiGet("/courses"),
+            apiGet("/progress"),
+            apiGet("/assignments"),
           ])
 
-        // Parse responses
-        const enrollmentsData = enrollmentsRes.ok
-          ? await enrollmentsRes.json()
-          : { enrollments: [] }
-        const coursesData = coursesRes.ok ? await coursesRes.json() : { courses: [] }
-        const progressData = progressRes.ok ? await progressRes.json() : {}
-        const assignmentsData = assignmentsRes.ok
-          ? await assignmentsRes.json()
-          : { assignments: [] }
+        const enrollmentsData: EnrollmentsApiResponse =
+          (enrollmentsRes.data as EnrollmentsApiResponse) ?? {
+            enrollments: [],
+          }
+        const coursesData: CoursesApiResponse =
+          (coursesRes.data as CoursesApiResponse) ?? {
+            courses: [],
+          }
+        const progressData: ProgressApiResponse =
+          (progressRes.data as ProgressApiResponse) ?? {}
+        const assignmentsData: AssignmentsApiResponse =
+          (assignmentsRes.data as AssignmentsApiResponse) ?? {
+            assignments: [],
+          }
 
-        // Filter enrollments for this student
-        const studentEnrollments = enrollmentsData.enrollments?.filter(
-          (e: Enrollment) => e.userId === user.id && e.status === "ACTIVE"
-        ) || []
+        const studentEnrollments =
+          enrollmentsData.enrollments?.filter(
+            (e: Enrollment) => e.userId === user.id && e.status === "ACTIVE"
+          ) || []
 
-        // Build KPIs
         const completedCourses = studentEnrollments.filter(
           (e: Enrollment) => e.progress === 100
         ).length
-        const avgProgress =
-          studentEnrollments.length > 0
-            ? Math.round(
-                studentEnrollments.reduce(
-                  (sum: number, e: Enrollment) => sum + e.progress,
-                  0
-                ) / studentEnrollments.length
-              )
-            : 0
-
-        // Count upcoming deadlines
         const now = new Date()
-        const upcomingDeadlinesCount = assignmentsData.assignments?.filter(
-          (a: Assignment) => {
+        const upcomingDeadlinesCount =
+          assignmentsData.assignments?.filter((a: Assignment) => {
             const enrolledCourseIds = studentEnrollments.map(
               (e: Enrollment) => e.courseId
             )
@@ -336,8 +207,7 @@ export default function StudentDashboardPage() {
               new Date(a.dueDate) > now &&
               enrolledCourseIds.includes(a.courseId)
             )
-          }
-        ).length || 0
+          }).length || 0
 
         const kpiData: KPICard[] = [
           {
@@ -350,7 +220,7 @@ export default function StudentDashboardPage() {
           },
           {
             label: "Avg Progress",
-            value: `${avgProgress}%`,
+            value: `${Math.round(progressData.overallProgress || 0)}%`,
           },
           {
             label: "Upcoming Deadlines",
@@ -358,15 +228,18 @@ export default function StudentDashboardPage() {
           },
         ]
 
-        // Enrich enrollments with course data
+        const enrolledCourseIds = studentEnrollments.map(
+          (e: Enrollment) => e.courseId
+        )
+        const apiCourses = coursesData.courses || []
+        const allCourses = mapApiCoursesToMock(apiCourses)
+
         const enrichedEnrollments = studentEnrollments
-          .map((enrollment: Enrollment) => {
-            const course = coursesData.courses?.find(
-              (c: Course) => c.id === enrollment.courseId
-            )
+          .map((enrollment: Enrollment): Enrollment => {
+            const course = allCourses.find((c) => c.id === enrollment.courseId)
             return { ...enrollment, course }
           })
-          .sort((a: Enrollment, b: Enrollment) => {
+          .sort((a, b) => {
             const dateA = a.lastAccessedAt
               ? new Date(a.lastAccessedAt).getTime()
               : 0
@@ -376,37 +249,34 @@ export default function StudentDashboardPage() {
             return dateB - dateA
           })
 
-        // Get recommended courses (not enrolled)
-        const enrolledCourseIds = studentEnrollments.map(
-          (e: Enrollment) => e.courseId
-        )
-        const apiCourses = coursesData.courses || []
-        const allCourses = mapApiCoursesToMock(apiCourses)
         const recommended = allCourses.filter(
           (c) => !enrolledCourseIds.includes(c.id)
         )
 
-        // Build upcoming deadlines
-        const deadlines = assignmentsData.assignments
-          ?.filter(
-            (a: Assignment) =>
-              a.dueDate &&
-              new Date(a.dueDate) > now &&
-              enrolledCourseIds.includes(a.courseId)
-          )
-          .sort(
-            (a: Assignment, b: Assignment) =>
-              new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
-          )
-          .slice(0, 3)
-          .map((a: Assignment) => {
-            const course = allCourses.find((c) => c.id === a.courseId)
-            return {
-              title: a.title,
-              courseTitle: course?.title || "Course",
-              dueDate: a.dueDate!,
-            }
-          }) || []
+        const deadlines =
+          assignmentsData.assignments
+            ?.filter(
+              (a: Assignment) =>
+                a.dueDate &&
+                new Date(a.dueDate) > now &&
+                enrolledCourseIds.includes(a.courseId)
+            )
+            .sort(
+              (a: Assignment, b: Assignment) =>
+                new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
+            )
+            .slice(0, 3)
+            .map((a: Assignment) => {
+              const course = allCourses.find((c) => c.id === a.courseId)
+              return {
+                title: a.title,
+                courseTitle: course?.title || "Course",
+                daysUntilDue: Math.ceil(
+                  (new Date(a.dueDate!).getTime() - now.getTime()) /
+                    (1000 * 60 * 60 * 24)
+                ),
+              }
+            }) || []
 
         setKpis(kpiData)
         setEnrollments(enrichedEnrollments)
@@ -426,7 +296,7 @@ export default function StudentDashboardPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
@@ -434,8 +304,7 @@ export default function StudentDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Welcome back, {user?.fullName?.split(" ")[0]}!
@@ -445,7 +314,6 @@ export default function StudentDashboardPage() {
         </p>
       </div>
 
-      {/* KPI cards grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICardComponent
           kpi={kpis[0] || { label: "Enrolled Courses", value: 0 }}
@@ -465,30 +333,55 @@ export default function StudentDashboardPage() {
         />
       </div>
 
-      {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Continue learning */}
-        <div className="space-y-4 lg:col-span-2">
+        <div className="flex flex-col gap-4 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Continue Learning</h2>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/student/courses/enrolled">View All</Link>
+              <Link href="/student/my-learning/enrolled">View All</Link>
             </Button>
           </div>
           {enrollments.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
-              {enrollments.slice(0, 4).map((enrollment) => (
-                <EnrolledCourseCard
-                  key={enrollment.id}
-                  enrollment={enrollment}
-                />
-              ))}
+              {enrollments.slice(0, 4).map((enrollment) => {
+                if (!enrollment.course) return null
+                return (
+                  <CourseCard
+                    key={enrollment.id}
+                    course={{
+                      id: enrollment.course.id,
+                      title: enrollment.course.title,
+                      slug: enrollment.course.slug,
+                      description: enrollment.course.description || undefined,
+                      thumbnail: enrollment.course.thumbnail || undefined,
+                      level: enrollment.course.level,
+                      category: enrollment.course.category || undefined,
+                      instructor: enrollment.course.instructor
+                        ? {
+                            id: enrollment.course.instructor.id,
+                            fullName: enrollment.course.instructor.fullName,
+                            avatarUrl:
+                              enrollment.course.instructor.avatarUrl ||
+                              undefined,
+                          }
+                        : { id: "", fullName: "Instructor" },
+                      _count: {
+                        modules: enrollment.course.modules.length,
+                        enrolments: 0,
+                      },
+                    }}
+                    progress={enrollment.progress}
+                    enrolled={true}
+                    showProgress={true}
+                  />
+                )
+              })}
             </div>
           ) : (
             <Card>
               <CardContent className="pt-6">
                 <div className="py-8 text-center">
-                  <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
                   <h3 className="mb-2 text-lg font-semibold">No courses yet</h3>
                   <p className="mb-4 text-sm text-muted-foreground">
                     Start your learning journey by enrolling in a course.
@@ -504,21 +397,19 @@ export default function StudentDashboardPage() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-4">
-          {/* Upcoming deadlines */}
+        <div className="flex flex-col gap-4">
           <div>
             <h2 className="mb-4 text-xl font-semibold">Upcoming Deadlines</h2>
             <Card>
               <CardContent className="pt-6">
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   {upcomingDeadlines.length > 0 ? (
                     upcomingDeadlines.map((d, i) => (
                       <UpcomingDeadlineItem
                         key={i}
                         title={d.title}
                         courseTitle={d.courseTitle}
-                        dueDate={d.dueDate}
+                        daysUntilDue={d.daysUntilDue}
                       />
                     ))
                   ) : (
@@ -531,12 +422,34 @@ export default function StudentDashboardPage() {
             </Card>
           </div>
 
-          {/* Recommended courses */}
           <div>
             <h2 className="mb-4 text-xl font-semibold">Recommended for You</h2>
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {recommendedCourses.slice(0, 2).map((course) => (
-                <RecommendedCourseCard key={course.id} course={course} />
+                <CourseCard
+                  key={course.id}
+                  course={{
+                    id: course.id,
+                    title: course.title,
+                    slug: course.slug,
+                    description: course.description || undefined,
+                    thumbnail: course.thumbnail || undefined,
+                    level: course.level,
+                    category: course.category || undefined,
+                    instructor: course.instructor
+                      ? {
+                          id: course.instructor.id,
+                          fullName: course.instructor.fullName,
+                          avatarUrl: course.instructor.avatarUrl || undefined,
+                        }
+                      : { id: "", fullName: "Instructor" },
+                    _count: {
+                      modules: course.modules.length,
+                      enrolments: 0,
+                    },
+                  }}
+                  enrolled={false}
+                />
               ))}
             </div>
           </div>

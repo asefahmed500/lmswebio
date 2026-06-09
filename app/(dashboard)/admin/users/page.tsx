@@ -10,22 +10,15 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Shield,
-  KeyRound,
   ToggleLeft,
   ToggleRight,
   GraduationCap,
-  UserCheck,
   UserCog,
   Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { apiPut, apiDelete } from "@/lib/api-client"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -65,14 +58,13 @@ import {
 } from "@/components/ui/alert-dialog"
 
 interface AdminUser {
-  id: string
+  id: number
   fullName: string
   email: string
   role: "ADMIN" | "INSTRUCTOR" | "STUDENT"
   isActive: boolean
   avatarUrl?: string
-  coursesCount?: number
-  enrollmentsCount?: number
+  _count?: { courses?: number; enrolments?: number }
   createdAt: string
 }
 
@@ -82,36 +74,36 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
   const [roleFilter, setRoleFilter] = React.useState("ALL")
-  const [deleteId, setDeleteId] = React.useState<string | null>(null)
+  const [deleteId, setDeleteId] = React.useState<number | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   React.useEffect(() => {
-    loadUsers()
-  }, [])
-
-  async function loadUsers() {
-    setIsLoading(true)
-    try {
-      const res = await fetch("/api/admin/users")
-      if (res.ok) {
-        const data = await res.json()
-        setUsers(Array.isArray(data) ? data : data.users || [])
-      }
-    } catch {
-      toast.error("Failed to load users")
-    } finally {
-      setIsLoading(false)
+    let cancelled = false
+    fetch("/api/admin/users")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed")
+        return res.json()
+      })
+      .then((data) => {
+        if (!cancelled) setUsers(Array.isArray(data) ? data : data.users || [])
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load users")
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [])
 
   async function handleToggleActive(user: AdminUser) {
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !user.isActive }),
+      const res = await apiPut(`/admin/users/${user.id}`, {
+        isActive: !user.isActive,
       })
-      if (res.ok) {
+      if (!res.error) {
         setUsers((prev) =>
           prev.map((u) =>
             u.id === user.id ? { ...u, isActive: !u.isActive } : u
@@ -132,14 +124,12 @@ export default function AdminUsersPage() {
     if (!deleteId) return
     setIsDeleting(true)
     try {
-      const res = await fetch(`/api/admin/users/${deleteId}`, {
-        method: "DELETE",
-      })
-      if (res.ok) {
+      const res = await apiDelete(`/admin/users/${deleteId}`)
+      if (!res.error) {
         setUsers((prev) => prev.filter((u) => u.id !== deleteId))
         toast.success("User deleted")
       } else {
-        toast.error("Failed to delete user")
+        toast.error(res.error || "Failed to delete user")
       }
     } catch {
       toast.error("Failed to delete user")
@@ -193,7 +183,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Users</h1>
@@ -203,7 +193,7 @@ export default function AdminUsersPage() {
         </div>
         <Button asChild>
           <Link href="/admin/users/new">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus data-icon="inline-start" />
             Add User
           </Link>
         </Button>
@@ -245,9 +235,9 @@ export default function AdminUsersPage() {
         </Card>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by name or email..."
             value={search}
@@ -256,7 +246,7 @@ export default function AdminUsersPage() {
           />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="All Roles" />
           </SelectTrigger>
           <SelectContent>
@@ -287,12 +277,16 @@ export default function AdminUsersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead className="hidden sm:table-cell">Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Courses</TableHead>
-                  <TableHead>Enrollments</TableHead>
-                  <TableHead>Joined</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Courses
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Enrollments
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">Joined</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
@@ -310,7 +304,7 @@ export default function AdminUsersPage() {
                         <span className="font-medium">{user.fullName}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="hidden text-muted-foreground sm:table-cell">
                       {user.email}
                     </TableCell>
                     <TableCell>
@@ -325,16 +319,20 @@ export default function AdminUsersPage() {
                         {user.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{user.coursesCount ?? "-"}</TableCell>
-                    <TableCell>{user.enrollmentsCount ?? "-"}</TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="hidden md:table-cell">
+                      {user._count?.courses ?? "-"}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {user._count?.enrolments ?? "-"}
+                    </TableCell>
+                    <TableCell className="hidden text-muted-foreground lg:table-cell">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon-sm">
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -357,22 +355,6 @@ export default function AdminUsersPage() {
                               <ToggleRight className="mr-2 h-4 w-4" />
                             )}
                             {user.isActive ? "Deactivate" : "Activate"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/admin/users/${user.id}`)
-                            }
-                          >
-                            <Shield className="mr-2 h-4 w-4" />
-                            Change Role
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/admin/users/${user.id}`)
-                            }
-                          >
-                            <KeyRound className="mr-2 h-4 w-4" />
-                            Reset Password
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem

@@ -6,6 +6,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import {
   FileText,
@@ -84,12 +85,10 @@ function SubmissionGradeForm({
   }
 
   return (
-    <div className="space-y-3">
-      {localError && (
-        <p className="text-sm text-destructive">{localError}</p>
-      )}
+    <div className="flex flex-col gap-3">
+      {localError && <p className="text-sm text-destructive">{localError}</p>}
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor={`grade-${submission.id}`}>Grade</Label>
           <Input
             id={`grade-${submission.id}`}
@@ -100,7 +99,7 @@ function SubmissionGradeForm({
             disabled={isSubmitting}
           />
         </div>
-        <div className="space-y-1.5 sm:col-span-2">
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
           <Label htmlFor={`feedback-${submission.id}`}>Feedback</Label>
           <Textarea
             id={`feedback-${submission.id}`}
@@ -112,14 +111,8 @@ function SubmissionGradeForm({
           />
         </div>
       </div>
-      <Button
-        size="sm"
-        onClick={handleSubmitGrade}
-        disabled={isSubmitting}
-      >
-        {isSubmitting && (
-          <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-        )}
+      <Button size="sm" onClick={handleSubmitGrade} disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="mr-2 size-3 animate-spin" />}
         Submit Grade
       </Button>
     </div>
@@ -136,20 +129,22 @@ function GradedSubmissionResult({
 }) {
   return (
     <div className="flex items-start gap-4 rounded-lg border bg-muted/30 p-4">
-      <Award className="mt-0.5 h-5 w-5 text-green-600" />
-      <div className="min-w-0 flex-1 space-y-1">
+      <Award className="text-success mt-0.5 size-5" />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-green-600">
+          <span className="text-success font-semibold">
             Grade: {submission.grade}/{submission.assignment?.maxPoints || "?"}
           </span>
           <Badge variant="secondary" className="gap-1">
-            <CheckCircle className="h-3 w-3" />
+            <CheckCircle className="size-3" />
             Graded
           </Badge>
         </div>
         {submission.feedback && (
           <div>
-            <p className="text-xs font-medium text-muted-foreground">Feedback:</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Feedback:
+            </p>
             <p className="text-sm">{submission.feedback}</p>
           </div>
         )}
@@ -172,34 +167,41 @@ export default function AssignmentDetailPage() {
   )
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-
-  const loadAssignment = React.useCallback(async () => {
-    if (!user || !params.id) return
-    setIsLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`/api/assignments/${params.id}`)
-      if (!res.ok) throw new Error("Failed to fetch assignment")
-      const data = await res.json()
-      setAssignment(data)
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load assignment"
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }, [user, params.id])
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0)
 
   React.useEffect(() => {
-    loadAssignment()
-  }, [loadAssignment])
+    if (!user || !params.id) return
+
+    let cancelled = false
+
+    fetch(`/api/assignments/${params.id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch assignment")
+        return res.json()
+      })
+      .then((data) => {
+        if (!cancelled) setAssignment(data)
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setError(
+            err instanceof Error ? err.message : "Failed to load assignment"
+          )
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [user, params.id, refreshTrigger])
 
   if (isLoading) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">Loading assignment...</p>
         </div>
       </div>
@@ -210,8 +212,10 @@ export default function AssignmentDetailPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">Error loading assignment</h3>
+          <AlertCircle className="mx-auto mb-4 size-12 text-destructive" />
+          <h3 className="mb-2 text-lg font-semibold">
+            Error loading assignment
+          </h3>
           <p className="mb-4 text-sm text-muted-foreground">
             {error || "Assignment not found"}
           </p>
@@ -229,20 +233,20 @@ export default function AssignmentDetailPage() {
   const pendingCount = assignment.submissions.length - gradedCount
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <a href="/instructor/assignments">
-            <ArrowLeft className="h-4 w-4" />
-          </a>
+          <Link href="/instructor/assignments">
+            <ArrowLeft />
+          </Link>
         </Button>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-bold tracking-tight">
             {assignment.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {assignment.course?.title || `Course #${assignment.courseId}`} &middot;{" "}
-            {assignment.maxPoints} points max
+            {assignment.course?.title || `Course #${assignment.courseId}`}{" "}
+            &middot; {assignment.maxPoints} points max
           </p>
         </div>
       </div>
@@ -253,12 +257,12 @@ export default function AssignmentDetailPage() {
             <CardTitle className="text-base">Description</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
               {assignment.description}
             </p>
             {assignment.dueDate && (
               <div className="mt-3 flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="size-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Due:</span>
                 <span className="font-medium">
                   {new Date(assignment.dueDate).toLocaleDateString()}
@@ -283,7 +287,7 @@ export default function AssignmentDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
+              <FileText className="size-5 text-primary" />
               <div className="text-2xl font-bold">
                 {assignment.submissions.length}
               </div>
@@ -298,7 +302,7 @@ export default function AssignmentDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="text-success size-5" />
               <div className="text-2xl font-bold">{gradedCount}</div>
             </div>
           </CardContent>
@@ -311,7 +315,7 @@ export default function AssignmentDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" />
+              <Clock className="text-warning size-5" />
               <div className="text-2xl font-bold">{pendingCount}</div>
             </div>
           </CardContent>
@@ -327,10 +331,10 @@ export default function AssignmentDetailPage() {
               : `Review and grade student submissions (${pendingCount} pending)`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="flex flex-col gap-6">
           {assignment.submissions.length === 0 ? (
             <div className="py-8 text-center">
-              <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No submissions</h3>
               <p className="text-sm text-muted-foreground">
                 Students haven&apos;t submitted any work yet
@@ -340,14 +344,12 @@ export default function AssignmentDetailPage() {
             assignment.submissions.map((submission, index) => (
               <React.Fragment key={submission.id}>
                 {index > 0 && <Separator />}
-                <div className="space-y-4">
+                <div className="flex flex-col gap-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarFallback>
-                          {(
-                            submission.user?.fullName || "S"
-                          )
+                          {(submission.user?.fullName || "S")
                             .split(" ")
                             .map((n: string) => n[0])
                             .join("")
@@ -361,19 +363,21 @@ export default function AssignmentDetailPage() {
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Submitted{" "}
-                          {new Date(submission.submittedAt).toLocaleDateString()}
+                          {new Date(
+                            submission.submittedAt
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     {submission.grade !== null &&
                     submission.grade !== undefined ? (
                       <Badge variant="default" className="gap-1">
-                        <CheckCircle className="h-3 w-3" />
+                        <CheckCircle className="size-3" />
                         {submission.grade}/{assignment.maxPoints}
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="gap-1 text-amber-600">
-                        <Clock className="h-3 w-3" />
+                      <Badge variant="outline" className="text-warning gap-1">
+                        <Clock className="size-3" />
                         Pending
                       </Badge>
                     )}
@@ -384,7 +388,7 @@ export default function AssignmentDetailPage() {
                       <p className="mb-1 text-xs font-medium text-muted-foreground">
                         Answer:
                       </p>
-                      <p className="whitespace-pre-wrap text-sm">
+                      <p className="text-sm whitespace-pre-wrap">
                         {submission.textAnswer}
                       </p>
                     </div>
@@ -397,7 +401,7 @@ export default function AssignmentDetailPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <Download className="mr-2 h-4 w-4" />
+                        <Download data-icon="inline-start" />
                         View Submitted File
                       </a>
                     </Button>
@@ -409,7 +413,7 @@ export default function AssignmentDetailPage() {
                   ) : (
                     <SubmissionGradeForm
                       submission={submission}
-                      onGraded={loadAssignment}
+                      onGraded={() => setRefreshTrigger((prev) => prev + 1)}
                     />
                   )}
                 </div>

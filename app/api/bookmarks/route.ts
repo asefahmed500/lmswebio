@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 const createBookmarkSchema = z.object({
-  lessonId: z.number(),
+  lessonId: z.string(),
   timestamp: z.number().optional(),
 })
 
@@ -19,16 +20,16 @@ export async function GET(req: NextRequest) {
     const lessonId = searchParams.get("lessonId")
     const courseId = searchParams.get("courseId")
 
-    const where: any = { userId: session.user.id }
+    const where: Prisma.BookmarkWhereInput = { userId: session.user.id }
 
     if (lessonId) {
-      where.lessonId = parseInt(lessonId)
+      where.lessonId = lessonId
     }
 
     if (courseId) {
       where.lesson = {
         module: {
-          courseId: parseInt(courseId),
+          courseId: courseId,
         },
       }
     }
@@ -147,9 +148,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function DELETE(
-  req: NextRequest
-) {
+export async function DELETE(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session) {
@@ -157,10 +156,13 @@ export async function DELETE(
     }
 
     const { searchParams } = new URL(req.url)
-    const bookmarkId = parseInt(searchParams.get("id") || "")
+    const bookmarkId = searchParams.get("id") || ""
 
     if (!bookmarkId) {
-      return NextResponse.json({ error: "Bookmark ID required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Bookmark ID required" },
+        { status: 400 }
+      )
     }
 
     const bookmark = await prisma.bookmark.findUnique({

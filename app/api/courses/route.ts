@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma, Level } from "@prisma/client"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { rateLimit, getRateLimitIdentifier } from "@/lib/rate-limit"
 
 const createCourseSchema = z.object({
   title: z.string().min(1),
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search")
     const instructorId = searchParams.get("instructorId")
 
-    const where: any = {}
+    const where: Prisma.CourseWhereInput = {}
 
     if (session.user.role === "INSTRUCTOR") {
       where.instructorId = session.user.id
@@ -46,8 +48,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (category) where.category = category
-    if (level) where.level = level
-    if (instructorId) where.instructorId = Number(instructorId)
+    if (level) where.level = level as Level
+    // Only allow instructorId filter for ADMIN (prevents IDOR)
+    if (instructorId && session.user.role !== "INSTRUCTOR")
+      where.instructorId = instructorId
     if (search) {
       where.OR = [
         { title: { contains: search, mode: "insensitive" } },
@@ -94,6 +98,15 @@ export async function POST(request: NextRequest) {
     const session = await getSession()
     if (!session || !["ADMIN", "INSTRUCTOR"].includes(session.user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const identifier = `${getRateLimitIdentifier(request)}:courses-create`
+    const rl = await rateLimit(identifier, {
+      maxRequests: 30,
+      windowMs: 60_000,
+    })
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
     const body = await request.json()

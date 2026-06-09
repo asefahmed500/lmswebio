@@ -52,15 +52,15 @@ export function CourseList({
 }: CourseListProps) {
   if (courses.length === 0) {
     return (
-      <div className="text-center py-12 px-4">
-        <p className="text-muted-foreground text-lg">No courses found</p>
+      <div className="px-4 py-12 text-center">
+        <p className="text-lg text-muted-foreground">No courses found</p>
       </div>
     )
   }
 
   if (layout === "list") {
     return (
-      <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4 sm:gap-6">
         {courses.map((course) => (
           <CourseCard
             key={course.id}
@@ -84,7 +84,11 @@ export function CourseList({
   )
 
   return (
-    <div className={gridCols} role="list" aria-label={`Course list with ${courses.length} courses`}>
+    <div
+      className={gridCols}
+      role="list"
+      aria-label={`Course list with ${courses.length} courses`}
+    >
       {courses.map((course) => (
         <CourseCard
           key={course.id}

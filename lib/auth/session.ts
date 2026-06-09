@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma"
 
-export async function invalidateUserSessions(userId: number): Promise<void> {
+export async function invalidateUserSessions(userId: string): Promise<void> {
   await prisma.refreshToken.deleteMany({
     where: { userId },
   })
 }
 
-export async function getActiveSessionCount(userId: number): Promise<number> {
+export async function getActiveSessionCount(userId: string): Promise<number> {
   return prisma.refreshToken.count({
     where: {
       userId,
@@ -16,7 +16,7 @@ export async function getActiveSessionCount(userId: number): Promise<number> {
 }
 
 export async function invalidateAllSessionsExcept(
-  userId: number,
+  userId: string,
   currentToken: string
 ): Promise<void> {
   await prisma.refreshToken.deleteMany({

@@ -1,20 +1,8 @@
-/**
- * Student graded assignments page
- * Shows graded assignments with scores and feedback
- */
-
 "use client"
 
 import * as React from "react"
 import Link from "next/link"
-import {
-  FileText,
-  BookOpen,
-  Calendar,
-  HelpCircle,
-  Trophy,
-  MessageSquareText,
-} from "lucide-react"
+import { Calendar, HelpCircle, Trophy, MessageSquareText } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -35,6 +23,7 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/components/auth-provider"
+import { cn } from "@/lib/utils"
 
 interface GradedSubmission {
   id: number
@@ -56,14 +45,7 @@ interface GradedSubmission {
   }
 }
 
-/**
- * Feedback dialog component
- */
-function FeedbackDialog({
-  submission,
-}: {
-  submission: GradedSubmission
-}) {
+function FeedbackDialog({ submission }: { submission: GradedSubmission }) {
   const percentage =
     submission.grade !== null && submission.assignment.maxPoints > 0
       ? (submission.grade / submission.assignment.maxPoints) * 100
@@ -73,7 +55,7 @@ function FeedbackDialog({
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <MessageSquareText className="mr-2 h-4 w-4" />
+          <MessageSquareText data-icon="inline-start" />
           View Feedback
         </Button>
       </DialogTrigger>
@@ -86,8 +68,7 @@ function FeedbackDialog({
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh]">
-          <div className="space-y-4 pr-4">
-            {/* Score */}
+          <div className="flex flex-col gap-4 pr-4">
             <div className="rounded-lg bg-muted p-4">
               <div className="mb-1 text-sm text-muted-foreground">Score</div>
               <div className="flex items-baseline gap-2">
@@ -106,7 +87,6 @@ function FeedbackDialog({
               </div>
             </div>
 
-            {/* Your answer */}
             {submission.textAnswer && (
               <div>
                 <h4 className="mb-2 text-sm font-medium">Your Answer</h4>
@@ -116,10 +96,11 @@ function FeedbackDialog({
               </div>
             )}
 
-            {/* Feedback */}
             {submission.feedback && (
               <div>
-                <h4 className="mb-2 text-sm font-medium">Instructor Feedback</h4>
+                <h4 className="mb-2 text-sm font-medium">
+                  Instructor Feedback
+                </h4>
                 <div className="rounded-lg border bg-card p-3 text-sm">
                   {submission.feedback}
                 </div>
@@ -132,7 +113,6 @@ function FeedbackDialog({
               </div>
             )}
 
-            {/* Dates */}
             <div className="flex gap-4 text-xs text-muted-foreground">
               <span>
                 Submitted:{" "}
@@ -140,8 +120,7 @@ function FeedbackDialog({
               </span>
               {submission.gradedAt && (
                 <span>
-                  Graded:{" "}
-                  {new Date(submission.gradedAt).toLocaleDateString()}
+                  Graded: {new Date(submission.gradedAt).toLocaleDateString()}
                 </span>
               )}
             </div>
@@ -152,9 +131,6 @@ function FeedbackDialog({
   )
 }
 
-/**
- * Graded assignments page
- */
 export default function GradedAssignmentsPage() {
   const { user } = useAuth()
   const [submissions, setSubmissions] = React.useState<GradedSubmission[]>([])
@@ -191,7 +167,7 @@ export default function GradedAssignmentsPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
           <p className="text-sm text-muted-foreground">
             Loading graded assignments...
           </p>
@@ -204,7 +180,7 @@ export default function GradedAssignmentsPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
-          <HelpCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
+          <HelpCircle className="mx-auto mb-4 size-12 text-destructive" />
           <h3 className="mb-2 text-lg font-semibold">
             Error loading submissions
           </h3>
@@ -218,7 +194,7 @@ export default function GradedAssignmentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Graded Assignments
@@ -249,13 +225,14 @@ export default function GradedAssignmentsPage() {
                     </div>
                     <div className="shrink-0 text-right">
                       <div
-                        className={`text-xl font-bold ${
+                        className={cn(
+                          "text-xl font-bold",
                           percentage >= 70
-                            ? "text-green-600"
+                            ? "text-success"
                             : percentage >= 40
-                              ? "text-amber-600"
-                              : "text-red-600"
-                        }`}
+                              ? "text-warning"
+                              : "text-destructive"
+                        )}
                       >
                         {grade.toFixed(0)}
                       </div>
@@ -266,14 +243,12 @@ export default function GradedAssignmentsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Trophy className="h-4 w-4" />
+                      <Trophy className="size-4" />
                       <span>{percentage.toFixed(0)}%</span>
                       <Badge
-                        variant={
-                          percentage >= 70 ? "default" : "secondary"
-                        }
+                        variant={percentage >= 70 ? "default" : "secondary"}
                         className="ml-auto"
                       >
                         {percentage >= 80
@@ -288,9 +263,8 @@ export default function GradedAssignmentsPage() {
 
                     {sub.gradedAt && (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        Graded{" "}
-                        {new Date(sub.gradedAt).toLocaleDateString()}
+                        <Calendar className="size-3" />
+                        Graded {new Date(sub.gradedAt).toLocaleDateString()}
                       </div>
                     )}
 
@@ -307,7 +281,7 @@ export default function GradedAssignmentsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="py-12 text-center">
-              <Trophy className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <Trophy className="mx-auto mb-4 size-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">
                 No graded assignments
               </h3>

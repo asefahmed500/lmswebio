@@ -1,38 +1,30 @@
-/**
- * Registration page
- * Provides form for new student account creation with validation
- */
-
 "use client"
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
 import { registerSchema, type RegisterFormData } from "@/lib/validators"
 import { useAuth } from "@/components/auth-provider"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { LMSioLogo } from "@/components/homepage/lmsio-logo"
 
-/**
- * Registration page component
- * Provides a form for new users to create a student account
- */
 export default function RegisterPage() {
   const router = useRouter()
   const { register: registerUser } = useAuth()
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [visible, setVisible] = React.useState(false)
+
+  React.useEffect(() => {
+    requestAnimationFrame(() => setVisible(true))
+  }, [])
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -44,159 +36,187 @@ export default function RegisterPage() {
     },
   })
 
-  /**
-   * Handle form submission
-   * Creates a new account and logs the user in
-   */
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
     setError(null)
-
     try {
-      const result = await registerUser(data.fullName, data.email, data.password)
-
-      if (result.success) {
-        router.push("/student")
+      const result = await registerUser(
+        data.fullName,
+        data.email,
+        data.password
+      )
+      if (result.success && result.user) {
+        router.push(`/${result.user.role.toLowerCase()}`)
       } else {
         setError(result.error || "Failed to create account. Please try again.")
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred during registration")
-      console.error(err)
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-xl font-bold text-primary-foreground">
-              L
-            </div>
+    <div className="relative flex min-h-svh flex-col items-center justify-center bg-background px-4 py-8">
+      <div className="absolute inset-0 bg-gradient-to-b from-teal-50/50 via-transparent to-transparent dark:from-teal-950/20" />
+
+      <div
+        className={`relative w-full max-w-[400px] transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+      >
+        <LMSioLogo className="mx-auto mb-10 justify-center" variant="icon" />
+
+        <div className="rounded-2xl border bg-card/50 p-8 shadow-xl shadow-teal-500/[0.04] backdrop-blur-sm">
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Create an account
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Start your learning journey
+            </p>
           </div>
-          <CardTitle className="text-2xl">Create an account</CardTitle>
-          <CardDescription>
-            Sign up to start learning with our LMS platform
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Error message */}
+
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             {error && (
-              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                {error}
-              </div>
+              <Alert
+                variant="destructive"
+                className="animate-in fade-in-0 slide-in-from-top-2"
+              >
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
-            {/* Full name field */}
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="fullName" className="text-xs font-medium">
+                Full Name
+              </Label>
               <Input
                 id="fullName"
                 type="text"
                 placeholder="John Doe"
                 disabled={isLoading}
+                className="h-11 rounded-xl"
                 {...form.register("fullName")}
               />
               {form.formState.errors.fullName && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {form.formState.errors.fullName.message}
                 </p>
               )}
             </div>
 
-            {/* Email field */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email" className="text-xs font-medium">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="name@example.com"
                 disabled={isLoading}
+                className="h-11 rounded-xl"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {form.formState.errors.email.message}
                 </p>
               )}
             </div>
 
-            {/* Password field */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="password" className="text-xs font-medium">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Min. 8 characters"
                 disabled={isLoading}
+                className="h-11 rounded-xl"
                 {...form.register("password")}
               />
               {form.formState.errors.password && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {form.formState.errors.password.message}
                 </p>
               )}
             </div>
 
-            {/* Confirm password field */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="confirmPassword" className="text-xs font-medium">
+                Confirm Password
+              </Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Repeat your password"
                 disabled={isLoading}
+                className="h-11 rounded-xl"
                 {...form.register("confirmPassword")}
               />
               {form.formState.errors.confirmPassword && (
-                <p className="text-sm text-destructive">
+                <p className="text-xs text-destructive">
                   {form.formState.errors.confirmPassword.message}
                 </p>
               )}
             </div>
 
-            {/* Submit button */}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create account
+            <Button
+              type="submit"
+              className="h-11 w-full rounded-xl"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                "Create account"
+              )}
             </Button>
           </form>
 
-          {/* Terms notice */}
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="mt-4 text-center text-xs text-muted-foreground">
             By creating an account, you agree to our{" "}
-            <a
+            <Link
               href="/terms"
-              className="underline underline-offset-4 hover:text-primary"
+              className="underline underline-offset-2 hover:text-foreground"
             >
-              Terms of Service
-            </a>{" "}
+              Terms
+            </Link>{" "}
             and{" "}
-            <a
+            <Link
               href="/privacy"
-              className="underline underline-offset-4 hover:text-primary"
+              className="underline underline-offset-2 hover:text-foreground"
             >
               Privacy Policy
-            </a>
-            .
+            </Link>
           </p>
-        </CardContent>
-        <CardFooter>
-          <div className="text-sm text-muted-foreground">
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-3 text-muted-foreground">or</span>
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <a
+            <Link
               href="/login"
-              className="text-primary underline-offset-4 hover:underline"
+              className="font-medium text-primary hover:underline"
             >
               Sign in
-            </a>
-          </div>
-        </CardFooter>
-      </Card>
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     if (courseId) {
       const course = await prisma.course.findUnique({
-        where: { id: Number(courseId) },
+        where: { id: courseId },
         include: {
           modules: {
             include: {
@@ -28,12 +28,18 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Course not found" }, { status: 404 })
       }
 
-      if (
-        session.user.role === "STUDENT" &&
-        !course.isPublished &&
-        course.instructorId !== session.user.id
-      ) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      if (session.user.role === "STUDENT" && !course.isPublished) {
+        const enrollment = await prisma.enrolment.findUnique({
+          where: {
+            userId_courseId: {
+              userId: session.user.id,
+              courseId: courseId,
+            },
+          },
+        })
+        if (!enrollment) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+        }
       }
 
       const completedLessons = await prisma.lessonCompletion.findMany({
@@ -41,7 +47,7 @@ export async function GET(request: NextRequest) {
           userId: session.user.id,
           lesson: {
             module: {
-              courseId: Number(courseId),
+              courseId: courseId,
             },
           },
         },
@@ -55,9 +61,8 @@ export async function GET(request: NextRequest) {
         0
       )
 
-      const progress = totalLessons > 0
-        ? (completedLessons.length / totalLessons) * 100
-        : 0
+      const progress =
+        totalLessons > 0 ? (completedLessons.length / totalLessons) * 100 : 0
 
       const moduleProgress = course.modules.map((module) => {
         const moduleCompletedLessons = completedLessons.filter(
@@ -68,9 +73,10 @@ export async function GET(request: NextRequest) {
           title: module.title,
           completedLessons: moduleCompletedLessons,
           totalLessons: module.lessons.length,
-          progress: module.lessons.length > 0
-            ? (moduleCompletedLessons / module.lessons.length) * 100
-            : 0,
+          progress:
+            module.lessons.length > 0
+              ? (moduleCompletedLessons / module.lessons.length) * 100
+              : 0,
         }
       })
 
@@ -115,7 +121,11 @@ export async function GET(request: NextRequest) {
       )
 
       const completedCount = enrollment.course.modules.reduce((sum, module) => {
-        return sum + module.lessons.filter((lesson) => completedLessonIds.has(lesson.id)).length
+        return (
+          sum +
+          module.lessons.filter((lesson) => completedLessonIds.has(lesson.id))
+            .length
+        )
       }, 0)
 
       totalCompletedLessons += completedCount
@@ -124,13 +134,17 @@ export async function GET(request: NextRequest) {
       return {
         courseId: enrollment.courseId,
         courseTitle: enrollment.course.title,
-        progress: courseTotalLessons > 0 ? (completedCount / courseTotalLessons) * 100 : 0,
+        progress:
+          courseTotalLessons > 0
+            ? (completedCount / courseTotalLessons) * 100
+            : 0,
         completedLessons: completedCount,
         totalLessons: courseTotalLessons,
       }
     })
 
-    const overallProgress = totalLessons > 0 ? (totalCompletedLessons / totalLessons) * 100 : 0
+    const overallProgress =
+      totalLessons > 0 ? (totalCompletedLessons / totalLessons) * 100 : 0
 
     return NextResponse.json({
       overallProgress,

@@ -4,12 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { BookOpen, Search, Eye, Trash2, Loader2, Library } from "lucide-react"
 import { toast } from "sonner"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -39,6 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { apiPatch, apiDelete } from "@/lib/api-client"
 
 interface AdminCourse {
   id: string
@@ -63,32 +59,38 @@ export default function AdminCoursesPage() {
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   React.useEffect(() => {
-    loadCourses()
-  }, [])
-
-  async function loadCourses() {
-    setIsLoading(true)
-    try {
-      const res = await fetch("/api/courses")
-      if (res.ok) {
-        const data = await res.json()
-        setCourses(Array.isArray(data) ? data : data.courses || [])
-      }
-    } catch {
-      toast.error("Failed to load courses")
-    } finally {
-      setIsLoading(false)
+    let cancelled = false
+    fetch("/api/courses")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed")
+        return res.json()
+      })
+      .then((data) => {
+        if (!cancelled)
+          setCourses(Array.isArray(data) ? data : data.courses || [])
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load courses")
+      })
+      .finally(() => {
+        if (!cancelled) {
+          const params = new URLSearchParams(window.location.search)
+          const q = params.get("q") || params.get("search")
+          if (q) setSearch(q)
+          setIsLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [])
 
   async function handleTogglePublish(course: AdminCourse) {
     try {
-      const res = await fetch(`/api/courses/${course.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublished: !course.isPublished }),
+      const res = await apiPatch(`/courses/${course.id}`, {
+        isPublished: !course.isPublished,
       })
-      if (res.ok) {
+      if (!res.error) {
         setCourses((prev) =>
           prev.map((c) =>
             c.id === course.id ? { ...c, isPublished: !c.isPublished } : c
@@ -109,10 +111,8 @@ export default function AdminCoursesPage() {
     if (!deleteId) return
     setIsDeleting(true)
     try {
-      const res = await fetch(`/api/courses/${deleteId}`, {
-        method: "DELETE",
-      })
-      if (res.ok) {
+      const res = await apiDelete(`/courses/${deleteId}`)
+      if (!res.error) {
         setCourses((prev) => prev.filter((c) => c.id !== deleteId))
         toast.success("Course deleted")
       } else {
@@ -174,7 +174,7 @@ export default function AdminCoursesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Courses</h1>
         <p className="mt-1 text-muted-foreground">
@@ -196,35 +196,33 @@ export default function AdminCoursesPage() {
         </Card>
         <Card size="sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-600">
+            <CardTitle className="text-success flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Published
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-success text-3xl font-bold">
               {stats.published}
             </div>
           </CardContent>
         </Card>
         <Card size="sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-amber-600">
+            <CardTitle className="text-warning flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               Draft
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-amber-600">
-              {stats.draft}
-            </div>
+            <div className="text-warning text-3xl font-bold">{stats.draft}</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search courses..."
             value={search}
@@ -233,7 +231,7 @@ export default function AdminCoursesPage() {
           />
         </div>
         <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="All Levels" />
           </SelectTrigger>
           <SelectContent>
@@ -244,7 +242,7 @@ export default function AdminCoursesPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -274,10 +272,14 @@ export default function AdminCoursesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Instructor</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    Instructor
+                  </TableHead>
                   <TableHead>Level</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Students</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Students
+                  </TableHead>
                   <TableHead className="w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -307,12 +309,10 @@ export default function AdminCoursesPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage
-                            src={course.instructor?.avatarUrl}
-                          />
+                          <AvatarImage src={course.instructor?.avatarUrl} />
                           <AvatarFallback className="text-[10px]">
                             {course.instructor
                               ? getInitials(course.instructor.fullName)
@@ -336,15 +336,13 @@ export default function AdminCoursesPage() {
                         {course.isPublished ? "Published" : "Draft"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{course._count?.students ?? 0}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {course._count?.students ?? 0}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          asChild
-                        >
-                          <Link href={`/instructor/courses/${course.id}`}>
+                        <Button variant="ghost" size="icon-xs" asChild>
+                          <Link href={`/admin/courses/${course.id}`}>
                             <Eye className="h-3.5 w-3.5" />
                           </Link>
                         </Button>
@@ -354,9 +352,9 @@ export default function AdminCoursesPage() {
                           onClick={() => handleTogglePublish(course)}
                         >
                           {course.isPublished ? (
-                            <BookOpen className="h-3.5 w-3.5 text-amber-600" />
+                            <BookOpen className="text-warning h-3.5 w-3.5" />
                           ) : (
-                            <BookOpen className="h-3.5 w-3.5 text-green-600" />
+                            <BookOpen className="text-success h-3.5 w-3.5" />
                           )}
                         </Button>
                         <Button

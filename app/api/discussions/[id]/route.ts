@@ -32,8 +32,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const discussionId = parseInt(id)
+    const { id: discussionId } = await params
 
     const discussion = await prisma.discussion.findUnique({
       where: { id: discussionId },
@@ -92,7 +91,10 @@ export async function GET(
     })
 
     if (!discussion) {
-      return NextResponse.json({ error: "Discussion not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Discussion not found" },
+        { status: 404 }
+      )
     }
 
     // Get user votes
@@ -103,9 +105,7 @@ export async function GET(
       },
     })
 
-    const userVoteMap = new Map(
-      userVotes.map((v) => [v.discussionId, v.value])
-    )
+    const userVoteMap = new Map(userVotes.map((v) => [v.discussionId, v.value]))
 
     return NextResponse.json({
       ...discussion,
@@ -134,8 +134,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const discussionId = parseInt(id)
+    const { id: discussionId } = await params
     const body = await req.json()
     const validatedData = updateDiscussionSchema.parse(body)
 
@@ -145,7 +144,10 @@ export async function PATCH(
     })
 
     if (!discussion) {
-      return NextResponse.json({ error: "Discussion not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Discussion not found" },
+        { status: 404 }
+      )
     }
 
     const isAdmin = session.user.role === "ADMIN"
@@ -219,8 +221,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const discussionId = parseInt(id)
+    const { id: discussionId } = await params
 
     // Check ownership or admin
     const discussion = await prisma.discussion.findUnique({
@@ -228,7 +229,10 @@ export async function DELETE(
     })
 
     if (!discussion) {
-      return NextResponse.json({ error: "Discussion not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Discussion not found" },
+        { status: 404 }
+      )
     }
 
     const isAdmin = session.user.role === "ADMIN"

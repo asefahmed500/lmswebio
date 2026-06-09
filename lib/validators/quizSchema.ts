@@ -14,10 +14,7 @@ export const quizSchema = z.object({
     .string()
     .max(1000, "Description must be less than 1000 characters")
     .optional(),
-  courseId: z
-    .number()
-    .int("Course ID must be an integer")
-    .positive("Course ID must be positive"),
+  courseId: z.string(),
   timeLimit: z
     .number()
     .int("Time limit must be an integer")

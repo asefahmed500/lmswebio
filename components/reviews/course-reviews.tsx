@@ -29,7 +29,11 @@ interface CourseReviewsProps {
   totalReviews?: number
 }
 
-export function CourseReviews({ reviews, averageRating, totalReviews }: CourseReviewsProps) {
+export function CourseReviews({
+  reviews,
+  averageRating,
+  totalReviews,
+}: CourseReviewsProps) {
   const ratingDistribution = React.useMemo(() => {
     const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
     reviews.forEach((r) => {
@@ -43,7 +47,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
       <Card>
         <CardContent className="py-12">
           <div className="text-center">
-            <Star className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <Star className="mx-auto mb-4 size-12 text-muted-foreground" />
             <h3 className="mb-2 text-lg font-semibold">No reviews yet</h3>
             <p className="text-sm text-muted-foreground">
               Be the first to review this course!
@@ -55,7 +59,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Rating Summary */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -65,35 +69,35 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
                 <div className="text-4xl font-bold">
                   {averageRating?.toFixed(1) || "0.0"}
                 </div>
-                <div className="flex items-center gap-1 mt-1">
+                <div className="mt-1 flex items-center gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-4 w-4 ${
+                      className={`size-4 ${
                         i < (averageRating || 0)
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
+                          ? "fill-warning text-warning"
+                          : "text-muted-foreground"
                       }`}
                     />
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {totalReviews || reviews.length} reviews
                 </p>
               </div>
-              <div className="flex-1 space-y-2">
+              <div className="flex flex-1 flex-col gap-2">
                 {[5, 4, 3, 2, 1].map((star) => {
-                  const count = ratingDistribution[star as keyof typeof ratingDistribution]
-                  const percentage = reviews.length > 0
-                    ? (count / reviews.length) * 100
-                    : 0
+                  const count =
+                    ratingDistribution[star as keyof typeof ratingDistribution]
+                  const percentage =
+                    reviews.length > 0 ? (count / reviews.length) * 100 : 0
                   return (
                     <div key={star} className="flex items-center gap-2 text-sm">
                       <span className="w-3">{star}</span>
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <Star className="fill-warning text-warning size-3" />
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full bg-yellow-400 rounded-full"
+                          className="bg-warning h-full rounded-full"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -110,8 +114,8 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 
         <Card>
           <CardContent className="p-6">
-            <h3 className="font-semibold mb-4">Rating Breakdown</h3>
-            <div className="space-y-3">
+            <h3 className="mb-4 font-semibold">Rating Breakdown</h3>
+            <div className="flex flex-col gap-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">5 stars</span>
                 <span className="font-medium">
@@ -148,7 +152,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
       </div>
 
       {/* Reviews List */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {reviews.map((review) => (
           <ReviewCard key={review.id} review={review} />
         ))}
@@ -174,19 +178,19 @@ function ReviewCard({ review }: { review: Review }) {
             </AvatarFallback>
           </Avatar>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex items-start justify-between gap-2">
               <div>
                 <h4 className="font-medium">{review.user.fullName}</h4>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="mt-1 flex items-center gap-2">
                   <div className="flex items-center">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-3 w-3 ${
+                        className={`size-3 ${
                           i < review.rating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300"
+                            ? "fill-warning text-warning"
+                            : "text-muted-foreground"
                         }`}
                       />
                     ))}
@@ -201,18 +205,18 @@ function ReviewCard({ review }: { review: Review }) {
             </div>
 
             {review.review && (
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="mb-3 text-sm text-muted-foreground">
                 {review.review}
               </p>
             )}
 
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="h-7 gap-1">
-                <ThumbsUp className="h-3 w-3" />
+                <ThumbsUp className="size-3" />
                 Helpful ({review.helpfulVotes})
               </Button>
               <Button variant="ghost" size="sm" className="h-7 gap-1">
-                <MessageSquare className="h-3 w-3" />
+                <MessageSquare className="size-3" />
                 Reply
               </Button>
             </div>

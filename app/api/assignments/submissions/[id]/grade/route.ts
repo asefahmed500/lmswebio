@@ -23,8 +23,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { id } = await params
-    const submissionId = parseInt(id)
+    const { id: submissionId } = await params
 
     const submission = await prisma.assignmentSubmission.findUnique({
       where: { id: submissionId },
@@ -32,10 +31,16 @@ export async function PUT(
     })
 
     if (!submission) {
-      return NextResponse.json({ error: "Submission not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Submission not found" },
+        { status: 404 }
+      )
     }
 
-    if (role === "INSTRUCTOR" && submission.assignment.course.instructorId !== userId) {
+    if (
+      role === "INSTRUCTOR" &&
+      submission.assignment.course.instructorId !== userId
+    ) {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 })
     }
 
@@ -64,6 +69,9 @@ export async function PUT(
       )
     }
     console.error("Grade submission error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

@@ -1,20 +1,8 @@
-/**
- * Student submitted assignments page
- * Shows assignments awaiting grading
- */
-
 "use client"
 
 import * as React from "react"
 import Link from "next/link"
-import {
-  FileText,
-  BookOpen,
-  Clock,
-  Send,
-  HelpCircle,
-  CheckCircle2,
-} from "lucide-react"
+import { Clock, Send, HelpCircle, CheckCircle2 } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -25,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
 
 interface SubmissionData {
   id: number
@@ -46,9 +35,6 @@ interface SubmissionData {
   }
 }
 
-/**
- * Submitted assignments page
- */
 export default function SubmittedAssignmentsPage() {
   const { user } = useAuth()
   const [submissions, setSubmissions] = React.useState<SubmissionData[]>([])
@@ -63,10 +49,12 @@ export default function SubmittedAssignmentsPage() {
       setError(null)
 
       try {
-        const subRes = await fetch("/api/assignments/my-submissions")
-        if (!subRes.ok) throw new Error("Failed to fetch submissions")
+        const subResult = await apiGet<SubmissionData[]>(
+          "/assignments/my-submissions"
+        )
+        if (subResult.error) throw new Error("Failed to fetch submissions")
 
-        const allSubmissions: SubmissionData[] = await subRes.json()
+        const allSubmissions = subResult.data!
         const awaitingGrade = allSubmissions.filter((s) => s.grade === null)
 
         setSubmissions(awaitingGrade)
@@ -112,7 +100,7 @@ export default function SubmittedAssignmentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Submitted Assignments
@@ -142,7 +130,7 @@ export default function SubmittedAssignmentsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Send className="h-4 w-4" />
                     <span>
@@ -156,9 +144,7 @@ export default function SubmittedAssignmentsPage() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="h-4 w-4" />
-                    <span>
-                      {sub.assignment.maxPoints} points possible
-                    </span>
+                    <span>{sub.assignment.maxPoints} points possible</span>
                   </div>
                 </div>
               </CardContent>
@@ -169,7 +155,7 @@ export default function SubmittedAssignmentsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="py-12 text-center">
-              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
+              <CheckCircle2 className="text-success mx-auto mb-4 h-12 w-12" />
               <h3 className="mb-2 text-lg font-semibold">
                 No submissions awaiting grading
               </h3>

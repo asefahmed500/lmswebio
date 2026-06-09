@@ -1,7 +1,9 @@
+import "dotenv/config"
 import { defineConfig } from "prisma/config"
 
 export default defineConfig({
   datasource: {
-    url: "postgresql://postgres:asef@localhost:5432/lmsioweb",
+    url: process.env.DATABASE_URL ?? "",
   },
+  engine: "classic" as const,
 })

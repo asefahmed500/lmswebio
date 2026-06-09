@@ -19,7 +19,7 @@ export async function GET(
     }
 
     const submission = await prisma.assignmentSubmission.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: {
         assignment: {
           include: {
@@ -70,7 +70,7 @@ export async function PATCH(
     }
 
     const submission = await prisma.assignmentSubmission.findUnique({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       include: {
         assignment: {
           include: { course: true },
@@ -96,7 +96,7 @@ export async function PATCH(
     const data = gradeSubmissionSchema.parse(body)
 
     const gradedSubmission = await prisma.assignmentSubmission.update({
-      where: { id: Number((await params).id) },
+      where: { id: (await params).id },
       data: {
         grade: data.grade,
         feedback: data.feedback,

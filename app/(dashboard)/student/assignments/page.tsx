@@ -12,7 +12,6 @@ import {
   Clock,
   CheckCircle2,
   BookOpen,
-  AlertCircle,
   HelpCircle,
   Calendar,
 } from "lucide-react"
@@ -26,8 +25,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
 
 interface CourseInfo {
   id: number
@@ -65,9 +64,8 @@ interface EnrolmentData {
  * Due date display helper
  */
 function DueDateDisplay({ dueDate }: { dueDate: string | null }) {
+  const [now] = React.useState(() => Date.now())
   if (!dueDate) return null
-
-  const now = Date.now()
   const due = new Date(dueDate).getTime()
   const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24))
 
@@ -80,7 +78,7 @@ function DueDateDisplay({ dueDate }: { dueDate: string | null }) {
     color = "text-destructive"
     label = "Due today"
   } else if (diffDays === 1) {
-    color = "text-amber-600"
+    color = "text-warning"
     label = "Due tomorrow"
   } else {
     color = "text-muted-foreground"
@@ -89,7 +87,7 @@ function DueDateDisplay({ dueDate }: { dueDate: string | null }) {
 
   return (
     <div className={`flex items-center gap-1 text-sm ${color}`}>
-      <Calendar className="h-4 w-4" />
+      <Calendar className="size-4" />
       <span>{label}</span>
     </div>
   )
@@ -135,14 +133,14 @@ function AssignmentCard({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className="size-4" />
               <span>{assignment.course.title}</span>
             </div>
             <div className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
+              <FileText className="size-4" />
               <span>{assignment.maxPoints} pts</span>
             </div>
             <DueDateDisplay dueDate={assignment.dueDate} />
@@ -194,26 +192,27 @@ export default function StudentAssignmentsPage() {
       setError(null)
 
       try {
-        const enrolRes = await fetch("/api/enrolments/my")
-        if (!enrolRes.ok) throw new Error("Failed to fetch enrollments")
-        const enrolments: EnrolmentData[] = await enrolRes.json()
+        const enrolRes = await apiGet<EnrolmentData[]>("/enrolments/my")
+        if (enrolRes.error || !enrolRes.data)
+          throw new Error("Failed to fetch enrollments")
+        const enrolments: EnrolmentData[] = enrolRes.data
 
         const courseIds = enrolments.map((e) => e.courseId)
 
         const assignResults = await Promise.all(
           courseIds.map((cid: number) =>
-            fetch(`/api/assignments?courseId=${cid}`).then((r) =>
-              r.ok ? r.json() : []
+            apiGet<AssignmentItem[]>(`/assignments?courseId=${cid}`).then(
+              (r) => r.data ?? []
             )
           )
         )
 
         const allAssignments: AssignmentItem[] = assignResults.flat()
 
-        const subRes = await fetch("/api/assignments/my-submissions")
-        const allSubmissions: SubmissionItem[] = subRes.ok
-          ? await subRes.json()
-          : []
+        const subRes = await apiGet<SubmissionItem[]>(
+          "/assignments/my-submissions"
+        )
+        const allSubmissions: SubmissionItem[] = subRes.data ?? []
 
         setAssignments(allAssignments)
         setSubmissions(allSubmissions)
@@ -292,7 +291,7 @@ export default function StudentAssignmentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">My Assignments</h1>
         <p className="mt-1 text-muted-foreground">
@@ -329,7 +328,7 @@ export default function StudentAssignmentsPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="py-12 text-center">
-                    <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-500" />
+                    <CheckCircle2 className="text-success mx-auto mb-4 h-12 w-12" />
                     <h3 className="mb-2 text-lg font-semibold">
                       No pending assignments
                     </h3>

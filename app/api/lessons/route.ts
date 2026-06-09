@@ -5,7 +5,7 @@ import { z } from "zod"
 
 const createLessonSchema = z.object({
   title: z.string().min(1),
-  moduleId: z.number(),
+  moduleId: z.string(),
   content: z.string().optional(),
   contentType: z.enum(["text", "video", "pdf"]).default("text"),
   duration: z.number().optional(),
@@ -23,7 +23,7 @@ const updateLessonSchema = z.object({
 const reorderLessonsSchema = z.object({
   lessons: z.array(
     z.object({
-      id: z.number(),
+      id: z.string(),
       order: z.number(),
     })
   ),
@@ -40,38 +40,35 @@ export async function GET(request: NextRequest) {
     const moduleId = searchParams.get("moduleId")
 
     if (!moduleId) {
-      return NextResponse.json(
-        { error: "Module ID required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Module ID required" }, { status: 400 })
     }
 
-    const module = await prisma.module.findUnique({
-      where: { id: Number(moduleId) },
+    const mod = await prisma.module.findUnique({
+      where: { id: moduleId },
       include: { course: true },
     })
 
-    if (!module) {
+    if (!mod) {
       return NextResponse.json({ error: "Module not found" }, { status: 404 })
     }
 
     if (
       session.user.role === "STUDENT" &&
-      !module.course.isPublished &&
-      module.course.instructorId !== session.user.id
+      !mod.course.isPublished &&
+      mod.course.instructorId !== session.user.id
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     if (
       session.user.role === "INSTRUCTOR" &&
-      module.course.instructorId !== session.user.id
+      mod.course.instructorId !== session.user.id
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     const lessons = await prisma.lesson.findMany({
-      where: { moduleId: Number(moduleId) },
+      where: { moduleId: moduleId },
       orderBy: { order: "asc" },
     })
 
@@ -95,18 +92,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const data = createLessonSchema.parse(body)
 
-    const module = await prisma.module.findUnique({
+    const mod = await prisma.module.findUnique({
       where: { id: data.moduleId },
       include: { course: true },
     })
 
-    if (!module) {
+    if (!mod) {
       return NextResponse.json({ error: "Module not found" }, { status: 404 })
     }
 
     if (
       session.user.role === "INSTRUCTOR" &&
-      module.course.instructorId !== session.user.id
+      mod.course.instructorId !== session.user.id
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
@@ -147,6 +144,32 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json()
     const data = reorderLessonsSchema.parse(body)
+
+    // Verify ownership for all lessons being reordered
+    for (const les of data.lessons) {
+      const existingLesson = await prisma.lesson.findUnique({
+        where: { id: les.id },
+        include: {
+          module: {
+            include: { course: { select: { instructorId: true } } },
+          },
+        },
+      })
+
+      if (!existingLesson) {
+        return NextResponse.json(
+          { error: `Lesson ${les.id} not found` },
+          { status: 404 }
+        )
+      }
+
+      if (
+        session.user.role === "INSTRUCTOR" &&
+        existingLesson.module.course.instructorId !== session.user.id
+      ) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+    }
 
     for (const lesson of data.lessons) {
       await prisma.lesson.update({

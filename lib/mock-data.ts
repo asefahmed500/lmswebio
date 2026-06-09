@@ -27,15 +27,14 @@ import assignmentsData from "@/data/mock/assignments.json"
 import assignmentSubmissionsData from "@/data/mock/assignment-submissions.json"
 
 // Type assertions for imported JSON
-const users = usersData as User[]
-const courses = coursesData as Course[]
-const enrollments = enrollmentsData as Enrollment[]
-const quizzes = quizzesData as Quiz[]
-// Quiz attempts need special handling due to answers field type
+const users = usersData as unknown as User[]
+const courses = coursesData as unknown as Course[]
+const enrollments = enrollmentsData as unknown as Enrollment[]
+const quizzes = quizzesData as unknown as Quiz[]
 const quizAttempts = quizAttemptsData as unknown as QuizAttempt[]
-const assignments = assignmentsData as Assignment[]
+const assignments = assignmentsData as unknown as Assignment[]
 const assignmentSubmissions =
-  assignmentSubmissionsData as AssignmentSubmission[]
+  assignmentSubmissionsData as unknown as AssignmentSubmission[]
 
 /**
  * Simulate async delay for realistic loading states
@@ -60,7 +59,7 @@ export async function getUsers(): Promise<User[]> {
 /**
  * Get user by ID
  */
-export async function getUserById(id: number): Promise<User | undefined> {
+export async function getUserById(id: string): Promise<User | undefined> {
   await delay(200)
   return users.find((u) => u.id === id)
 }
@@ -92,7 +91,7 @@ export async function getUsersByRole(role: Role): Promise<User[]> {
  */
 export async function getCourses(
   userRole?: Role,
-  userId?: number
+  userId?: string
 ): Promise<Course[]> {
   await delay()
 
@@ -114,7 +113,7 @@ export async function getCourses(
 /**
  * Get course by ID with instructor populated
  */
-export async function getCourseById(id: number): Promise<Course | undefined> {
+export async function getCourseById(id: string): Promise<Course | undefined> {
   await delay(200)
   const course = courses.find((c) => c.id === id)
   if (course) {
@@ -128,7 +127,7 @@ export async function getCourseById(id: number): Promise<Course | undefined> {
  * Get courses by instructor
  */
 export async function getCoursesByInstructor(
-  instructorId: number
+  instructorId: string
 ): Promise<Course[]> {
   await delay()
   return courses.filter((c) => c.instructorId === instructorId)
@@ -150,7 +149,7 @@ export async function getEnrollments(): Promise<Enrollment[]> {
  * Get enrollments for a specific student
  */
 export async function getEnrollmentsByStudent(
-  studentId: number
+  studentId: string
 ): Promise<Enrollment[]> {
   await delay()
   const studentEnrollments = enrollments.filter((e) => e.userId === studentId)
@@ -166,7 +165,7 @@ export async function getEnrollmentsByStudent(
  * Get enrollments for a specific course (instructor view)
  */
 export async function getEnrollmentsByCourse(
-  courseId: number
+  courseId: string
 ): Promise<Enrollment[]> {
   await delay()
   const courseEnrollments = enrollments.filter((e) => e.courseId === courseId)
@@ -193,7 +192,7 @@ export async function getQuizzes(): Promise<Quiz[]> {
 /**
  * Get quiz by ID
  */
-export async function getQuizById(id: number): Promise<Quiz | undefined> {
+export async function getQuizById(id: string): Promise<Quiz | undefined> {
   await delay(200)
   return quizzes.find((q) => q.id === id)
 }
@@ -201,7 +200,7 @@ export async function getQuizById(id: number): Promise<Quiz | undefined> {
 /**
  * Get quizzes by course
  */
-export async function getQuizzesByCourse(courseId: number): Promise<Quiz[]> {
+export async function getQuizzesByCourse(courseId: string): Promise<Quiz[]> {
   await delay()
   return quizzes.filter((q) => q.courseId === courseId)
 }
@@ -218,7 +217,7 @@ export async function getQuizAttempts(): Promise<QuizAttempt[]> {
  * Get quiz attempts by student
  */
 export async function getQuizAttemptsByStudent(
-  studentId: number
+  studentId: string
 ): Promise<QuizAttempt[]> {
   await delay()
   return quizAttempts.filter((a) => a.userId === studentId)
@@ -228,7 +227,7 @@ export async function getQuizAttemptsByStudent(
  * Get quiz attempts by quiz
  */
 export async function getQuizAttemptsByQuiz(
-  quizId: number
+  quizId: string
 ): Promise<QuizAttempt[]> {
   await delay()
   const attempts = quizAttempts.filter((a) => a.quizId === quizId)
@@ -256,7 +255,7 @@ export async function getAssignments(): Promise<Assignment[]> {
  * Get assignment by ID
  */
 export async function getAssignmentById(
-  id: number
+  id: string
 ): Promise<Assignment | undefined> {
   await delay(200)
   return assignments.find((a) => a.id === id)
@@ -266,7 +265,7 @@ export async function getAssignmentById(
  * Get assignments by course
  */
 export async function getAssignmentsByCourse(
-  courseId: number
+  courseId: string
 ): Promise<Assignment[]> {
   await delay()
   return assignments.filter((a) => a.courseId === courseId)
@@ -286,7 +285,7 @@ export async function getAssignmentSubmissions(): Promise<
  * Get submissions by student
  */
 export async function getSubmissionsByStudent(
-  studentId: number
+  studentId: string
 ): Promise<AssignmentSubmission[]> {
   await delay()
   const submissions = assignmentSubmissions.filter(
@@ -304,7 +303,7 @@ export async function getSubmissionsByStudent(
  * Get submissions by assignment (instructor grading view)
  */
 export async function getSubmissionsByAssignment(
-  assignmentId: number
+  assignmentId: string
 ): Promise<AssignmentSubmission[]> {
   await delay()
   const submissions = assignmentSubmissions.filter(
@@ -322,7 +321,7 @@ export async function getSubmissionsByAssignment(
  * Get pending grading count for an instructor
  */
 export async function getPendingGradingCount(
-  instructorId: number
+  instructorId: string
 ): Promise<number> {
   await delay(200)
 
@@ -410,7 +409,7 @@ export async function getWeeklyEnrollments(): Promise<WeeklyEnrollment[]> {
  * Get instructor dashboard KPIs
  */
 export async function getInstructorKPIs(
-  instructorId: number
+  instructorId: string
 ): Promise<KPICard[]> {
   await delay()
 
@@ -457,7 +456,7 @@ export async function getInstructorKPIs(
  * Get course performance data for instructor
  */
 export async function getCoursePerformance(
-  instructorId: number
+  instructorId: string
 ): Promise<CoursePerformance[]> {
   await delay()
 
@@ -492,7 +491,7 @@ export async function getCoursePerformance(
 /**
  * Get student dashboard KPIs
  */
-export async function getStudentKPIs(studentId: number): Promise<KPICard[]> {
+export async function getStudentKPIs(studentId: string): Promise<KPICard[]> {
   await delay()
 
   const studentEnrollments = enrollments.filter((e) => e.userId === studentId)

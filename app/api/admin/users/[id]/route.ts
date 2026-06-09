@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSession, hashPassword } from "@/lib/auth/jwt"
+import { z } from "zod"
+
+const updateUserSchema = z.object({
+  fullName: z.string().min(1, "Name is required").max(200).optional(),
+  email: z.string().email("Invalid email address").optional(),
+  role: z.enum(["ADMIN", "INSTRUCTOR", "STUDENT"]).optional(),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .optional(),
+  isActive: z.boolean().optional(),
+})
 
 export async function GET(
   _request: NextRequest,
@@ -12,14 +24,18 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { id } = await params
-    const userId = parseInt(id)
+    const { id: userId } = await params
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
-        id: true, email: true, fullName: true, role: true,
-        avatarUrl: true, isActive: true, createdAt: true,
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        avatarUrl: true,
+        isActive: true,
+        createdAt: true,
         _count: { select: { courses: true, enrolments: true } },
       },
     })
@@ -31,7 +47,10 @@ export async function GET(
     return NextResponse.json(user)
   } catch (error) {
     console.error("GET /api/admin/users/[id] error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
 
@@ -45,8 +64,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { id } = await params
-    const userId = parseInt(id)
+    const { id: userId } = await params
 
     const existing = await prisma.user.findUnique({ where: { id: userId } })
     if (!existing) {
@@ -54,24 +72,43 @@ export async function PUT(
     }
 
     const body = await request.json()
+    const parsed = updateUserSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.issues },
+        { status: 400 }
+      )
+    }
+
     const data: Record<string, unknown> = {}
 
-    if (body.fullName !== undefined) data.fullName = body.fullName
-    if (body.email !== undefined) data.email = body.email
-    if (body.role !== undefined) data.role = body.role
-    if (body.password) data.passwordHash = await hashPassword(body.password)
-    if (body.isActive !== undefined) data.isActive = body.isActive
+    if (parsed.data.fullName !== undefined) data.fullName = parsed.data.fullName
+    if (parsed.data.email !== undefined) data.email = parsed.data.email
+    if (parsed.data.role !== undefined) data.role = parsed.data.role
+    if (parsed.data.password)
+      data.passwordHash = await hashPassword(parsed.data.password)
+    if (parsed.data.isActive !== undefined) data.isActive = parsed.data.isActive
 
     const user = await prisma.user.update({
       where: { id: userId },
       data,
-      select: { id: true, email: true, fullName: true, role: true, isActive: true, createdAt: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
     })
 
     return NextResponse.json(user)
   } catch (error) {
     console.error("PUT /api/admin/users/[id] error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
 
@@ -85,8 +122,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { id } = await params
-    const userId = parseInt(id)
+    const { id: userId } = await params
 
     const existing = await prisma.user.findUnique({ where: { id: userId } })
     if (!existing) {
@@ -96,7 +132,10 @@ export async function DELETE(
     if (existing.role === "ADMIN") {
       const adminCount = await prisma.user.count({ where: { role: "ADMIN" } })
       if (adminCount <= 1) {
-        return NextResponse.json({ error: "Cannot delete the last admin" }, { status: 400 })
+        return NextResponse.json(
+          { error: "Cannot delete the last admin" },
+          { status: 400 }
+        )
       }
     }
 
@@ -104,6 +143,9 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("DELETE /api/admin/users/[id] error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

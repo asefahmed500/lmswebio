@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
+import { apiGet, apiPut } from "@/lib/api-client"
 
 export default function AdminSettingsPage() {
   const { theme, setTheme } = useTheme()
@@ -31,16 +32,17 @@ export default function AdminSettingsPage() {
   React.useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch("/api/settings")
-        if (res.ok) {
-          const data = await res.json()
-          const s = data.settings
-          setSystemName(s.siteName || "")
-          setSystemDescription(s.siteDescription || "")
-          setAllowRegistration(s.allowRegistration ?? true)
-          setMaintenanceMode(s.maintenanceMode ?? false)
-          setEmailNotifications(s.emailNotifications ?? true)
-          setMaxUploadSize(s.maxUploadSize ?? 20)
+        const res = await apiGet<{ settings: Record<string, unknown> }>(
+          "/settings"
+        )
+        if (res.data) {
+          const s = res.data.settings
+          setSystemName((s.siteName as string) || "")
+          setSystemDescription((s.siteDescription as string) || "")
+          setAllowRegistration((s.allowRegistration as boolean) ?? true)
+          setMaintenanceMode((s.maintenanceMode as boolean) ?? false)
+          setEmailNotifications((s.emailNotifications as boolean) ?? true)
+          setMaxUploadSize((s.maxUploadSize as number) ?? 20)
         }
       } catch (error) {
         console.error("Failed to load settings:", error)
@@ -54,20 +56,16 @@ export default function AdminSettingsPage() {
   async function handleSave() {
     setIsSaving(true)
     try {
-      const res = await fetch("/api/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          siteName: systemName,
-          siteDescription: systemDescription,
-          allowRegistration,
-          maintenanceMode,
-          emailNotifications,
-          maxUploadSize,
-        }),
+      const res = await apiPut("/settings", {
+        siteName: systemName,
+        siteDescription: systemDescription,
+        allowRegistration,
+        maintenanceMode,
+        emailNotifications,
+        maxUploadSize,
       })
 
-      if (res.ok) {
+      if (!res.error) {
         toast.success("Settings saved successfully")
       } else {
         toast.error("Failed to save settings")
@@ -88,7 +86,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="mt-1 text-muted-foreground">
@@ -106,8 +104,8 @@ export default function AdminSettingsPage() {
             Basic platform configuration options
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
+        <CardContent className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="systemName">Site Name</Label>
             <Input
               id="systemName"
@@ -117,7 +115,7 @@ export default function AdminSettingsPage() {
               className="max-w-md"
             />
           </div>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="systemDescription">Site Description</Label>
             <Input
               id="systemDescription"
@@ -127,7 +125,7 @@ export default function AdminSettingsPage() {
               className="max-w-md"
             />
           </div>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="maxUploadSize">Max Upload Size (MB)</Label>
             <Input
               id="maxUploadSize"
@@ -145,15 +143,17 @@ export default function AdminSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Features</CardTitle>
-          <CardDescription>
-            Enable or disable platform features
-          </CardDescription>
+          <CardDescription>Enable or disable platform features</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="allowRegistration" className="cursor-pointer">Allow Registration</Label>
-              <p className="text-sm text-muted-foreground">Allow new users to register on the platform</p>
+              <Label htmlFor="allowRegistration" className="cursor-pointer">
+                Allow Registration
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Allow new users to register on the platform
+              </p>
             </div>
             <Switch
               id="allowRegistration"
@@ -163,8 +163,12 @@ export default function AdminSettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="emailNotifications" className="cursor-pointer">Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">Send email notifications for important events</p>
+              <Label htmlFor="emailNotifications" className="cursor-pointer">
+                Email Notifications
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Send email notifications for important events
+              </p>
             </div>
             <Switch
               id="emailNotifications"
@@ -174,8 +178,12 @@ export default function AdminSettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="maintenanceMode" className="cursor-pointer">Maintenance Mode</Label>
-              <p className="text-sm text-muted-foreground">Temporarily disable access for non-admin users</p>
+              <Label htmlFor="maintenanceMode" className="cursor-pointer">
+                Maintenance Mode
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Temporarily disable access for non-admin users
+              </p>
             </div>
             <Switch
               id="maintenanceMode"
@@ -196,9 +204,7 @@ export default function AdminSettingsPage() {
             )}
             Theme
           </CardTitle>
-          <CardDescription>
-            Toggle between light and dark mode
-          </CardDescription>
+          <CardDescription>Toggle between light and dark mode</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3">
@@ -221,9 +227,9 @@ export default function AdminSettingsPage() {
       <div className="flex items-center gap-4">
         <Button onClick={handleSave} disabled={isSaving}>
           {isSaving ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 data-icon="inline-start" className="animate-spin" />
           ) : (
-            <Save className="mr-2 h-4 w-4" />
+            <Save data-icon="inline-start" />
           )}
           Save Settings
         </Button>

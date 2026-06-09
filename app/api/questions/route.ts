@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 const createQuestionSchema = z.object({
-  quizId: z.number(),
+  quizId: z.string(),
   text: z.string().min(1),
   type: z.enum(["MC_SINGLE", "MC_MULTI", "TEXT", "TRUE_FALSE"]),
   points: z.number().default(1),
