@@ -1,33 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-const courseInclude = {
-  instructor: {
-    select: { id: true, fullName: true, avatarUrl: true },
-  },
-  _count: {
-    select: {
-      modules: true,
-      enrolments: true,
-    },
-  },
-  modules: {
-    orderBy: { order: "asc" },
-    include: {
-      lessons: {
-        orderBy: { order: "asc" },
-        select: {
-          id: true,
-          title: true,
-          contentType: true,
-          duration: true,
-          order: true,
-        },
-      },
-    },
-  },
-}
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -37,17 +10,65 @@ export async function GET(
 
     let course = null
 
-    // Try by slug first (most common case for public URLs)
     course = await prisma.course.findUnique({
       where: { slug: param },
-      include: courseInclude,
+      include: {
+        instructor: {
+          select: { id: true, fullName: true, avatarUrl: true },
+        },
+        _count: {
+          select: {
+            modules: true,
+            enrolments: true,
+          },
+        },
+        modules: {
+          orderBy: { order: "asc" },
+          include: {
+            lessons: {
+              orderBy: { order: "asc" },
+              select: {
+                id: true,
+                title: true,
+                contentType: true,
+                duration: true,
+                order: true,
+              },
+            },
+          },
+        },
+      },
     })
 
-    // If not found and param looks like ObjectId, try by id
     if (!course && /^[a-f\d]{24}$/i.test(param)) {
       course = await prisma.course.findUnique({
         where: { id: param },
-        include: courseInclude,
+        include: {
+          instructor: {
+            select: { id: true, fullName: true, avatarUrl: true },
+          },
+          _count: {
+            select: {
+              modules: true,
+              enrolments: true,
+            },
+          },
+          modules: {
+            orderBy: { order: "asc" },
+            include: {
+              lessons: {
+                orderBy: { order: "asc" },
+                select: {
+                  id: true,
+                  title: true,
+                  contentType: true,
+                  duration: true,
+                  order: true,
+                },
+              },
+            },
+          },
+        },
       })
     }
 
