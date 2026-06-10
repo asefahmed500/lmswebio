@@ -63,7 +63,7 @@ export default function NewQuizPage() {
 
   const [title, setTitle] = React.useState("")
   const [description, setDescription] = React.useState("")
-  const [courseId, setCourseId] = React.useState<number | undefined>(undefined)
+  const [courseId, setCourseId] = React.useState<string | undefined>(undefined)
   const [timeLimit, setTimeLimit] = React.useState<number | undefined>(
     undefined
   )
@@ -386,7 +386,7 @@ export default function NewQuizPage() {
                 <Select
                   value={courseId ? String(courseId) : ""}
                   onValueChange={(value) => {
-                    setCourseId(Number(value))
+                    setCourseId(value)
                     if (courseError) setCourseError(null)
                   }}
                   disabled={isSubmitting || isLoadingCourses}

@@ -19,7 +19,7 @@ function getSecret(key: string): Uint8Array {
 const JWT_SECRET = getSecret("JWT_SECRET")
 const JWT_REFRESH_SECRET = getSecret("JWT_REFRESH_SECRET")
 
-const ACCESS_TOKEN_EXPIRY = "7d"
+const ACCESS_TOKEN_EXPIRY = "1h"
 const REFRESH_TOKEN_EXPIRY = "30d"
 
 export async function hashPassword(password: string): Promise<string> {
@@ -120,6 +120,16 @@ const sessionCache = new Map<
   { data: NonNullable<Awaited<ReturnType<typeof getSession>>>; expiry: number }
 >()
 const SESSION_CACHE_TTL = 60_000
+const SESSION_CACHE_MAX = 1000
+
+function purgeExpiredSessions() {
+  const now = Date.now()
+  for (const [key, entry] of sessionCache) {
+    if (entry.expiry <= now) {
+      sessionCache.delete(key)
+    }
+  }
+}
 
 export async function getSession(): Promise<{
   user: {
@@ -156,12 +166,17 @@ export async function getSession(): Promise<{
 
   if (!user) return null
 
-  if (sessionCache.size > 1000) {
-    const oldest = [...sessionCache.entries()].sort(
-      (a, b) => a[1].expiry - b[1].expiry
+  if (sessionCache.size > SESSION_CACHE_MAX) {
+    purgeExpiredSessions()
+  }
+
+  if (sessionCache.size > SESSION_CACHE_MAX) {
+    const keysToDelete = [...sessionCache.keys()].slice(
+      0,
+      sessionCache.size - SESSION_CACHE_MAX + 200
     )
-    for (let i = 0; i < 200 && i < oldest.length; i++) {
-      sessionCache.delete(oldest[i][0])
+    for (const key of keysToDelete) {
+      sessionCache.delete(key)
     }
   }
 

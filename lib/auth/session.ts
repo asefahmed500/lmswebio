@@ -28,11 +28,22 @@ export async function invalidateAllSessionsExcept(
 }
 
 export async function cleanupExpiredSessions(): Promise<void> {
-  await prisma.refreshToken.deleteMany({
-    where: {
-      expiresAt: { lt: new Date() },
-    },
-  })
+  try {
+    await prisma.refreshToken.deleteMany({
+      where: {
+        expiresAt: { lt: new Date() },
+      },
+    })
+  } catch (error) {
+    console.error("Error cleaning expired sessions:", error)
+  }
 }
 
-setInterval(cleanupExpiredSessions, 24 * 60 * 60 * 1000)
+const sessionCleanupTimer = setInterval(async () => {
+  try {
+    await cleanupExpiredSessions()
+  } catch {
+    // Intentionally swallowed — interval must survive
+  }
+}, 24 * 60 * 60 * 1000)
+sessionCleanupTimer.unref()

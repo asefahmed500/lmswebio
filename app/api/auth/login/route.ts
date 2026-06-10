@@ -76,18 +76,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const accessToken = await signAccessToken(user.id, user.role)
-    const refreshToken = await signRefreshToken(user.id)
+    const [accessToken, refreshToken] = await Promise.all([
+      signAccessToken(user.id, user.role),
+      signRefreshToken(user.id),
+    ])
 
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      },
-    })
-
-    await setTokens(accessToken, refreshToken)
+    await Promise.all([
+      prisma.refreshToken.create({
+        data: {
+          token: refreshToken,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      }),
+      setTokens(accessToken, refreshToken),
+    ])
 
     return NextResponse.json({
       user: {

@@ -10,7 +10,7 @@ export interface QuizOption {
 }
 
 export interface QuizQuestion {
-  id: number
+  id: string
   text: string
   type: QuestionType
   points: number
@@ -30,16 +30,16 @@ export type QuizAnswer =
  * Quiz answers record - maps question ID to answer
  */
 export interface QuizAnswers {
-  [questionId: number]: QuizAnswer["value"]
+  [questionId: string]: QuizAnswer["value"]
 }
 
 /**
  * Quiz attempt data
  */
 export interface QuizAttempt {
-  id: number
-  quizId: number
-  userId: number
+  id: string
+  quizId: string
+  userId: string
   score?: number
   submittedAt: Date
   answers: QuizAnswers
@@ -49,7 +49,7 @@ export interface QuizAttempt {
  * Quiz data for player
  */
 export interface QuizData {
-  id: number
+  id: string
   title: string
   description?: string
   timeLimit?: number

@@ -128,47 +128,6 @@ function mapEnrollment(api: ApiEnrollment): Enrollment {
   }
 }
 
-function CertificateCard({ enrollment }: { enrollment: Enrollment }) {
-  if (!enrollment.course) return null
-
-  const { course } = enrollment
-
-  return (
-    <Card className="border-warning/20 bg-warning/10 overflow-hidden">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-warning/10 rounded-full p-2">
-              <Award className="text-warning size-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base">{course.title}</CardTitle>
-              {course.instructor && (
-                <CardDescription>
-                  by {course.instructor.fullName}
-                </CardDescription>
-              )}
-            </div>
-          </div>
-          <Badge className="bg-success hover:bg-success/90">
-            <CheckCircle className="mr-1 size-3" />
-            Certificate earned
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{course.level}</span>
-          <span>
-            {course.modules.reduce((sum, m) => sum + m.lessons.length, 0)}{" "}
-            lessons
-          </span>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 export default function AchievementsPage() {
   const { user } = useAuth()
   const [enrollments, setEnrollments] = React.useState<Enrollment[]>([])

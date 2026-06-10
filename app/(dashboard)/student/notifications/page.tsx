@@ -13,8 +13,7 @@ import {
   ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 import { apiPatch, apiDelete } from "@/lib/api-client"

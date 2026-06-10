@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
           : {}),
       },
       select: { category: true },
+      take: 1000,
     })
 
     // Count courses per category

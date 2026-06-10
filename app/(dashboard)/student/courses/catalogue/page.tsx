@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
 import { BookOpen, Search } from "lucide-react"
 import {
   Card,
@@ -13,9 +12,7 @@ import {
 import { CourseCard } from "@/components/course/course-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
@@ -24,14 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/components/auth-provider"
-import { apiGet, apiPost } from "@/lib/api-client"
+import { apiGet } from "@/lib/api-client"
 
 type SortOption = "popular" | "newest" | "rating"
 type LevelFilter = "ALL" | "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
 type CategoryFilter = "ALL" | string
 
 interface ApiCourse {
-  id: number
+  id: string
   title: string
   slug?: string
   description: string | null
@@ -42,16 +39,15 @@ interface ApiCourse {
   price?: number | null
   isPublished: boolean
   createdAt: string
-  instructor?: { id: number; fullName: string; avatarUrl: string | null }
+  instructor?: { id: string; fullName: string; avatarUrl: string | null }
   _count?: { modules: number; enrolments: number }
-  modules: Array<{ id: number; lessons: Array<{ id: number }> }>
+  modules: Array<{ id: string; lessons: Array<{ id: string }> }>
 }
 
 export default function CourseCataloguePage() {
-  const router = useRouter()
   const { user } = useAuth()
   const [courses, setCourses] = React.useState<ApiCourse[]>([])
-  const [enrolledCourseIds, setEnrolledCourseIds] = React.useState<Set<number>>(
+  const [enrolledCourseIds, setEnrolledCourseIds] = React.useState<Set<string>>(
     new Set()
   )
   const [isLoading, setIsLoading] = React.useState(true)
@@ -81,10 +77,10 @@ export default function CourseCataloguePage() {
         if (enrollmentsResult.data) {
           const enrollments = enrollmentsResult.data
           const enrolled = Array.isArray(enrollments)
-            ? (enrollments as { courseId: number }[]).map((e) => e.courseId)
+            ? (enrollments as { courseId: string }[]).map((e) => e.courseId)
             : (
                 (enrollments as Record<string, unknown>).enrolments as
-                  | { courseId: number }[]
+                  | { courseId: string }[]
                   | undefined
               )?.map((e) => e.courseId) || []
           setEnrolledCourseIds(new Set(enrolled))
@@ -120,26 +116,10 @@ export default function CourseCataloguePage() {
     filtered.sort((a, b) => {
       if (sortBy === "newest")
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      return b.id - a.id
+      return b.id.localeCompare(a.id)
     })
     return filtered
   }, [courses, searchQuery, levelFilter, categoryFilter, sortBy])
-
-  const handleEnroll = async (courseId: number, price?: number | null) => {
-    if (price && price > 0) {
-      router.push(`/student/checkout/${courseId}`)
-      return
-    }
-    try {
-      const result = await apiPost(`/courses/${courseId}/enrol`)
-      if (result.data) {
-        setEnrolledCourseIds((prev) => new Set(prev).add(courseId))
-        router.push(`/student/courses/${courseId}`)
-      }
-    } catch {
-      console.error("Enrolment error")
-    }
-  }
 
   const categories = React.useMemo(() => {
     const cats = new Set(

@@ -94,69 +94,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<{ success: boolean; error?: string; user?: User }> => {
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
+  const login = React.useCallback(
+    async (
+      email: string,
+      password: string
+    ): Promise<{ success: boolean; error?: string; user?: User }> => {
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        })
 
-      const data = await res.json()
+        const data = await res.json()
 
-      if (!res.ok) {
-        return { success: false, error: data.error || "Login failed" }
-      }
-
-      setAuthState({
-        user: data.user,
-        isAuthenticated: true,
-        isLoading: false,
-      })
-
-      return { success: true, user: data.user }
-    } catch {
-      return { success: false, error: "An error occurred during login" }
-    }
-  }
-
-  const register = async (
-    fullName: string,
-    email: string,
-    password: string
-  ): Promise<{ success: boolean; error?: string; user?: User }> => {
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, email, password }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        return {
-          success: false,
-          error: data.error || "Registration failed",
+        if (!res.ok) {
+          return { success: false, error: data.error || "Login failed" }
         }
+
+        setAuthState({
+          user: data.user,
+          isAuthenticated: true,
+          isLoading: false,
+        })
+
+        return { success: true, user: data.user }
+      } catch {
+        return { success: false, error: "An error occurred during login" }
       }
+    },
+    []
+  )
 
-      setAuthState({
-        user: data.user,
-        isAuthenticated: true,
-        isLoading: false,
-      })
+  const register = React.useCallback(
+    async (
+      fullName: string,
+      email: string,
+      password: string
+    ): Promise<{ success: boolean; error?: string; user?: User }> => {
+      try {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName, email, password }),
+        })
 
-      return { success: true, user: data.user }
-    } catch {
-      return { success: false, error: "An error occurred during registration" }
-    }
-  }
+        const data = await res.json()
 
-  const logout = async () => {
+        if (!res.ok) {
+          return {
+            success: false,
+            error: data.error || "Registration failed",
+          }
+        }
+
+        setAuthState({
+          user: data.user,
+          isAuthenticated: true,
+          isLoading: false,
+        })
+
+        return { success: true, user: data.user }
+      } catch {
+        return { success: false, error: "An error occurred during registration" }
+      }
+    },
+    []
+  )
+
+  const logout = React.useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
     } catch {}
@@ -168,15 +174,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: false,
       isLoading: false,
     })
-  }
+  }, [])
 
-  const setUser = (user: User | null) => {
+  const setUser = React.useCallback((user: User | null) => {
     setAuthState({
       user,
       isAuthenticated: !!user,
       isLoading: false,
     })
-  }
+  }, [])
 
   const value = React.useMemo(
     () => ({
@@ -186,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       setUser,
     }),
-    [authState]
+    [authState, login, register, logout, setUser]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -14,14 +14,12 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  FileQuestion,
   HelpCircle,
   Send,
 } from "lucide-react"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -32,12 +30,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
+import { apiPost } from "@/lib/api-client"
 
 interface QuizQuestion {
-  id: number
+  id: string
   text: string
   type: "MC_SINGLE" | "MC_MULTI" | "TRUE_FALSE" | "TEXT"
   points: number
@@ -46,19 +44,19 @@ interface QuizQuestion {
 }
 
 interface QuizData {
-  id: number
+  id: string
   title: string
   description: string | null
-  courseId: number
+  courseId: string
   timeLimit: number | null
   attemptsAllowed: number
   questions: QuizQuestion[]
-  course: { id: number; title: string }
+  course: { id: string; title: string }
   _count: { attempts: number }
 }
 
 interface AttemptResult {
-  id: number
+  id: string
   score: number | null
   submittedAt: string
   answers: Record<string, string | string[]>
@@ -249,7 +247,7 @@ function MultiChoiceQuestion({
  * Text answer question (textarea)
  */
 function TextQuestion({
-  question,
+  question: _question,
   value,
   onChange,
   showResult,
@@ -274,7 +272,7 @@ function TextQuestion({
  * True/False question (radio buttons)
  */
 function TrueFalseQuestion({
-  question,
+  question: _question,
   value,
   onChange,
   showResult,
@@ -286,11 +284,6 @@ function TrueFalseQuestion({
   showResult: boolean
   correctAnswer: string | string[] | null
 }) {
-  const isTrueCorrect = showResult && correctAnswer === "true"
-  const isFalseCorrect = showResult && correctAnswer === "false"
-  const selectedTrue = value === "true"
-  const selectedFalse = value === "false"
-
   return (
     <div className="flex gap-3">
       {["true", "false"].map((opt) => {
@@ -338,8 +331,8 @@ function QuestionRenderer({
   showResult,
 }: {
   question: QuizQuestion
-  answers: Record<number, string | string[]>
-  onAnswer: (questionId: number, answer: string | string[]) => void
+  answers: Record<string, string | string[]>
+  onAnswer: (questionId: string, answer: string | string[]) => void
   showResult: boolean
 }) {
   const value = answers[question.id] || (question.type === "MC_MULTI" ? [] : "")
@@ -410,8 +403,6 @@ function QuizResults({
   const latestAttempt = attempts[0]
   const bestScore = Math.max(...attempts.map((a) => a.score ?? 0))
   const latestScore = latestAttempt?.score ?? 0
-  const totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0)
-
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
@@ -580,7 +571,7 @@ export default function QuizTakingPage() {
   const [quiz, setQuiz] = React.useState<QuizData | null>(null)
   const [attempts, setAttempts] = React.useState<AttemptResult[]>([])
   const [answers, setAnswers] = React.useState<
-    Record<number, string | string[]>
+    Record<string, string | string[]>
   >({})
   const [isLoading, setIsLoading] = React.useState(true)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -613,7 +604,7 @@ export default function QuizTakingPage() {
         setQuiz(quizData)
         setAttempts(attemptsData)
 
-        const initialAnswers: Record<number, string | string[]> = {}
+        const initialAnswers: Record<string, string | string[]> = {}
         quizData.questions.forEach((q) => {
           if (q.type === "MC_MULTI") {
             initialAnswers[q.id] = []
@@ -633,7 +624,7 @@ export default function QuizTakingPage() {
     loadData()
   }, [quizId, user, router])
 
-  const handleAnswer = (questionId: number, answer: string | string[]) => {
+  const handleAnswer = (questionId: string, answer: string | string[]) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }))
   }
 
@@ -642,20 +633,19 @@ export default function QuizTakingPage() {
 
     setIsSubmitting(true)
     try {
-      const res = await fetch(`/api/quizzes/${quizId}/attempt`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
-      })
+      const submitResult = await apiPost<AttemptResult>(
+        `/quizzes/${quizId}/attempt`,
+        { answers }
+      )
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || "Failed to submit quiz")
+      if (submitResult.error) {
+        throw new Error(submitResult.error)
       }
 
-      const result: AttemptResult = await res.json()
-      setSubmissionResult(result)
-      setSubmitted(true)
+      if (submitResult.data) {
+        setSubmissionResult(submitResult.data)
+        setSubmitted(true)
+      }
 
       const updatedRes = await fetch(`/api/quizzes/${quizId}/attempt`)
       if (updatedRes.ok) {
@@ -712,8 +702,6 @@ export default function QuizTakingPage() {
     }
     return typeof answer === "string" && answer !== ""
   }).length
-
-  const allAnswered = answeredCount === quiz.questions.length
 
   if (
     attempts.length >= quiz.attemptsAllowed &&

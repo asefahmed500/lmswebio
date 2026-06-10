@@ -58,7 +58,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 interface AdminUser {
-  id: number
+  id: string
   fullName: string
   email: string
   role: "ADMIN" | "INSTRUCTOR" | "STUDENT"
@@ -74,7 +74,7 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
   const [roleFilter, setRoleFilter] = React.useState("ALL")
-  const [deleteId, setDeleteId] = React.useState<number | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   React.useEffect(() => {

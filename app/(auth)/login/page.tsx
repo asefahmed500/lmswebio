@@ -17,7 +17,7 @@ import { LMSioLogo } from "@/components/homepage/lmsio-logo"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, user } = useAuth()
+  const { login } = useAuth()
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [visible, setVisible] = React.useState(false)

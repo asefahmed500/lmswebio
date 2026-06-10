@@ -44,19 +44,19 @@ import {
 } from "@/components/ui/alert-dialog"
 
 interface QuizItem {
-  id: number
+  id: string
   title: string
   description?: string
   timeLimit?: number
   attemptsAllowed: number
-  courseId: number
-  course?: { id: number; title: string }
+  courseId: string
+  course?: { id: string; title: string }
   _count?: { questions: number }
   createdAt: string
 }
 
 interface CourseOption {
-  id: number
+  id: string
   title: string
 }
 
@@ -66,7 +66,7 @@ export default function AdminQuizzesPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
   const [courseFilter, setCourseFilter] = React.useState("ALL")
-  const [deleteId, setDeleteId] = React.useState<number | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   React.useEffect(() => {
@@ -120,7 +120,7 @@ export default function AdminQuizzesPage() {
       .toLowerCase()
       .includes(search.toLowerCase())
     const matchesCourse =
-      courseFilter === "ALL" || quiz.courseId === Number(courseFilter)
+      courseFilter === "ALL" || quiz.courseId === courseFilter
     return matchesSearch && matchesCourse
   })
 

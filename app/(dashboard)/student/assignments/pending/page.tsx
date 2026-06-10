@@ -25,18 +25,18 @@ import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPost } from "@/lib/api-client"
 
 interface AssignmentItem {
-  id: number
+  id: string
   title: string
   description: string | null
   dueDate: string | null
   maxPoints: number
-  courseId: number
-  course: { id: number; title: string }
+  courseId: string
+  course: { id: string; title: string }
 }
 
 interface SubmissionItem {
-  id: number
-  assignmentId: number
+  id: string
+  assignmentId: string
 }
 
 function SubmissionForm({
@@ -153,7 +153,7 @@ export default function PendingAssignmentsPage() {
   const [assignments, setAssignments] = React.useState<AssignmentItem[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [openFormId, setOpenFormId] = React.useState<number | null>(null)
+  const [openFormId, setOpenFormId] = React.useState<string | null>(null)
   const [refreshTrigger, setRefreshTrigger] = React.useState(0)
 
   React.useEffect(() => {
@@ -164,14 +164,14 @@ export default function PendingAssignmentsPage() {
     async function load() {
       try {
         const enrolResult =
-          await apiGet<{ courseId: number }[]>("/enrolments/my")
+          await apiGet<{ courseId: string }[]>("/enrolments/my")
         if (enrolResult.error) throw new Error("Failed to fetch enrollments")
         const enrolments = enrolResult.data!
 
         const courseIds = enrolments.map((e) => e.courseId)
 
         const assignResults = await Promise.all(
-          courseIds.map((cid: number) =>
+          courseIds.map((cid: string) =>
             apiGet(`/assignments?courseId=${cid}`).then((r) =>
               r.data ? r.data : []
             )

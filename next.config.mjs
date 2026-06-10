@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable standalone output for Docker deployments
   output: 'standalone',
+  poweredBy: false,
 
-  // Configure image domains for Next.js Image optimization
   images: {
     remotePatterns: [
       {

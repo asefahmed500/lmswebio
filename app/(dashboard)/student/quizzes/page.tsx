@@ -22,15 +22,15 @@ import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 
 interface CourseInfo {
-  id: number
+  id: string
   title: string
 }
 
 interface QuizListItem {
-  id: number
+  id: string
   title: string
   description: string | null
-  courseId: number
+  courseId: string
   timeLimit: number | null
   attemptsAllowed: number
   _count: { questions: number }
@@ -119,17 +119,17 @@ export default function StudentQuizzesPage() {
       setError(null)
 
       try {
-        const enrolRes = await apiGet<{ courseId: number }[]>("/enrolments/my")
+        const enrolRes = await apiGet<{ courseId: string }[]>("/enrolments/my")
         if (enrolRes.error || !enrolRes.data)
           throw new Error("Failed to fetch enrollments")
         const enrolments = enrolRes.data
 
         const courseIds = enrolments.map(
-          (e: { courseId: number }) => e.courseId
+          (e: { courseId: string }) => e.courseId
         )
 
         const quizResults = await Promise.all(
-          courseIds.map((cid: number) =>
+          courseIds.map((cid: string) =>
             apiGet<QuizListItem[]>(`/quizzes?courseId=${cid}`).then(
               (r) => r.data ?? []
             )
@@ -139,11 +139,11 @@ export default function StudentQuizzesPage() {
         const allQuizzes: QuizListItem[] = quizResults.flat()
 
         const attemptsRes = await apiGet<
-          { quizId: number; score: number | null }[]
+          { quizId: string; score: number | null }[]
         >("/quizzes/my-attempts")
         const attempts = attemptsRes.data ?? []
 
-        const attemptsByQuiz: Record<number, { score: number | null }[]> = {}
+        const attemptsByQuiz: Record<string, { score: number | null }[]> = {}
         for (const a of attempts) {
           if (!attemptsByQuiz[a.quizId]) attemptsByQuiz[a.quizId] = []
           attemptsByQuiz[a.quizId].push(a)

@@ -12,7 +12,6 @@ import {
   BarChart3,
   Users,
   TrendingUp,
-  Search,
   ArrowUpRight,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -104,13 +103,6 @@ export default function QuizResultsPage() {
     (sum, q) => sum + (q.attemptsCount || 0),
     0
   )
-  const avgScoreAll =
-    quizzes.length > 0
-      ? Math.round(
-          quizzes.reduce((sum, q) => sum + (q.averageScore || 0), 0) /
-            quizzes.length
-        )
-      : 0
   const quizzesWithAttempts = quizzes.filter(
     (q) => (q.attemptsCount || 0) > 0
   ).length

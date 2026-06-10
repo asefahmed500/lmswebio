@@ -84,6 +84,20 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    if (session.user.role === "STUDENT") {
+      const enrollment = await prisma.enrolment.findUnique({
+        where: {
+          userId_courseId: {
+            userId: session.user.id,
+            courseId,
+          },
+        },
+      })
+      if (!enrollment) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+    }
+
     const modules = await prisma.module.findMany({
       where: { courseId },
       include: {

@@ -20,7 +20,7 @@ import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPatch, apiDelete } from "@/lib/api-client"
 
 interface DraftCourse {
-  id: number
+  id: string
   title: string
   description: string | null
   level: string
@@ -28,9 +28,9 @@ interface DraftCourse {
   isPublished: boolean
   category: string | null
   modules: Array<{
-    id: number
+    id: string
     title: string
-    lessons: Array<{ id: number }>
+    lessons: Array<{ id: string }>
   }>
   updatedAt: string
 }
@@ -43,7 +43,7 @@ export default function InstructorDraftsPage() {
   const { user } = useAuth()
   const [drafts, setDrafts] = React.useState<DraftCourse[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
-  const [deleteId, setDeleteId] = React.useState<number | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     async function loadDrafts() {
@@ -68,7 +68,7 @@ export default function InstructorDraftsPage() {
     loadDrafts()
   }, [user])
 
-  const handlePublish = async (id: number) => {
+  const handlePublish = async (id: string) => {
     try {
       const res = await apiPatch(`/courses/${id}`, { isPublished: true })
       if (res.error) throw new Error("Failed to publish course")
@@ -78,7 +78,7 @@ export default function InstructorDraftsPage() {
     }
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       const res = await apiDelete(`/courses/${id}`)
       if (res.error) throw new Error("Failed to delete course")

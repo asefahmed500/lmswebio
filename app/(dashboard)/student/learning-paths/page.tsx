@@ -6,10 +6,8 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { TrendingUp, BookOpen, Clock, Users } from "lucide-react"
 import { LearningPathCard } from "@/components/learning-paths/learning-path-card"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Select,
@@ -19,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { LoadingCard } from "@/components/loading-skeleton"
-import { apiGet, apiPost } from "@/lib/api-client"
+import { apiGet } from "@/lib/api-client"
 
 interface LearningPath {
   id: number
@@ -114,19 +112,6 @@ export default function StudentLearningPathsPage() {
 
     loadLearningPaths()
   }, [filter, levelFilter])
-
-  const handleEnroll = async (pathId: number) => {
-    try {
-      const result = await apiPost(`/learning-paths/${pathId}/enroll`)
-
-      if (result.data) {
-        setEnrolledPaths((prev) => new Set([...prev, pathId]))
-        setPathProgress((prev) => new Map([...prev, [pathId, 0]]))
-      }
-    } catch (error) {
-      console.error("Failed to enroll:", error)
-    }
-  }
 
   if (isLoading) {
     return (

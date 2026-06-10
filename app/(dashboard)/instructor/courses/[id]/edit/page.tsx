@@ -7,7 +7,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -42,7 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/components/auth-provider"
-import { courseSchema, type CourseFormData } from "@/lib/validators"
+import { courseSchema } from "@/lib/validators"
 import { Level } from "@/types"
 import type { Course, Module, Lesson } from "@/types"
 import { apiPost, apiPut, apiPatch, apiDelete } from "@/lib/api-client"
@@ -115,12 +115,10 @@ function mapCourse(api: ApiCourse): Course {
 
 function LessonEditor({
   lesson,
-  moduleId,
   onUpdate,
   onDelete,
 }: {
   lesson: Lesson
-  moduleId: string
   onUpdate: (lessonId: string, data: Partial<Lesson>) => void
   onDelete: (lessonId: string) => void
 }) {
@@ -283,7 +281,6 @@ function ModuleEditor({
             <LessonEditor
               key={lesson.id}
               lesson={lesson}
-              moduleId={module.id}
               onUpdate={(lessonId, data) =>
                 onUpdateLesson(module.id, lessonId, data)
               }
@@ -306,7 +303,6 @@ function ModuleEditor({
 
 export default function InstructorCourseEditPage() {
   const params = useParams()
-  const router = useRouter()
   const { user } = useAuth()
 
   const courseId = params.id as string

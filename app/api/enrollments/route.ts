@@ -114,6 +114,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (course.price && course.price > 0) {
+      return NextResponse.json(
+        { error: "Paid course requires checkout. Use /api/courses/[id]/enrol." },
+        { status: 402 }
+      )
+    }
+
     const existingEnrollment = await prisma.enrolment.findUnique({
       where: {
         userId_courseId: {

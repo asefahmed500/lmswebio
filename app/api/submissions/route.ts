@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       const submissions = await prisma.assignmentSubmission.findMany({
         where: {
           userId: session.user.id,
-          ...(assignmentId && { assignmentId: assignmentId }),
+          ...(assignmentId ? { assignmentId } : {}),
         },
         include: {
           assignment: {
@@ -29,6 +29,13 @@ export async function GET(request: NextRequest) {
       })
 
       return NextResponse.json({ submissions })
+    }
+
+    if (!assignmentId) {
+      return NextResponse.json(
+        { error: "assignmentId query parameter is required" },
+        { status: 400 }
+      )
     }
 
     const assignment = await prisma.assignment.findUnique({

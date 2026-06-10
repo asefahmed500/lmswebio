@@ -68,7 +68,7 @@ export interface ApiError {
  * User data
  */
 export interface UserData {
-  id: number
+  id: string
   email: string
   fullName: string
   role: "ADMIN" | "INSTRUCTOR" | "STUDENT"
@@ -83,14 +83,14 @@ export interface UserData {
  * Course data
  */
 export interface CourseData {
-  id: number
+  id: string
   title: string
   slug: string
   description?: string
   thumbnail?: string
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
   isPublished: boolean
-  instructorId: number
+  instructorId: string
   category?: string
   tags: string[]
   createdAt: Date
@@ -101,9 +101,9 @@ export interface CourseData {
  * Enrollment data
  */
 export interface EnrollmentData {
-  id: number
-  userId: number
-  courseId: number
+  id: string
+  userId: string
+  courseId: string
   status: "ACTIVE" | "COMPLETED" | "DROPPED"
   progress: number
   enrolledAt: Date
@@ -115,10 +115,10 @@ export interface EnrollmentData {
  * Module data
  */
 export interface ModuleData {
-  id: number
+  id: string
   title: string
   order: number
-  courseId: number
+  courseId: string
   lessons?: LessonData[]
 }
 
@@ -126,12 +126,12 @@ export interface ModuleData {
  * Lesson data
  */
 export interface LessonData {
-  id: number
+  id: string
   title: string
   content?: string
   contentType: string
   order: number
-  moduleId: number
+  moduleId: string
   duration?: number
 }
 
@@ -139,8 +139,8 @@ export interface LessonData {
  * Notification data
  */
 export interface NotificationData {
-  id: number
-  userId: number
+  id: string
+  userId: string
   title: string
   message: string
   type: "info" | "success" | "warning" | "error"
@@ -176,7 +176,7 @@ export interface SearchFilters {
   type?: "courses" | "users" | "all"
   category?: string
   level?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
-  instructorId?: number
+  instructorId?: string
 }
 
 /**

@@ -1,11 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Search, Users, BookOpen, TrendingUp, X } from "lucide-react"
+import { Search, Users, BookOpen, TrendingUp } from "lucide-react"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"

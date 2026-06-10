@@ -21,7 +21,7 @@ export interface QueryFilter {
  */
 export interface ApiRequestContext {
   user?: {
-    id: number
+    id: string
     email: string
     fullName: string
     role: "ADMIN" | "INSTRUCTOR" | "STUDENT"
@@ -98,7 +98,7 @@ export interface CourseSearchFilter {
   category?: string
   level?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
   isPublished?: boolean
-  instructorId?: number
+  instructorId?: string
   tags?: { hasSome: string[] }
 }
 
@@ -106,8 +106,8 @@ export interface CourseSearchFilter {
  * Enrollment filter
  */
 export interface EnrollmentFilter {
-  userId?: number
-  courseId?: number
+  userId?: string
+  courseId?: string
   status?: "ACTIVE" | "COMPLETED" | "DROPPED"
 }
 
@@ -119,7 +119,7 @@ export interface ProgressData {
   totalCompletedLessons: number
   totalLessons: number
   courseProgress: Array<{
-    courseId: number
+    courseId: string
     courseTitle: string
     progress: number
     completedLessons: number
@@ -149,7 +149,7 @@ export type NotificationType = "info" | "success" | "warning" | "error"
  * Create notification data
  */
 export interface CreateNotificationData {
-  userId: number
+  userId: string
   title: string
   message: string
   type?: NotificationType
@@ -167,7 +167,7 @@ export interface UpdateNotificationData {
  * Bookmark data
  */
 export interface BookmarkData {
-  lessonId: number
+  lessonId: string
   timestamp?: number
 }
 
@@ -175,7 +175,7 @@ export interface BookmarkData {
  * Note data
  */
 export interface NoteData {
-  lessonId: number
+  lessonId: string
   content: string
   timestamp?: number
   isPrivate?: boolean
@@ -185,7 +185,7 @@ export interface NoteData {
  * Discussion data
  */
 export interface DiscussionData {
-  courseId: number
+  courseId: string
   title: string
   content: string
 }
@@ -194,16 +194,16 @@ export interface DiscussionData {
  * Comment data
  */
 export interface CommentData {
-  discussionId: number
+  discussionId: string
   content: string
-  parentId?: number
+  parentId?: string
 }
 
 /**
  * Review data
  */
 export interface ReviewData {
-  courseId: number
+  courseId: string
   rating: number
   review?: string
 }

@@ -55,20 +55,23 @@ export async function POST(_: NextRequest) {
       )
     }
 
-    await prisma.refreshToken.delete({ where: { id: storedToken.id } })
+    const [newAccessToken, newRefresh] = await Promise.all([
+      signAccessToken(user.id, user.role),
+      signRefreshToken(user.id),
+    ])
 
-    const accessToken = await signAccessToken(user.id, user.role)
-    const refreshToken = await signRefreshToken(user.id)
-
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.refreshToken.delete({ where: { id: storedToken.id } })
+      await tx.refreshToken.create({
+        data: {
+          token: newRefresh,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      })
     })
 
-    await setTokens(accessToken, refreshToken)
+    await setTokens(newAccessToken, newRefresh)
 
     return NextResponse.json({ user })
   } catch (error) {

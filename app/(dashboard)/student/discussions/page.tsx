@@ -7,7 +7,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { MessageSquare, Plus, Search } from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import { DiscussionList } from "@/components/discussions/discussion-list"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

@@ -6,7 +6,7 @@
 "use client"
 
 import * as React from "react"
-import { Calendar, Clock, MapPin, Users, Check } from "lucide-react"
+import { Clock, MapPin, Users, Check } from "lucide-react"
 import { CalendarView } from "@/components/calendar/calendar-view"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"

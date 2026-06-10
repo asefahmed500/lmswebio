@@ -7,15 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
 import {
   Search,
   Loader2,
   UserPlus,
   Mail,
-  BookOpen,
   Users,
-  Star,
 } from "lucide-react"
 import { apiGet } from "@/lib/api-client"
 

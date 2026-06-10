@@ -73,7 +73,10 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith("/login") ||
       pathname.startsWith("/register") ||
       pathname.startsWith("/forgot-password") ||
-      pathname.startsWith("/reset-password")
+      pathname.startsWith("/reset-password") ||
+      pathname.startsWith("/privacy") ||
+      pathname.startsWith("/terms") ||
+      pathname.startsWith("/courses")
     ) {
       return NextResponse.next()
     }
@@ -114,5 +117,8 @@ export const config = {
     "/instructor/:path*",
     "/student/:path*",
     "/api/:path*",
+    "/privacy",
+    "/terms",
+    "/courses/:path*",
   ],
 }

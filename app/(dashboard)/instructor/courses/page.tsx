@@ -54,7 +54,7 @@ import { apiGet, apiPatch, apiDelete } from "@/lib/api-client"
 type CourseStatus = "ALL" | "PUBLISHED" | "DRAFT" | "ARCHIVED"
 
 interface ApiCourse {
-  id: number
+  id: string
   title: string
   description: string | null
   level: string
@@ -62,9 +62,9 @@ interface ApiCourse {
   isPublished: boolean
   category: string | null
   modules: Array<{
-    id: number
+    id: string
     title: string
-    lessons: Array<{ id: number }>
+    lessons: Array<{ id: string }>
   }>
 }
 
@@ -82,9 +82,9 @@ export default function InstructorCoursesPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<CourseStatus>("ALL")
-  const [deleteId, setDeleteId] = React.useState<number | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
   const [enrollmentStats, setEnrollmentStats] = React.useState<
-    Record<number, { count: number; avgProgress: number }>
+    Record<string, { count: number; avgProgress: number }>
   >({})
 
   React.useEffect(() => {
@@ -103,7 +103,7 @@ export default function InstructorCoursesPage() {
           : (data as CoursesApiResponse).courses || []
         setCourses(courseList)
 
-        const stats: Record<number, { count: number; avgProgress: number }> = {}
+        const stats: Record<string, { count: number; avgProgress: number }> = {}
         await Promise.all(
           courseList.map(async (course: ApiCourse) => {
             try {
@@ -171,7 +171,7 @@ export default function InstructorCoursesPage() {
     return filtered
   }, [courses, statusFilter, searchQuery])
 
-  const handleStatusToggle = async (id: number) => {
+  const handleStatusToggle = async (id: string) => {
     const course = courses.find((c) => c.id === id)
     if (!course) return
 
@@ -190,7 +190,7 @@ export default function InstructorCoursesPage() {
     }
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       const result = await apiDelete(`/courses/${id}`)
       if (result.error) throw new Error(result.error)

@@ -8,7 +8,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import {
   BookOpen,
   Users,
@@ -100,7 +100,6 @@ function mapCourse(api: ApiCourse): Course {
 
 export default function InstructorCourseDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const { user } = useAuth()
   const [course, setCourse] = React.useState<Course | null>(null)
   const [studentCount, setStudentCount] = React.useState(0)

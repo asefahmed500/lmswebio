@@ -177,10 +177,15 @@ export async function uploadFile(
     formData.append("file", file)
     formData.append("type", type)
 
+    const csrfHeadersObj = await csrfHeaders()
+
     const response = await fetch("/api/upload", {
       method: "POST",
       body: formData,
       credentials: "include",
+      headers: {
+        ...csrfHeadersObj,
+      },
     })
 
     if (!response.ok) {

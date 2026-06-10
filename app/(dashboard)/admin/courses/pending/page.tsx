@@ -8,12 +8,11 @@ import {
   Loader2,
   Trash2,
   CheckCircle2,
-  XCircle,
   Search,
 } from "lucide-react"
 import { toast } from "sonner"
 import { apiPatch, apiDelete } from "@/lib/api-client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -44,13 +43,13 @@ import {
 } from "@/components/ui/alert-dialog"
 
 interface PendingCourse {
-  id: number
+  id: string
   title: string
   slug: string
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
   isPublished: boolean
-  instructorId: number
-  instructor?: { id: number; fullName: string; avatarUrl?: string }
+  instructorId: string
+  instructor?: { id: string; fullName: string; avatarUrl?: string }
   _count?: { modules: number; enrolments: number }
   createdAt: string
 }
@@ -60,9 +59,9 @@ export default function AdminPendingCoursesPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
   const [levelFilter, setLevelFilter] = React.useState("ALL")
-  const [deleteId, setDeleteId] = React.useState<number | null>(null)
+  const [deleteId, setDeleteId] = React.useState<string | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
-  const [publishingId, setPublishingId] = React.useState<number | null>(null)
+  const [publishingId, setPublishingId] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     let cancelled = false

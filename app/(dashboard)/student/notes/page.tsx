@@ -202,17 +202,6 @@ export default function StudentNotesPage() {
     }
   }
 
-  // Get unique courses from notes for the filter
-  const coursesFromNotes = React.useMemo(() => {
-    const courseMap = new Map<number, string>()
-    notes.forEach((note) => {
-      if (note.lesson?.module?.courseId) {
-        courseMap.set(note.lesson.module.courseId, note.lesson.module.title)
-      }
-    })
-    return Array.from(courseMap.entries()).map(([id, title]) => ({ id, title }))
-  }, [notes])
-
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">

@@ -141,16 +141,16 @@ function PendingGradingItem({
 
 interface RecentSubmission {
   user: {
-    id: number
+    id: string
     fullName: string
     email: string
     avatarUrl: string | null
   }
   assignment: {
-    id: number
+    id: string
     title: string
-    courseId: number
-    course: { id: number; title: string }
+    courseId: string
+    course: { id: string; title: string }
   }
   grade: number | null
 }

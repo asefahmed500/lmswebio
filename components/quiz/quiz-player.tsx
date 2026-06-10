@@ -20,7 +20,7 @@ import { useMediaQuery, Breakpoint } from "@/lib/utils/responsive"
 import type { QuizQuestion, QuizAnswers } from "@/types/quiz"
 
 interface QuizPlayerProps {
-  quizId: number
+  quizId: string
   title: string
   description?: string
   questions: QuizQuestion[]
@@ -73,7 +73,7 @@ export function QuizPlayer({
   }, [timeLeft, handleSubmit])
 
   const handleAnswerChange = (
-    questionId: number,
+    questionId: string,
     answer: string | string[]
   ) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }))
