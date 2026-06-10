@@ -48,15 +48,17 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-5">
         <Alert>
           <CheckCircle2 className="size-4 text-emerald-500" />
           <AlertDescription>
-            <p className="font-medium">Password reset successful</p>
-            <p className="mt-1 text-sm text-muted-foreground">{success}</p>
+            <p className="font-medium text-void-black">
+              Password reset successful
+            </p>
+            <p className="mt-1 text-sm text-smoke">{success}</p>
           </AlertDescription>
         </Alert>
-        <Button asChild className="h-11 w-full rounded-xl">
+        <Button size="lg" className="h-12 w-full rounded-lg tracking-wide" asChild>
           <Link href="/login">Sign in with new password</Link>
         </Button>
       </div>
@@ -95,7 +97,7 @@ function ResetPasswordForm() {
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-5"
     >
       {error && (
         <Alert
@@ -106,16 +108,19 @@ function ResetPasswordForm() {
         </Alert>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="newPassword" className="text-xs font-medium">
+      <div className="flex flex-col gap-2">
+        <Label
+          htmlFor="newPassword"
+          className="text-xs font-medium tracking-normal normal-case text-graphite"
+        >
           New Password
         </Label>
         <Input
           id="newPassword"
           type="password"
-          placeholder="••••••••"
+          variant="filled"
+          placeholder="Enter new password"
           disabled={isLoading}
-          className="h-11 rounded-xl"
           {...form.register("newPassword", {
             required: "Password is required",
             validate: (value) => {
@@ -138,13 +143,13 @@ function ResetPasswordForm() {
         )}
       </div>
 
-      <div className="space-y-1.5 rounded-lg border bg-muted/30 p-3">
+      <div className="space-y-2 rounded-lg border border-graphite/10 bg-linen p-4">
         {PASSWORD_REQUIREMENTS.map((req) => {
           const met = req.test(passwordValue)
           return (
             <div
               key={req.label}
-              className={`flex items-center gap-2 text-xs ${met ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
+              className={`flex items-center gap-2.5 text-xs ${met ? "text-emerald-600" : "text-smoke"}`}
             >
               {met ? (
                 <CheckCircle2 className="size-3.5 shrink-0" />
@@ -157,16 +162,19 @@ function ResetPasswordForm() {
         })}
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="confirmPassword" className="text-xs font-medium">
+      <div className="flex flex-col gap-2">
+        <Label
+          htmlFor="confirmPassword"
+          className="text-xs font-medium tracking-normal normal-case text-graphite"
+        >
           Confirm Password
         </Label>
         <Input
           id="confirmPassword"
           type="password"
-          placeholder="••••••••"
+          variant="filled"
+          placeholder="Repeat your password"
           disabled={isLoading}
-          className="h-11 rounded-xl"
           {...form.register("confirmPassword", {
             required: "Please confirm your password",
             validate: (value) =>
@@ -182,16 +190,17 @@ function ResetPasswordForm() {
 
       <Button
         type="submit"
-        className="h-11 w-full rounded-xl"
+        size="lg"
+        className="mt-1 h-12 w-full rounded-lg tracking-wide"
         disabled={isLoading}
       >
         {isLoading ? <Loader2 className="animate-spin" /> : "Reset password"}
       </Button>
 
-      <div className="text-center">
+      <div className="pt-2 text-center">
         <Link
           href="/login"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-1.5 text-sm text-smoke transition-colors hover:text-void-black"
         >
           <ArrowLeft className="size-3.5" />
           Back to sign in
@@ -208,23 +217,21 @@ export default function ResetPasswordPage() {
   }, [])
 
   return (
-    <div className="relative flex min-h-svh flex-col items-center justify-center bg-background px-4 py-8">
-      <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/30 via-transparent to-transparent dark:from-emerald-950/10" />
-
+    <div className="relative flex min-h-svh flex-col items-center justify-center bg-canvas px-4 py-12">
       <div
-        className={`relative w-full max-w-[400px] transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+        className={`w-full max-w-[420px] transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
       >
-        <LMSioLogo className="mx-auto mb-10 justify-center" variant="icon" />
+        <LMSioLogo className="mx-auto mb-12 justify-center" variant="icon" />
 
-        <div className="rounded-2xl border bg-card/50 p-8 shadow-xl backdrop-blur-sm">
-          <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950">
-              <KeyRound className="size-5 text-emerald-600" />
+        <div className="rounded-2xl border border-graphite/10 bg-chalk p-8 shadow-sq-card">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl bg-linen">
+              <KeyRound className="size-6 text-graphite" />
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="font-visueltpro text-2xl font-semibold tracking-tight text-void-black">
               Set new password
             </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
+            <p className="mt-2 text-sm text-smoke">
               Enter your new password below
             </p>
           </div>

@@ -12,7 +12,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { LMSioLogo } from "@/components/homepage/lmsio-logo"
 
 export default function RegisterPage() {
@@ -58,27 +57,25 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative flex min-h-svh flex-col items-center justify-center bg-background px-4 py-8">
-      <div className="absolute inset-0 bg-gradient-to-b from-teal-50/50 via-transparent to-transparent dark:from-teal-950/20" />
-
+    <div className="relative flex min-h-svh flex-col items-center justify-center bg-canvas px-4 py-12">
       <div
-        className={`relative w-full max-w-[400px] transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+        className={`w-full max-w-[420px] transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
       >
-        <LMSioLogo className="mx-auto mb-10 justify-center" variant="icon" />
+        <LMSioLogo className="mx-auto mb-12 justify-center" variant="icon" />
 
-        <div className="rounded-2xl border bg-card/50 p-8 shadow-xl shadow-teal-500/[0.04] backdrop-blur-sm">
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">
+        <div className="rounded-2xl border border-graphite/10 bg-chalk p-8 shadow-sq-card">
+          <div className="mb-8 text-center">
+            <h1 className="font-visueltpro text-2xl font-semibold tracking-tight text-void-black">
               Create an account
             </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              Start your learning journey
+            <p className="mt-2 text-sm text-smoke">
+              Start your learning journey today
             </p>
           </div>
 
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-5"
           >
             {error && (
               <Alert
@@ -89,16 +86,19 @@ export default function RegisterPage() {
               </Alert>
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="fullName" className="text-xs font-medium">
+            <div className="flex flex-col gap-2">
+              <Label
+                htmlFor="fullName"
+                className="text-xs font-medium tracking-normal normal-case text-graphite"
+              >
                 Full Name
               </Label>
               <Input
                 id="fullName"
                 type="text"
+                variant="filled"
                 placeholder="John Doe"
                 disabled={isLoading}
-                className="h-11 rounded-xl"
                 {...form.register("fullName")}
               />
               {form.formState.errors.fullName && (
@@ -108,16 +108,19 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email" className="text-xs font-medium">
-                Email
+            <div className="flex flex-col gap-2">
+              <Label
+                htmlFor="email"
+                className="text-xs font-medium tracking-normal normal-case text-graphite"
+              >
+                Email address
               </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                variant="filled"
+                placeholder="you@example.com"
                 disabled={isLoading}
-                className="h-11 rounded-xl"
                 {...form.register("email")}
               />
               {form.formState.errors.email && (
@@ -127,16 +130,19 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password" className="text-xs font-medium">
+            <div className="flex flex-col gap-2">
+              <Label
+                htmlFor="password"
+                className="text-xs font-medium tracking-normal normal-case text-graphite"
+              >
                 Password
               </Label>
               <Input
                 id="password"
                 type="password"
+                variant="filled"
                 placeholder="Min. 8 characters"
                 disabled={isLoading}
-                className="h-11 rounded-xl"
                 {...form.register("password")}
               />
               {form.formState.errors.password && (
@@ -146,16 +152,19 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="confirmPassword" className="text-xs font-medium">
+            <div className="flex flex-col gap-2">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-xs font-medium tracking-normal normal-case text-graphite"
+              >
                 Confirm Password
               </Label>
               <Input
                 id="confirmPassword"
                 type="password"
+                variant="filled"
                 placeholder="Repeat your password"
                 disabled={isLoading}
-                className="h-11 rounded-xl"
                 {...form.register("confirmPassword")}
               />
               {form.formState.errors.confirmPassword && (
@@ -167,7 +176,8 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              className="h-11 w-full rounded-xl"
+              size="lg"
+              className="mt-1 h-12 w-full rounded-lg tracking-wide"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -178,39 +188,37 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-muted-foreground">
+          <p className="mt-5 text-center text-xs text-smoke">
             By creating an account, you agree to our{" "}
             <Link
               href="/terms"
-              className="underline underline-offset-2 hover:text-foreground"
+              className="underline underline-offset-2 transition-colors hover:text-void-black"
             >
               Terms
             </Link>{" "}
             and{" "}
             <Link
               href="/privacy"
-              className="underline underline-offset-2 hover:text-foreground"
+              className="underline underline-offset-2 transition-colors hover:text-void-black"
             >
               Privacy Policy
             </Link>
           </p>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-3 text-muted-foreground">or</span>
-              </div>
+          <div className="relative my-7">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-graphite/10" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-chalk px-4 text-xs text-smoke">or</span>
             </div>
           </div>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-smoke">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-brand-teal hover:underline"
             >
               Sign in
             </Link>

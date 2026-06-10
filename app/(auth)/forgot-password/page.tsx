@@ -53,41 +53,38 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="relative flex min-h-svh flex-col items-center justify-center bg-background px-4 py-8">
-      <div className="absolute inset-0 bg-gradient-to-b from-amber-50/30 via-transparent to-transparent dark:from-amber-950/10" />
-
+    <div className="relative flex min-h-svh flex-col items-center justify-center bg-canvas px-4 py-12">
       <div
-        className={`relative w-full max-w-[400px] transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
+        className={`w-full max-w-[420px] transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
       >
-        <LMSioLogo className="mx-auto mb-10 justify-center" variant="icon" />
+        <LMSioLogo className="mx-auto mb-12 justify-center" variant="icon" />
 
-        <div className="rounded-2xl border bg-card/50 p-8 shadow-xl backdrop-blur-sm">
-          <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950">
-              <Mail className="size-5 text-amber-600" />
+        <div className="rounded-2xl border border-graphite/10 bg-chalk p-8 shadow-sq-card">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl bg-linen">
+              <Mail className="size-6 text-graphite" />
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="font-visueltpro text-2xl font-semibold tracking-tight text-void-black">
               Forgot password?
             </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
+            <p className="mt-2 text-sm text-smoke">
               Enter your email and we&apos;ll send you a reset link
             </p>
           </div>
 
           {success ? (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-5">
               <Alert>
                 <CheckCircle className="size-4 text-emerald-500" />
                 <AlertDescription>
-                  <p className="font-medium">Check your email</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {success}
-                  </p>
+                  <p className="font-medium text-void-black">Check your email</p>
+                  <p className="mt-1 text-sm text-smoke">{success}</p>
                 </AlertDescription>
               </Alert>
               <Button
                 variant="outline"
-                className="h-11 w-full rounded-xl"
+                size="lg"
+                className="h-12 w-full rounded-lg tracking-wide"
                 asChild
               >
                 <Link href="/login">Back to sign in</Link>
@@ -96,7 +93,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex flex-col gap-4"
+              className="flex flex-col gap-5"
             >
               {error && (
                 <Alert
@@ -107,16 +104,19 @@ export default function ForgotPasswordPage() {
                 </Alert>
               )}
 
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email" className="text-xs font-medium">
-                  Email
+              <div className="flex flex-col gap-2">
+                <Label
+                  htmlFor="email"
+                  className="text-xs font-medium tracking-normal normal-case text-graphite"
+                >
+                  Email address
                 </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
+                  variant="filled"
+                  placeholder="you@example.com"
                   disabled={isLoading}
-                  className="h-11 rounded-xl"
                   {...form.register("email", {
                     required: "Email is required",
                     pattern: {
@@ -134,7 +134,8 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit"
-                className="h-11 w-full rounded-xl"
+                size="lg"
+                className="mt-1 h-12 w-full rounded-lg tracking-wide"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -144,10 +145,10 @@ export default function ForgotPasswordPage() {
                 )}
               </Button>
 
-              <div className="text-center">
+              <div className="pt-2 text-center">
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="inline-flex items-center gap-1.5 text-sm text-smoke transition-colors hover:text-void-black"
                 >
                   <ArrowLeft className="size-3.5" />
                   Back to sign in
