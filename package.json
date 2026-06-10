@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate || echo 'prisma generate skipped'",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
