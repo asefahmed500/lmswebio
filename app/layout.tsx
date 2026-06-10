@@ -1,5 +1,4 @@
 import "./globals.css"
-import "@blossom-carousel/core/style.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/auth-provider"
 import { ErrorBoundary } from "@/components/error-boundary"

@@ -115,6 +115,12 @@ export async function getRefreshToken(): Promise<string | undefined> {
   return cookieStore.get("refresh_token")?.value
 }
 
+const sessionCache = new Map<
+  string,
+  { data: NonNullable<Awaited<ReturnType<typeof getSession>>>; expiry: number }
+>()
+const SESSION_CACHE_TTL = 60_000
+
 export async function getSession(): Promise<{
   user: {
     id: string
@@ -131,6 +137,11 @@ export async function getSession(): Promise<{
   const payload = await verifyAccessToken(token)
   if (!payload) return null
 
+  const cached = sessionCache.get(payload.sub)
+  if (cached && cached.expiry > Date.now()) {
+    return cached.data
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: payload.sub },
     select: {
@@ -145,5 +156,17 @@ export async function getSession(): Promise<{
 
   if (!user) return null
 
-  return { user }
+  if (sessionCache.size > 1000) {
+    const oldest = [...sessionCache.entries()].sort(
+      (a, b) => a[1].expiry - b[1].expiry
+    )
+    for (let i = 0; i < 200 && i < oldest.length; i++) {
+      sessionCache.delete(oldest[i][0])
+    }
+  }
+
+  const result = { user }
+  sessionCache.set(payload.sub, { data: result, expiry: Date.now() + SESSION_CACHE_TTL })
+
+  return result
 }

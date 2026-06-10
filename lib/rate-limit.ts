@@ -5,6 +5,9 @@ export interface RateLimitConfig {
   windowMs: number
 }
 
+const cleanupCache = new Map<string, number>()
+const CLEANUP_INTERVAL = 60_000
+
 export async function rateLimit(
   identifier: string,
   config: RateLimitConfig
@@ -13,18 +16,25 @@ export async function rateLimit(
   const windowStart = new Date(now - config.windowMs)
 
   try {
-    await prisma.rateLimitRecord.deleteMany({
-      where: {
-        timestamp: { lt: windowStart },
-      },
-    })
+    const lastCleanup = cleanupCache.get(identifier) || 0
+    if (now - lastCleanup > CLEANUP_INTERVAL) {
+      await prisma.rateLimitRecord.deleteMany({
+        where: {
+          identifier,
+          timestamp: { lt: windowStart },
+        },
+      })
+      cleanupCache.set(identifier, now)
+    }
 
-    const count = await prisma.rateLimitRecord.count({
-      where: {
-        identifier,
-        timestamp: { gte: windowStart },
-      },
-    })
+    const [count] = await Promise.all([
+      prisma.rateLimitRecord.count({
+        where: {
+          identifier,
+          timestamp: { gte: windowStart },
+        },
+      }),
+    ])
 
     if (count >= config.maxRequests) {
       return { success: false, remaining: 0 }
@@ -60,5 +70,3 @@ export async function cleanExpiredRateLimits(): Promise<void> {
     console.error("Error cleaning expired rate limits:", error)
   }
 }
-
-setInterval(cleanExpiredRateLimits, 60 * 60 * 1000)

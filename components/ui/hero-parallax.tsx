@@ -7,7 +7,7 @@ import {
   useTransform,
   useSpring,
   MotionValue,
-} from "motion/react"
+} from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 

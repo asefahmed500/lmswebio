@@ -1,5 +1,6 @@
 "use client"
 
+import "@blossom-carousel/core/style.css"
 import { useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"

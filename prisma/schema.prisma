@@ -67,6 +67,8 @@ model User {
   notifications             Notification[]
   instructorProfile         InstructorProfile?
   payments                  Payment[]
+
+  @@index([role])
 }
 
 model Course {
@@ -96,7 +98,11 @@ model Course {
   reviews        CourseReview[]
   learningPaths  LearningPathCourse[]
   calendarEvents CalendarEvent[]
-  payments       Payment[]
+   payments       Payment[]
+
+  @@index([instructorId])
+  @@index([isPublished])
+  @@index([isPublished, category])
 }
 
 model Module {
@@ -107,9 +113,9 @@ model Module {
   course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   lessons Lesson[]
-}
 
-model Lesson {
+  @@index([courseId])
+}
   id          String @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   content     String?
@@ -122,6 +128,8 @@ model Lesson {
   completions LessonCompletion[]
   notes       Note[]
   bookmarks   Bookmark[]
+
+  @@index([moduleId])
 }
 
 model Enrolment {
@@ -140,6 +148,10 @@ model Enrolment {
   amount         Float?
 
   @@unique([userId, courseId])
+
+  @@index([status])
+  @@index([userId])
+  @@index([courseId])
 }
 
 model LessonCompletion {
@@ -223,6 +235,8 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id])
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Certificate {
@@ -468,6 +482,9 @@ model Notification {
   read      Boolean  @default(false)
   link      String?
   createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
 }
 
 model Settings {
@@ -500,4 +517,6 @@ model RateLimitRecord {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   identifier String
   timestamp  DateTime @default(now())
+
+  @@index([identifier, timestamp])
 }
