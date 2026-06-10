@@ -12,6 +12,11 @@ const transporter = nodemailer.createTransport({
 
 const FROM_ADDRESS = process.env.EMAIL_FROM || "lmsio <asefxahmed@gmail.com>"
 
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:3000"
+
 export async function sendEmail(options: {
   to: string
   subject: string
@@ -35,7 +40,7 @@ export async function sendEmail(options: {
 }
 
 export async function sendPasswordResetEmail(to: string, resetToken: string) {
-  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`
+  const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`
   return sendEmail({
     to,
     subject: "Password Reset - LMS Platform",
@@ -56,7 +61,7 @@ export async function sendPasswordResetEmail(to: string, resetToken: string) {
 }
 
 export async function sendVerificationEmail(to: string, verifyToken: string) {
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}`
+  const verifyUrl = `${APP_URL}/verify-email?token=${verifyToken}`
   return sendEmail({
     to,
     subject: "Verify Your Email - LMS Platform",

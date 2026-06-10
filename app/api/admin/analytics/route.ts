@@ -25,19 +25,27 @@ export async function GET() {
       prisma.enrolment.count(),
     ])
 
-    const coursesByLevel = await prisma.course.groupBy({
-      by: ["level"],
-      _count: true,
-    })
-
-    const weeklyEnrolments = await prisma.enrolment.findMany({
-      select: { enrolledAt: true },
-      orderBy: { enrolledAt: "desc" },
-      take: 90,
-    })
+    const [coursesByLevel, weeklyEnrolmentsRaw, avgProgress, completions] =
+      await Promise.all([
+        prisma.course.groupBy({
+          by: ["level"],
+          _count: true,
+        }),
+        prisma.enrolment.findMany({
+          select: { enrolledAt: true },
+          orderBy: { enrolledAt: "desc" },
+          take: 90,
+        }),
+        prisma.enrolment.aggregate({
+          _avg: { progress: true },
+        }),
+        prisma.enrolment.count({
+          where: { status: "COMPLETED" },
+        }),
+      ])
 
     const weekMap = new Map<string, number>()
-    for (const e of weeklyEnrolments) {
+    for (const e of weeklyEnrolmentsRaw) {
       const d = new Date(e.enrolledAt)
       const weekStart = new Date(d)
       weekStart.setDate(d.getDate() - d.getDay())
@@ -48,13 +56,6 @@ export async function GET() {
     const weeklyData = Array.from(weekMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([week, enrollments]) => ({ week, enrollments }))
-
-    const avgProgress = await prisma.enrolment.aggregate({
-      _avg: { progress: true },
-    })
-    const completions = await prisma.enrolment.count({
-      where: { status: "COMPLETED" },
-    })
 
     return NextResponse.json({
       totalUsers,

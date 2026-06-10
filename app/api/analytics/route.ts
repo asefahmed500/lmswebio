@@ -33,19 +33,20 @@ export async function GET(request: NextRequest) {
           }),
         ])
 
-      const userGrowth = await prisma.user.findMany({
-        select: {
-          createdAt: true,
-        },
-        orderBy: { createdAt: "asc" },
-      })
-
-      const enrollmentGrowth = await prisma.enrolment.findMany({
-        select: {
-          enrolledAt: true,
-        },
-        orderBy: { enrolledAt: "asc" },
-      })
+      const [userGrowth, enrollmentGrowth] = await Promise.all([
+        prisma.user.findMany({
+          select: {
+            createdAt: true,
+          },
+          orderBy: { createdAt: "asc" },
+        }),
+        prisma.enrolment.findMany({
+          select: {
+            enrolledAt: true,
+          },
+          orderBy: { enrolledAt: "asc" },
+        }),
+      ])
 
       // Aggregate enrollments by week
       const weekMap = new Map<string, number>()

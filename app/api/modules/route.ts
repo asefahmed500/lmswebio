@@ -146,34 +146,37 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const data = reorderModulesSchema.parse(body)
 
-    // Verify ownership for all modules being reordered
-    for (const mod of data.modules) {
-      const existingModule = await prisma.module.findUnique({
-        where: { id: mod.id },
-        include: { course: { select: { instructorId: true } } },
-      })
+    const existingModules = await prisma.module.findMany({
+      where: { id: { in: data.modules.map((m) => m.id) } },
+      include: { course: { select: { instructorId: true } } },
+    })
 
-      if (!existingModule) {
-        return NextResponse.json(
-          { error: `Module ${mod.id} not found` },
-          { status: 404 }
-        )
-      }
+    if (existingModules.length !== data.modules.length) {
+      const foundIds = new Set(existingModules.map((m) => m.id))
+      const missing = data.modules.find((m) => !foundIds.has(m.id))
+      return NextResponse.json(
+        { error: `Module ${missing?.id} not found` },
+        { status: 404 }
+      )
+    }
 
-      if (
-        session.user.role === "INSTRUCTOR" &&
-        existingModule.course.instructorId !== session.user.id
-      ) {
+    if (session.user.role === "INSTRUCTOR") {
+      const forbidden = existingModules.find(
+        (m) => m.course.instructorId !== session.user.id
+      )
+      if (forbidden) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
     }
 
-    for (const mod of data.modules) {
-      await prisma.module.update({
-        where: { id: mod.id },
-        data: { order: mod.order },
-      })
-    }
+    await prisma.$transaction(
+      data.modules.map((mod) =>
+        prisma.module.update({
+          where: { id: mod.id },
+          data: { order: mod.order },
+        })
+      )
+    )
 
     return NextResponse.json({ success: true })
   } catch (error) {

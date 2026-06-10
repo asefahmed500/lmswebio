@@ -107,11 +107,12 @@ export async function POST(
     }
 
     // Get updated vote count
-    const votes = await prisma.discussionVote.findMany({
+    const { _sum } = await prisma.discussionVote.aggregate({
+      _sum: { value: true },
       where: { discussionId },
     })
 
-    const voteCount = votes.reduce((sum, vote) => sum + vote.value, 0)
+    const voteCount = _sum.value ?? 0
 
     return NextResponse.json({
       success: true,

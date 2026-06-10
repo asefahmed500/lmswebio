@@ -46,18 +46,16 @@ export async function PUT(
           order: number
           duration?: number
         }>
-        for (let i = 0; i < lessons.length; i++) {
-          await tx.lesson.create({
-            data: {
-              title: lessons[i].title,
-              content: lessons[i].content ?? "",
-              contentType: lessons[i].contentType ?? "text",
-              order: lessons[i].order ?? i,
-              duration: lessons[i].duration ?? null,
-              moduleId: modId,
-            },
-          })
-        }
+        await tx.lesson.createMany({
+          data: lessons.map((l, i) => ({
+            title: l.title,
+            content: l.content ?? "",
+            contentType: l.contentType ?? "text",
+            order: l.order ?? i,
+            duration: l.duration ?? null,
+            moduleId: modId,
+          })),
+        })
       })
     } else {
       await prisma.module.update({ where: { id: modId }, data })
@@ -115,14 +113,13 @@ export async function DELETE(
       orderBy: { order: "asc" },
     })
 
-    for (let i = 0; i < remaining.length; i++) {
-      if (remaining[i].order !== i) {
-        await prisma.module.update({
-          where: { id: remaining[i].id },
-          data: { order: i },
-        })
-      }
-    }
+    await Promise.all(
+      remaining.map((m, i) =>
+        m.order !== i
+          ? prisma.module.update({ where: { id: m.id }, data: { order: i } })
+          : Promise.resolve()
+      )
+    )
 
     return NextResponse.json({ success: true })
   } catch (error) {

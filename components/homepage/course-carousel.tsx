@@ -4,7 +4,11 @@ import "@blossom-carousel/core/style.css"
 import { useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { BlossomCarousel } from "@blossom-carousel/react"
+import dynamic from "next/dynamic"
+const BlossomCarousel = dynamic(
+  () => import("@blossom-carousel/react").then((m) => ({ default: m.BlossomCarousel })),
+  { ssr: false }
+)
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { CoursePreview } from "@/types/homepage"

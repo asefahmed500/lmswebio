@@ -145,38 +145,41 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const data = reorderLessonsSchema.parse(body)
 
-    // Verify ownership for all lessons being reordered
-    for (const les of data.lessons) {
-      const existingLesson = await prisma.lesson.findUnique({
-        where: { id: les.id },
-        include: {
-          module: {
-            include: { course: { select: { instructorId: true } } },
-          },
+    const existingLessons = await prisma.lesson.findMany({
+      where: { id: { in: data.lessons.map((l) => l.id) } },
+      include: {
+        module: {
+          include: { course: { select: { instructorId: true } } },
         },
-      })
+      },
+    })
 
-      if (!existingLesson) {
-        return NextResponse.json(
-          { error: `Lesson ${les.id} not found` },
-          { status: 404 }
-        )
-      }
+    if (existingLessons.length !== data.lessons.length) {
+      const foundIds = new Set(existingLessons.map((l) => l.id))
+      const missing = data.lessons.find((l) => !foundIds.has(l.id))
+      return NextResponse.json(
+        { error: `Lesson ${missing?.id} not found` },
+        { status: 404 }
+      )
+    }
 
-      if (
-        session.user.role === "INSTRUCTOR" &&
-        existingLesson.module.course.instructorId !== session.user.id
-      ) {
+    if (session.user.role === "INSTRUCTOR") {
+      const forbidden = existingLessons.find(
+        (l) => l.module.course.instructorId !== session.user.id
+      )
+      if (forbidden) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
     }
 
-    for (const lesson of data.lessons) {
-      await prisma.lesson.update({
-        where: { id: lesson.id },
-        data: { order: lesson.order },
-      })
-    }
+    await prisma.$transaction(
+      data.lessons.map((lesson) =>
+        prisma.lesson.update({
+          where: { id: lesson.id },
+          data: { order: lesson.order },
+        })
+      )
+    )
 
     return NextResponse.json({ success: true })
   } catch (error) {
