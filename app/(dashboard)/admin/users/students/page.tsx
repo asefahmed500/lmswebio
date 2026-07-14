@@ -17,7 +17,7 @@ import {
 import { apiGet } from "@/lib/api-client"
 
 interface ApiUser {
-  id: number
+  id: string
   fullName: string
   email: string
   role: string
@@ -108,8 +108,22 @@ export default function StudentsPage() {
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              No students found
+            <div className="py-12 text-center">
+              <Users className="mx-auto mb-4 size-12 text-muted-foreground/40" />
+              <h3 className="mb-2 text-lg font-semibold">No students found</h3>
+              <p className="mb-4 text-sm text-muted-foreground">
+                {searchQuery
+                  ? "No students match your search. Try a different query."
+                  : "No students have registered yet. Students can sign up on their own, or you can add them manually."}
+              </p>
+              {!searchQuery && (
+                <Button asChild>
+                  <Link href="/admin/users/new">
+                    <UserPlus className="mr-2 size-4" />
+                    Add Student
+                  </Link>
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-4">

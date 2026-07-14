@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiPut } from "@/lib/api-client"
 import type { Assignment, AssignmentSubmission } from "@/types"
 
 interface AssignmentDetail extends Assignment {
@@ -62,18 +63,11 @@ function SubmissionGradeForm({
     setIsSubmitting(true)
     setLocalError(null)
     try {
-      const res = await fetch(
-        `/api/assignments/submissions/${submission.id}/grade`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ grade, feedback }),
-        }
+      const res = await apiPut(
+        `/assignments/submissions/${submission.id}/grade`,
+        { grade, feedback } as Record<string, unknown>
       )
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to submit grade")
-      }
+      if (res.error) throw new Error(res.error)
       onGraded()
     } catch (err) {
       setLocalError(
@@ -174,13 +168,12 @@ export default function AssignmentDetailPage() {
 
     let cancelled = false
 
-    fetch(`/api/assignments/${params.id}`)
+    apiGet<{ assignment: AssignmentDetail }>(`/assignments/${params.id}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch assignment")
-        return res.json()
-      })
-      .then((data) => {
-        if (!cancelled) setAssignment(data)
+        if (!cancelled) {
+          if (res.error) throw new Error(res.error)
+          setAssignment(res.data!.assignment)
+        }
       })
       .catch((err) => {
         if (!cancelled)

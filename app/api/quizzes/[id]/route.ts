@@ -61,7 +61,16 @@ export async function GET(
           description: quiz.description,
           timeLimit: quiz.timeLimit,
           attemptsAllowed: quiz.attemptsAllowed,
+          course: quiz.course,
           questionCount: quiz.questions.length,
+          questions: quiz.questions.map((q) => ({
+            id: q.id,
+            text: q.text,
+            type: q.type,
+            points: q.points,
+            options: q.options,
+            correctAnswer: null,
+          })),
         },
       })
     }

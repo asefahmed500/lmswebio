@@ -123,11 +123,23 @@ export async function DELETE(
 ) {
   try {
     const session = await getSession()
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { id } = await params
+
+    // ADMIN can delete any course; INSTRUCTOR can delete own
+    if (session.user.role !== "ADMIN") {
+      const canModify = await canModifyCourse(
+        session.user.id,
+        id,
+        session.user.role as Role
+      )
+      if (!canModify) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+    }
 
     await prisma.course.delete({
       where: { id },

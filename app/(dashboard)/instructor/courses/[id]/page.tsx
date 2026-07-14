@@ -29,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
 import type { Course, Module } from "@/types"
 
 interface ApiCourse {
@@ -113,9 +114,9 @@ export default function InstructorCourseDetailPage() {
 
       setIsLoading(true)
       try {
-        const res = await fetch(`/api/courses/${courseId}`)
-        if (!res.ok) throw new Error("Failed to fetch course")
-        const data: ApiCourse = await res.json()
+        const res = await apiGet<{ course: ApiCourse }>(`/courses/${courseId}`)
+        if (res.error) throw new Error(res.error)
+        const data = res.data!.course
         setCourse(mapCourse(data))
         setStudentCount(data._count?.enrolments ?? 0)
       } catch (error) {

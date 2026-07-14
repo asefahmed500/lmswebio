@@ -72,10 +72,10 @@ export default function AllSubmissionsPage() {
         for (const assignment of assignments) {
           try {
             const subResult = await apiGet<{
-              submissions: SubmissionWithMeta[]
+              assignment: { submissions: SubmissionWithMeta[] }
             }>(`/assignments/${assignment.id}`)
             if (subResult.data) {
-              const subs = (subResult.data.submissions || []).map(
+              const subs = (subResult.data.assignment?.submissions || []).map(
                 (s: SubmissionWithMeta) => ({
                   ...s,
                   ...s,

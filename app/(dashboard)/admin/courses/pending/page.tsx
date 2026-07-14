@@ -11,7 +11,7 @@ import {
   Search,
 } from "lucide-react"
 import { toast } from "sonner"
-import { apiPatch, apiDelete } from "@/lib/api-client"
+import { apiGet, apiPatch, apiDelete } from "@/lib/api-client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,19 +65,11 @@ export default function AdminPendingCoursesPage() {
 
   React.useEffect(() => {
     let cancelled = false
-    fetch("/api/courses?limit=100")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed")
-        return res.json()
-      })
-      .then((data) => {
-        if (!cancelled) {
-          const allCourses = Array.isArray(data) ? data : data.courses || []
-          setCourses(allCourses.filter((c: PendingCourse) => !c.isPublished))
-        }
-      })
-      .catch(() => {
-        if (!cancelled) toast.error("Failed to load pending courses")
+    apiGet<{ courses: PendingCourse[] }>("/courses?limit=100")
+      .then((result) => {
+        if (!cancelled && !result.error && result.data)
+          setCourses(result.data.courses.filter((c) => !c.isPublished))
+        else if (!cancelled) toast.error("Failed to load pending courses")
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false)

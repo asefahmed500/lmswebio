@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     const level = searchParams.get("level")
     const search = searchParams.get("search")
     const instructorId = searchParams.get("instructorId")
+    const isPublished = searchParams.get("isPublished")
 
     const where: Prisma.CourseWhereInput = {}
 
@@ -49,6 +50,8 @@ export async function GET(request: NextRequest) {
 
     if (category) where.category = category
     if (level) where.level = level as Level
+    if (isPublished === "true") where.isPublished = true
+    else if (isPublished === "false") where.isPublished = false
     // Only allow instructorId filter for ADMIN (prevents IDOR)
     if (instructorId && session.user.role !== "INSTRUCTOR")
       where.instructorId = instructorId

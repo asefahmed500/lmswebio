@@ -255,7 +255,7 @@ export default function CourseCataloguePage() {
                       avatarUrl: course.instructor.avatarUrl ?? undefined,
                     }
                   : {
-                      id: 0,
+                      id: "",
                       fullName: "Instructor",
                       avatarUrl: undefined as string | undefined,
                     },

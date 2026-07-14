@@ -670,7 +670,7 @@ export function HomepageContent() {
       </section>
 
       {/* ENTERPRISE */}
-      <section className="py-20">
+      <section id="enterprise" className="py-20">
         <div className="mx-auto max-w-[1280px] px-5">
           <div className="mb-6 text-center">
             <span className="inline-flex rounded-full border border-graphite/15 px-3 py-1 font-visueltpro text-[10px] font-medium tracking-[0.08em] text-smoke uppercase">
@@ -708,7 +708,7 @@ export function HomepageContent() {
           </div>
           <div className="mt-10 text-center">
             <Link
-              href="#"
+              href="/contact"
               className="inline-flex items-center gap-2 rounded-full bg-void-black px-5 py-2.5 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
             >
               Request a demo <ArrowRight className="size-3.5" />
@@ -718,7 +718,7 @@ export function HomepageContent() {
       </section>
 
       {/* PRICING */}
-      <section className="py-20">
+      <section id="pricing-info" className="py-20">
         <div className="mx-auto max-w-[1280px] px-5">
           <div className="mb-14 text-center">
             <h2 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
@@ -732,7 +732,7 @@ export function HomepageContent() {
             {pricingTiers.map((tier) => (
               <div
                 key={tier.name}
-                className={`rounded-xl border p-6 ${
+                className={`flex h-full flex-col rounded-xl border p-6 ${
                   tier.featured
                     ? "border-void-black bg-void-black"
                     : "border-graphite/10 bg-chalk"
@@ -791,7 +791,7 @@ export function HomepageContent() {
                 </ul>
                 <Link
                   href={tier.href}
-                  className={`mt-6 flex w-full items-center justify-center rounded-full px-5 py-2.5 font-visueltpro text-sm font-medium transition-opacity hover:opacity-90 ${
+                  className={`mt-auto flex w-full items-center justify-center rounded-full px-5 py-2.5 font-visueltpro text-sm font-medium transition-opacity hover:opacity-90 ${
                     tier.featured
                       ? "bg-chalk text-void-black"
                       : "bg-void-black text-chalk"

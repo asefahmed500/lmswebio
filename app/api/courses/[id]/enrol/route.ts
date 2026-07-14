@@ -34,26 +34,25 @@ export async function POST(
       )
     }
 
-    // For paid courses, redirect to checkout instead of direct enrollment
-    if (course.price && course.price > 0) {
-      return NextResponse.json(
-        {
-          error: "This course requires payment",
-          requiresPayment: true,
-          courseId: course.id,
-          price: course.price,
-          checkoutUrl: `/student/checkout/${course.id}`,
-        },
-        { status: 402 }
-      )
-    }
-
     const existing = await prisma.enrolment.findUnique({
       where: { userId_courseId: { userId, courseId } },
     })
 
     if (existing) {
       return NextResponse.json({ error: "Already enrolled" }, { status: 409 })
+    }
+
+    // For paid courses, redirect to checkout instead of direct enrollment
+    if (course.price && course.price > 0) {
+      return NextResponse.json(
+        {
+          requiresPayment: true,
+          courseId: course.id,
+          price: course.price,
+          checkoutUrl: `/student/checkout/${course.id}`,
+        },
+        { status: 200 }
+      )
     }
 
     const enrolment = await prisma.enrolment.create({

@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiDelete } from "@/lib/api-client"
 import type { Quiz } from "@/types"
 
 interface QuizWithStats extends Quiz {
@@ -71,10 +72,9 @@ export default function InstructorQuizzesPage() {
       if (!user) return
       setIsLoading(true)
       try {
-        const res = await fetch("/api/quizzes")
-        if (!res.ok) throw new Error("Failed to fetch quizzes")
-        const data = await res.json()
-        setQuizzes(data)
+        const res = await apiGet<{ quizzes: QuizWithStats[] }>("/quizzes")
+        if (res.error) throw new Error(res.error)
+        setQuizzes(res.data!.quizzes)
       } catch (error) {
         console.error("Failed to load quizzes:", error)
       } finally {
@@ -86,8 +86,8 @@ export default function InstructorQuizzesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/quizzes/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete quiz")
+      const res = await apiDelete(`/quizzes/${id}`)
+      if (res.error) throw new Error(res.error)
       setQuizzes((prev) => prev.filter((q) => q.id !== id))
       setDeleteId(null)
     } catch (error) {

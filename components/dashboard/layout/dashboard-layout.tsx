@@ -41,8 +41,8 @@ export function DashboardLayoutShell({
       .slice(0, 2)
   }, [user?.fullName])
 
-  const handleLogout = React.useCallback(() => {
-    logout()
+  const handleLogout = React.useCallback(async () => {
+    await logout()
     window.location.href = "/login"
   }, [logout])
 

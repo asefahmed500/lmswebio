@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import type { Role, SidebarMenuItem } from "@/types"
 import {
   LayoutDashboard,
@@ -234,7 +234,10 @@ function MenuItem({
 
   const hasActiveSubItem = React.useMemo(() => {
     if (!item.items) return false
-    return item.items.some((subItem) => subItem.href === pathname)
+    return item.items.some(
+      (subItem) =>
+        subItem.href === pathname || pathname.startsWith(subItem.href + "/")
+    )
   }, [item.items, pathname])
 
   const [isOpen, setIsOpen] = React.useState(hasActiveSubItem)
@@ -278,7 +281,10 @@ function MenuItem({
               <SidebarMenuSubItem key={subItem.href}>
                 <SidebarMenuSubButton
                   asChild
-                  isActive={subItem.href === pathname}
+                  isActive={
+                    subItem.href === pathname ||
+                    pathname.startsWith(subItem.href + "/")
+                  }
                 >
                   <Link href={subItem.href ?? "#"}>
                     <span>{subItem.title}</span>
@@ -296,13 +302,7 @@ function MenuItem({
 function SidebarSearch() {
   const [query, setQuery] = React.useState("")
   const { user } = useAuth()
-  const router = React.useMemo(() => {
-    return {
-      push: (url: string) => {
-        window.location.href = url
-      },
-    }
-  }, [])
+  const router = useRouter()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -374,8 +374,8 @@ export function SidebarNav({ role }: { role: Role }) {
         <SidebarMenu>
           <UISidebarMenuItem>
             <SidebarMenuButton
-              onClick={() => {
-                logout()
+              onClick={async () => {
+                await logout()
                 window.location.href = "/login"
               }}
               tooltip="Log out"

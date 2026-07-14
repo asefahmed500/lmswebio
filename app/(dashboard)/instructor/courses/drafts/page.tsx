@@ -27,11 +27,7 @@ interface DraftCourse {
   thumbnail: string | null
   isPublished: boolean
   category: string | null
-  modules: Array<{
-    id: string
-    title: string
-    lessons: Array<{ id: string }>
-  }>
+  _count?: { modules: number; enrolments: number }
   updatedAt: string
 }
 
@@ -44,6 +40,7 @@ export default function InstructorDraftsPage() {
   const [drafts, setDrafts] = React.useState<DraftCourse[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [deleteId, setDeleteId] = React.useState<string | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     async function loadDrafts() {
@@ -61,6 +58,7 @@ export default function InstructorDraftsPage() {
         setDrafts(list)
       } catch (error) {
         console.error("Failed to load drafts:", error)
+        setError("Failed to load drafts. Please try again.")
       } finally {
         setIsLoading(false)
       }
@@ -75,6 +73,7 @@ export default function InstructorDraftsPage() {
       setDrafts((prev) => prev.filter((c) => c.id !== id))
     } catch (error) {
       console.error("Failed to publish course:", error)
+      setError("Failed to publish course. Please try again.")
     }
   }
 
@@ -86,6 +85,7 @@ export default function InstructorDraftsPage() {
       setDeleteId(null)
     } catch (error) {
       console.error("Failed to delete course:", error)
+      setError("Failed to delete course. Please try again.")
     }
   }
 
@@ -117,13 +117,16 @@ export default function InstructorDraftsPage() {
         </Button>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {drafts.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {drafts.map((course) => {
-            const totalLessons = course.modules.reduce(
-              (sum, m) => sum + m.lessons.length,
-              0
-            )
+            const moduleCount = course._count?.modules || 0
             return (
               <Card key={course.id} className="overflow-hidden">
                 <div className="flex aspect-video w-full items-center justify-center bg-muted">
@@ -153,8 +156,7 @@ export default function InstructorDraftsPage() {
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <span>{course.level}</span>
                       <span>
-                        {course.modules.length} modules &middot; {totalLessons}{" "}
-                        lessons
+                        {moduleCount} module{moduleCount !== 1 ? "s" : ""}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">

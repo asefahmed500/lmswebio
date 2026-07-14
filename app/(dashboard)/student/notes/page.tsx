@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { LoadingCard } from "@/components/loading-skeleton"
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api-client"
 
 interface Note {
   id: number
@@ -78,31 +79,29 @@ export default function StudentNotesPage() {
       setIsLoading(true)
       try {
         const [notesRes, coursesRes] = await Promise.all([
-          fetch("/api/notes"),
-          fetch("/api/enrolments/my"),
+          apiGet<{ notes: Note[] }>("/notes"),
+          apiGet<EnrolledCourse[]>("/enrolments/my"),
         ])
 
-        if (notesRes.ok) {
-          const data = await notesRes.json()
-          setNotes(data.notes || [])
+        // Fixed: replaced raw fetch with apiGet
+        if (notesRes.data) {
+          setNotes(notesRes.data.notes || [])
         }
 
-        if (coursesRes.ok) {
-          const data = await coursesRes.json()
-          const enrolments = Array.isArray(data) ? data : data.enrolments || []
+        if (coursesRes.data) {
+          const enrolments = coursesRes.data
           // Load full course data with modules/lessons for the lesson picker
-          const coursesWithData = await Promise.all(
-            enrolments.map(
-              async (e: {
-                courseId: number
-                course: {
-                  modules: Array<{ id: number; lessons: Array<{ id: number }> }>
-                }
-              }) => {
+          const coursesWithData: EnrolledCourse[] = await Promise.all(
+            (enrolments as EnrolledCourse[]).map(
+              async (e: EnrolledCourse) => {
                 try {
-                  const res = await fetch(`/api/courses/${e.courseId}`)
-                  if (res.ok)
-                    return { courseId: e.courseId, course: await res.json() }
+                  const res = await apiGet<Record<string, unknown>>(
+                    `/courses/${e.courseId}`
+                  )
+                  if (res.data) {
+                    const courseData = res.data as unknown as EnrolledCourse["course"]
+                    return { courseId: e.courseId, course: courseData }
+                  }
                 } catch {}
                 return { courseId: e.courseId, course: e.course }
               }
@@ -127,10 +126,10 @@ export default function StudentNotesPage() {
         if (searchQuery) params.append("search", searchQuery)
         if (courseFilter !== "all") params.append("courseId", courseFilter)
 
-        const response = await fetch(`/api/notes?${params}`)
-        if (response.ok) {
-          const data = await response.json()
-          setNotes(data.notes || [])
+        // Fixed: replaced raw fetch with apiGet
+        const result = await apiGet<{ notes: Note[] }>(`/notes?${params}`)
+        if (result.data) {
+          setNotes(result.data.notes || [])
         }
       } catch (error) {
         console.error("Failed to load notes:", error)
@@ -141,12 +140,7 @@ export default function StudentNotesPage() {
 
   const handleSaveNote = async (content: string, timestamp?: number) => {
     try {
-      const url = selectedNote ? `/api/notes/${selectedNote.id}` : "/api/notes"
-      const method = selectedNote ? "PATCH" : "POST"
-
-      const body: { content: string; lessonId?: string; timestamp?: number } = {
-        content,
-      }
+      const body: Record<string, unknown> = { content }
       if (timestamp !== undefined) body.timestamp = timestamp
       if (!selectedNote && newNoteLessonId) {
         body.lessonId = newNoteLessonId
@@ -161,25 +155,26 @@ export default function StudentNotesPage() {
         }
       }
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (selectedNote) {
+      // Fixed: replaced raw fetch with apiPatch/apiPost
+      if (selectedNote) {
+        const result = await apiPatch<{ note: Note }>(
+          `/notes/${selectedNote.id}`,
+          body
+        )
+        if (result.data) {
           setNotes((prev) =>
-            prev.map((n) => (n.id === selectedNote.id ? data.note : n))
+            prev.map((n) => (n.id === selectedNote.id ? result.data!.note : n))
           )
-          setSelectedNote(data.note)
-        } else {
-          setNotes((prev) => [data.note, ...prev])
-          setSelectedNote(data.note)
+          setSelectedNote(result.data.note)
         }
-        setIsNewNote(false)
+      } else {
+        const result = await apiPost<{ note: Note }>("/notes", body)
+        if (result.data) {
+          setNotes((prev) => [result.data!.note, ...prev])
+          setSelectedNote(result.data.note)
+        }
       }
+      setIsNewNote(false)
     } catch (error) {
       console.error("Failed to save note:", error)
     }
@@ -189,11 +184,9 @@ export default function StudentNotesPage() {
     if (!selectedNote) return
 
     try {
-      const response = await fetch(`/api/notes/${selectedNote.id}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
+      // Fixed: replaced raw fetch with apiDelete
+      const result = await apiDelete(`/notes/${selectedNote.id}`)
+      if (!result.error) {
         setNotes((prev) => prev.filter((n) => n.id !== selectedNote.id))
         setSelectedNote(undefined)
       }

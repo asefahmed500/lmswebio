@@ -41,7 +41,7 @@ export function SynexNavbar() {
           {[
             { label: "Courses", href: "/courses" },
             { label: "Pricing", href: "#pricing-info" },
-            { label: "Enterprise", href: "#" },
+            { label: "Enterprise", href: "#enterprise" },
           ].map((link) => (
             <Link
               key={link.label}
@@ -107,7 +107,7 @@ export function SynexNavbar() {
               {[
                 { label: "Courses", href: "/courses" },
                 { label: "Pricing", href: "#pricing-info" },
-                { label: "Enterprise", href: "#" },
+                { label: "Enterprise", href: "#enterprise" },
               ].map((link) => (
                 <Link
                   key={link.label}

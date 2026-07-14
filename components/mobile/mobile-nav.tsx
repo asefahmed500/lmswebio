@@ -4,11 +4,8 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  Home,
   BookOpen,
-  FileText,
   Award,
-  Calendar,
   Users,
   Settings,
   Menu,
@@ -22,7 +19,6 @@ import {
   ChevronRight,
   LogOut,
   Bell,
-  Search,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -31,7 +27,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import type { Role } from "@/types"
@@ -107,6 +102,8 @@ const roleNavMap: Record<string, NavItem[]> = {
         },
       ],
     },
+    { href: "/notifications", label: "Notifications", icon: Bell },
+    { href: "/admin/profile", label: "Profile", icon: Settings },
   ],
   INSTRUCTOR: [
     { href: "/instructor", label: "Dashboard", icon: LayoutDashboard },
@@ -185,6 +182,8 @@ const roleNavMap: Record<string, NavItem[]> = {
         },
       ],
     },
+    { href: "/instructor/notifications", label: "Notifications", icon: Bell },
+    { href: "/instructor/profile", label: "Profile", icon: Settings },
   ],
   STUDENT: [
     { href: "/student", label: "Dashboard", icon: LayoutDashboard },
@@ -255,6 +254,26 @@ const roleNavMap: Record<string, NavItem[]> = {
         },
       ],
     },
+    {
+      href: "/student/discussions",
+      label: "Community",
+      icon: Users,
+      items: [
+        { href: "/student/discussions", label: "Discussions", icon: Users },
+        { href: "/student/learning-paths", label: "Learning Paths", icon: Users },
+      ],
+    },
+    {
+      href: "/student/notes",
+      label: "Tools",
+      icon: Award,
+      items: [
+        { href: "/student/notes", label: "Notes", icon: Award },
+        { href: "/student/calendar", label: "Calendar", icon: Award },
+      ],
+    },
+    { href: "/student/notifications", label: "Notifications", icon: Bell },
+    { href: "/student/profile", label: "Profile", icon: Settings },
   ],
 }
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { randomUUID } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/auth/jwt"
 import { getStripe, isStripeConfigured } from "@/lib/stripe"
@@ -56,24 +57,27 @@ export async function POST(request: NextRequest) {
 
     // If Stripe is not configured, use a simple direct-payment flow
     if (!isStripeConfigured()) {
-      // Create enrollment with "paid" status directly (demo mode)
-      const enrolment = await prisma.enrolment.create({
-        data: {
-          userId: session.user.id,
-          courseId,
-          paymentStatus: "paid",
-          amount: course.price,
-        },
-      })
-
-      await prisma.payment.create({
-        data: {
-          userId: session.user.id,
-          courseId,
-          amount: course.price,
-          status: "completed",
-        },
-      })
+      // Atomic: enrolment + payment in a single transaction
+      const demoRef = `demo_${randomUUID()}`
+      await prisma.$transaction([
+        prisma.enrolment.create({
+          data: {
+            userId: session.user.id,
+            courseId,
+            paymentStatus: "paid",
+            amount: course.price,
+          },
+        }),
+        prisma.payment.create({
+          data: {
+            userId: session.user.id,
+            courseId,
+            amount: course.price,
+            status: "completed",
+            stripeSessionId: demoRef,
+          },
+        }),
+      ])
 
       return NextResponse.json({
         success: true,
@@ -123,6 +127,7 @@ export async function POST(request: NextRequest) {
         amount: course.price,
         status: "pending",
         stripeSessionId: checkoutSession.id,
+        stripePaymentIntentId: `pending_${randomUUID()}`,
       },
     })
 

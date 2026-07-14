@@ -4,115 +4,138 @@
 
 ```bash
 npm run dev           # next dev --turbopack
-npm run build         # next build (standalone output)
+npm run build         # next build (standalone output for Docker)
 npm run typecheck     # tsc --noEmit
-npm run lint          # eslint (uses eslint-config-next)
+npm run lint          # eslint (flat config: core-web-vitals + typescript)
 npm run format        # prettier --write "**/*.{ts,tsx}"
-npm run test          # vitest
-npm run test:ui       # vitest --ui
+npm run test          # vitest (watch mode by default)
+npm run test:coverage # vitest --coverage
+npm run audit         # lint + typecheck + test --run (pre-commit gate)
 npm run db:generate   # prisma generate
-npm run db:push       # prisma db push (dev only — no migrations)
+npm run db:push       # prisma db push (MongoDB — no migration files)
 npm run db:seed       # tsx prisma/seed.ts
+npm run db:studio     # prisma studio
+npm run db:reset      # prisma migrate reset (destructive)
 ```
 
-**Order matters:** format -> lint -> typecheck -> build. Typecheck must pass before considering a change done.
+**Run order:** `format → lint → typecheck → test --run` or `audit`. Build only for deploy.
 
-**Path alias:** `@/*` maps to the **project root** (no `src/` directory). Use `@/components/ui/button`, not `@/src/components/ui/button`.
+**Path alias:** `@/*` → project root (`@/components/ui/button`).
 
 ## Architecture
 
 | Layer | Details |
 |-------|---------|
 | Framework | Next.js 16 App Router. Route groups: `(auth)` (no sidebar), `(dashboard)` (sidebar layout). |
-| Database | MongoDB Atlas via Prisma v6.19 (MongoDB not supported in Prisma v7). Schema in `prisma/schema.prisma`, CLI config in `prisma.config.ts`. All IDs are `String @db.ObjectId`. |
-| Auth | JWT (access + refresh tokens in HTTP-only cookies) via `jose`. Edge middleware enforces role-based routing + CSRF. Client state via `useAuth()` from `components/auth-provider.tsx`. |
+| Database | **MongoDB** via Prisma v6.19 (v7 dropped MongoDB). All IDs are `String @db.ObjectId`. Never use `parseInt()`/`Number()` on route params. |
+| Auth | JWT (access 1h + refresh 30d) in HTTP-only cookies via `jose`. Edge middleware enforces role routing + CSRF. Client state: `useAuth()` from `@/components/auth-provider`. |
 | UI | shadcn/ui v4 (radix-sera style). Tailwind CSS v4 via `@import "tailwindcss"` in `app/globals.css`. No `tailwind.config.ts`. |
-| Forms | react-hook-form + Zod (schemas in `lib/validators/`). |
-| Payments | Stripe v22. Client in `lib/stripe.ts`. Falls back to demo mode (auto-enroll) if `STRIPE_SECRET_KEY` unset. |
-| Tests | Vitest + jsdom + @testing-library/react. Setup in `test/setup.ts`. Tests under `test/`. |
+| Forms | react-hook-form + Zod v4 (`lib/validators/`). |
+| Payments | Stripe v22 via `lib/stripe.ts`. Falls back to demo mode (auto-enroll) if `STRIPE_SECRET_KEY` unset. |
+| Tests | Vitest + jsdom + @testing-library/react. Setup mocks `next/navigation` + `next/headers`. `vitest.config.ts` runs `pool: "threads"`, `maxWorkers: 1`, `isolate: false` (single-threaded, shared module cache). |
 
 ## Database
 
-- MongoDB Atlas — connection string in `.env` as `DATABASE_URL`
-- **Prisma v6.19** (v7 does not support MongoDB). No driver adapter needed — `lib/prisma.ts` uses `new PrismaClient()` directly.
-- **All IDs are `String @db.ObjectId`** — never use `parseInt()` or `Number()` on route params or query params containing IDs. They're already strings.
-- Schema uses `url = env("DATABASE_URL")` + `prisma.config.ts` with `dotenv/config` for CLI tools.
-- After schema changes: `npx prisma db push` then `npx prisma generate`. No migrations for MongoDB.
-- `prisma.config.ts` uses `engine: "classic"` (required for v6 config).
+- MongoDB — `DATABASE_URL` in `.env`. **Prisma v6.19 only** (v7 dropped MongoDB support).
+- `lib/prisma.ts` — singleton pattern (no driver adapter).
+- Schema changes: `npx prisma db push` → auto `prisma generate` (postinstall hook). No migration files for MongoDB.
+- `prisma.config.ts` uses `engine: "classic"` for CLI tools.
+- CI spins up a `mongo:7` service container — integration/API tests require a live MongoDB connection. Component tests with mocks run without one.
+- **British/American spelling inconsistency**: Prisma model is `Enrolment` (British), but the API route at `app/api/enrolments/my/route.ts` uses British spelling while most frontend code references `enrollment` (American). Be consistent when adding new code.
 
 ## Auth
 
-**Demo accounts** (from seed, password uses `SEED_DEFAULT_PASSWORD` env var, default `Test123456!`):
-- `admin@lms.com` / `Admin123!` (seed creates these with separate hashes: `Admin123!`, `Instructor123!`, `Student123!`)
-- `instructor@lms.com` / `Instructor123!`
-- `student@lms.com` / `Student123!`
+**Demo accounts** (hardcoded in `prisma/seed.ts`):
+| Email | Password | Role |
+|-------|----------|------|
+| admin@lms.com | Admin123! | ADMIN |
+| instructor@lms.com | Instructor123! | INSTRUCTOR |
+| student@lms.com | Student123! | STUDENT |
 
-- Login: `POST /api/auth/login` -> sets `access_token` + `refresh_token` HTTP-only cookies
-- Session: `GET /api/auth/me` -> reads access token cookie
-- Refresh: `POST /api/auth/refresh` -> rotates both tokens
-- Client: `useAuth()` from `@/components/auth-provider`
-
-**Middleware runs in Edge runtime.** Cannot use PrismaClient, bcrypt, or any Node.js APIs. Only `jose` for JWT verification.
+- Login: `POST /api/auth/login` → sets `access_token` + `refresh_token` cookies.
+- Server session: `getSession()` from `@/lib/auth/jwt` (not `getServerSession`). Has a 60s in-memory cache.
+- **Middleware runs in Edge runtime** — no PrismaClient, bcrypt, or Node APIs. Only `jose` for JWT verify.
+- Two separate JWT secrets required: `JWT_SECRET` + `JWT_REFRESH_SECRET` (each min 32 chars).
 
 ## Roles & Routing
 
 | Role | Base URL | Access |
 |------|----------|--------|
 | ADMIN | `/admin` | Full system control |
-| INSTRUCTOR | `/instructor` | Admin + Instructor routes |
-| STUDENT | `/student` | Admin + Student routes |
+| INSTRUCTOR | `/instructor` | Instructor + Admin routes |
+| STUDENT | `/student` | Student + Admin routes |
 
-Role-based sidebar: `components/dashboard/layout/sidebar-nav.tsx`. Role enum: `types/index.ts`.
+Role-based sidebar: `@/components/dashboard/layout/sidebar-nav.tsx`. Role type in `types/index.ts`.
 
-## API Development
+## API Conventions
 
-- **CSRF:** All POST/PUT/PATCH/DELETE must include `X-CSRF-Token` header. Use `apiPost`, `apiPut`, `apiPatch`, `apiDelete` from `lib/api-client.ts` (auto-injects CSRF). Exempt paths: `/api/auth/`, `/api/csrf-token`, `/api/payments/webhook`.
-- **IDs are strings (ObjectId).** Never use `parseInt()` or `Number()` on `params.id` or any ID field from request. They're already strings.
-- **Session:** Use `getSession()` from `lib/auth/jwt.ts`, not `getServerSession()`.
-- **Authorization:** `lib/authorization.ts` for IDOR guards (`canAccessCourse`, `canModifyCourse`, `isEnrolledInCourse`).
-- **Error responses:** Use `lib/api-response.ts` helpers for consistent formatting.
-- **Rate limiting:** `lib/rate-limit.ts` — per-identifier with Prisma backend.
-- **Publish/unpublish:** Uses PATCH (not PUT). The PATCH handler toggles `isPublished`; PUT Zod schema excludes it.
+- **CSRF:** All POST/PUT/PATCH/DELETE must include `X-CSRF-Token` header. Use `apiPost`/`apiPut`/`apiPatch`/`apiDelete` from `@/lib/api-client` (auto-injects CSRF). Exempt paths: `/api/auth/`, `/api/csrf-token`, `/api/payments/webhook`.
+- **Never use raw `fetch()` for mutations** — it bypasses CSRF and will 403. Many pages still use raw fetch; always use `apiGet`/`apiPost`/etc.
+- **Two course detail endpoints:** `/api/courses/[id]` is auth-gated via `canAccessCourse()` (students must be enrolled). `/api/courses/public/[id]` requires no auth, accepts slug OR ObjectId, requires only `isPublished`. Use the public endpoint for un-enrolled views (checkout, browse, catalogue).
+- **Authorization:** `@/lib/authorization` for IDOR guards.
+- **Error responses:** `@/lib/api-response` for consistent formatting (though most routes don't use it yet).
+- **Rate limiting:** `@/lib/rate-limit` — dual memory + Prisma backend. Only login and forgot-password are currently rate-limited.
+- **Publish/unpublish courses:** Uses PATCH (not PUT).
 
-## Gotchas
+## Known Gotchas
 
-- **All page components are `"use client"`** except `app/page.tsx` (landing page) and `app/layout.tsx` which are server components.
-- **No `loading.tsx` files.** Pages handle loading inline with `isLoading` + spinner.
-- **Prettier:** No semicolons, double quotes, trailing commas (es5). Uses `prettier-plugin-tailwindcss` for class sorting with `app/globals.css` as stylesheet reference.
-- **CSP in `next.config.mjs`:** `frame-src 'self' https:` required for embedded YouTube/Vimeo. `X-Frame-Options: SAMEORIGIN` on pages, `DENY` on API routes only.
-- **Tailwind v4:** `@import "tailwindcss"` in globals.css, NOT `@tailwind` directives. Dark mode via `@custom-variant dark (&:is(.dark *))`.
-- **Paid courses:** `POST /api/courses/[id]/enrol` returns 402 if price > 0. Use `POST /api/payments/checkout` for Stripe flow.
-- **Lesson sequential locking:** Lessons locked until previous in same module completed. First lesson per module always unlocked.
-- **File uploads:** `POST /api/upload` -> `public/uploads/` (local filesystem, max 20MB). No cloud storage.
-- **Mock data is legacy.** Most pages use live API. Only homepage (`app/page.tsx`) uses `lib/homepage-data.ts`.
-- **PDF lesson type & certificates** are placeholders — no viewer/generation wired up.
-- **Rich text editor (TipTap):** No image/media upload in current config. Content images must be external URLs.
+### MongoDB unique constraint on nullable fields (CRITICAL)
+Unlike Postgres, MongoDB's unique index treats `null` as a value — **only one document can have `null`** for a `@unique` field. Prisma schema fields like `Payment.stripePaymentIntentId` and `Payment.stripeSessionId` are `@unique` + optional. If you create a record without setting them (e.g. demo-mode payments), the second insert crashes with `P2002`. Always assign a unique placeholder (e.g. `"demo_" + uuid`) when the real value isn't available.
+
+### Next.js 16 quirks
+- **`middleware.ts` is the file** (not `proxy.ts` yet). Next.js 17 renames it to `proxy.ts`; on 16 the old name works but may log a deprecation warning.
+- **`poweredBy` is not a valid config key** in Next.js 16 — already removed; never re-add it or dev server crashes. Unknown config keys are rejected, so don't copy config from older Next versions blindly.
+- **First compilation is slow** (60-75s). API routes compile lazily on first request.
+
+### middleware.ts corruption (CRITICAL)
+If `middleware.ts` gets a BOM, wrong encoding, or line-ending corruption, **all `/api/auth/*` routes silently return 404** while other API routes work. Fix: delete and recreate the file.
+
+### Session expiry in dev (Edge runtime)
+The Edge middleware may fail to read `process.env.JWT_SECRET` in dev. After ~3-5 page navigations in `next dev`, you may get unexpectedly redirected to `/login`. The session token is likely still valid — restart the browser session.
+
+### CourseCard ignores progress prop
+`components/course/course-card.tsx:33` destructures `{ course, enrolled }` but ignores `progress` and `showProgress`. Progress bars never render. If adding progress UI, this is where to fix.
+
+### Enrolment API returns wrong user's completions
+`app/api/enrollments/[id]/route.ts:87-96` uses `session.user.id` (viewer) instead of `enrollment.userId` (enrollment owner). ADMIN or INSTRUCTOR viewing a student's progress see their own data.
+
+### `text-success` / `text-warning` / `text-info` (NOT missing)
+These classes ARE defined in `app/globals.css` under `@theme inline` (`--color-success` / `--color-warning` / `--color-info`). They work correctly. The old gotcha about them being missing was stale.
+
+### `"use client"` required
+All page components in route groups (`(auth)/`, `(dashboard)/`) need `"use client"`. Exceptions: `app/page.tsx`, `app/layout.tsx`, `loading.tsx`, `error.tsx`.
+
+### Misc
+- **Prettier:** no semicolons, double quotes, trailing commas (es5). `prettier-plugin-tailwindcss` sorts classes.
+- **Tailwind v4:** `@import "tailwindcss"` (not `@tailwind`). PostCSS plugin: `@tailwindcss/postcss`. Dark mode via `@custom-variant dark (&:is(.dark *))`.
+- **File uploads:** `POST /api/upload` → `public/uploads/` (local filesystem, max 20MB). No cloud storage.
+- **Rich text (TipTap):** No image/media upload. Content images must be external URLs.
+- **Types:** `types/index.ts` uses TypeScript value/type double declarations (`export type Role` + `export const Role`). Import as `import type { Role }` for type usage.
+- **N+1 queries** are common on assignments, quizzes, and learning-paths pages (individual API calls per item). Batch endpoints are preferred.
 
 ## Key Files
 
 | Purpose | Path |
 |---------|------|
-| Prisma client | `lib/prisma.ts` |
-| Prisma schema | `prisma/schema.prisma` |
-| Prisma CLI config | `prisma.config.ts` |
+| Edge auth middleware | `middleware.ts` (`proxy.ts` in Next.js 17) |
+| Next.js config | `next.config.mjs` (standalone output + CSP headers) |
 | Auth context + hooks | `components/auth-provider.tsx` |
-| JWT utilities | `lib/auth/jwt.ts` |
-| Session management | `lib/auth/session.ts` |
-| Edge auth middleware | `middleware.ts` |
+| JWT sign/verify/session | `lib/auth/jwt.ts` |
+| Prisma schema (MongoDB) | `prisma/schema.prisma` |
+| Prisma client singleton | `lib/prisma.ts` |
+| API client (fetch + CSRF) | `lib/api-client.ts` |
 | Authorization (IDOR) | `lib/authorization.ts` |
-| CSRF | `lib/csrf.ts` |
-| API client (fetch wrappers) | `lib/api-client.ts` |
-| API error responses | `lib/api-response.ts` |
+| CSRF generation/validation | `lib/csrf.ts` |
+| Error response helpers | `lib/api-response.ts` |
 | Rate limiting | `lib/rate-limit.ts` |
-| Stripe client | `lib/stripe.ts` |
-| Email (Nodemailer) | `lib/email.ts` |
-| XSS sanitization | `lib/sanitize.ts` |
 | Zod validators | `lib/validators/*.ts` |
-| Types | `types/index.ts`, `types/api.ts` |
 | Dashboard layout | `components/dashboard/layout/dashboard-layout.tsx` |
 | Sidebar nav | `components/dashboard/layout/sidebar-nav.tsx` |
-| shadcn config | `components.json` |
+| Dashboard header | `components/dashboard/layout/dashboard-header.tsx` |
+| CI pipeline | `.github/workflows/ci.yml` |
+| Test setup (mocks) | `test/setup.ts` |
+| Globals + theme vars | `app/globals.css` |
 
 ## Environment
 
-`.env` requires: `DATABASE_URL`, `JWT_SECRET` (min 32 chars), `JWT_REFRESH_SECRET` (min 32 chars), `NEXT_PUBLIC_API_URL`. Optional: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `EMAIL_HOST/PORT/USER/PASS/FROM`, `SEED_DEFAULT_PASSWORD`.
+`.env` requires: `DATABASE_URL`, `JWT_SECRET` (min 32 chars), `JWT_REFRESH_SECRET` (min 32 chars). Optional: `NEXT_PUBLIC_APP_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `EMAIL_HOST`/`PORT`/`USER`/`PASS`/`FROM`, `SEED_DEFAULT_PASSWORD`.

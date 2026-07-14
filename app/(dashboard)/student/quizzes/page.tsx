@@ -128,11 +128,12 @@ export default function StudentQuizzesPage() {
           (e: { courseId: string }) => e.courseId
         )
 
+        // Fixed: API returns { quizzes: [...] }, not array directly
         const quizResults = await Promise.all(
           courseIds.map((cid: string) =>
-            apiGet<QuizListItem[]>(`/quizzes?courseId=${cid}`).then(
-              (r) => r.data ?? []
-            )
+            apiGet<{ quizzes: QuizListItem[] }>(
+              `/quizzes?courseId=${cid}`
+            ).then((r) => r.data?.quizzes ?? [])
           )
         )
 

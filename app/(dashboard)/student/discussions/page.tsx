@@ -138,7 +138,7 @@ export default function StudentDiscussionsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/student/discussions">
+          <Link href="/student/discussions/new">
             <Plus data-icon="inline-start" />
             New Discussion
           </Link>

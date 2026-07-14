@@ -61,11 +61,7 @@ interface ApiCourse {
   thumbnail: string | null
   isPublished: boolean
   category: string | null
-  modules: Array<{
-    id: string
-    title: string
-    lessons: Array<{ id: string }>
-  }>
+  _count?: { modules: number; enrolments: number }
 }
 
 interface CoursesApiResponse {
@@ -83,6 +79,7 @@ export default function InstructorCoursesPage() {
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<CourseStatus>("ALL")
   const [deleteId, setDeleteId] = React.useState<string | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
   const [enrollmentStats, setEnrollmentStats] = React.useState<
     Record<string, { count: number; avgProgress: number }>
   >({})
@@ -138,6 +135,7 @@ export default function InstructorCoursesPage() {
         setEnrollmentStats(stats)
       } catch (error) {
         console.error("Failed to load courses:", error)
+        setError("Failed to load courses. Please try again.")
       } finally {
         const params = new URLSearchParams(window.location.search)
         const q = params.get("q") || params.get("search")
@@ -176,6 +174,7 @@ export default function InstructorCoursesPage() {
     if (!course) return
 
     try {
+      setError(null)
       const result = await apiPatch(`/courses/${id}`, {
         isPublished: !course.isPublished,
       })
@@ -187,17 +186,20 @@ export default function InstructorCoursesPage() {
       )
     } catch (error) {
       console.error("Failed to toggle publish status:", error)
+      setError("Failed to update course status. Please try again.")
     }
   }
 
   const handleDelete = async (id: string) => {
     try {
+      setError(null)
       const result = await apiDelete(`/courses/${id}`)
       if (result.error) throw new Error(result.error)
       setCourses((prev) => prev.filter((c) => c.id !== id))
       setDeleteId(null)
     } catch (error) {
       console.error("Failed to delete course:", error)
+      setError("Failed to delete course. Please try again.")
     }
   }
 
@@ -228,6 +230,12 @@ export default function InstructorCoursesPage() {
           </Link>
         </Button>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -272,7 +280,7 @@ export default function InstructorCoursesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {courses.reduce((sum, c) => sum + c.modules.length, 0)}
+              {courses.reduce((sum, c) => sum + (c._count?.modules || 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -324,10 +332,7 @@ export default function InstructorCoursesPage() {
                     count: 0,
                     avgProgress: 0,
                   }
-                  const totalLessons = course.modules.reduce(
-                    (sum, m) => sum + m.lessons.length,
-                    0
-                  )
+                  const moduleCount = course._count?.modules || 0
                   return (
                     <TableRow key={course.id}>
                       <TableCell>
@@ -351,8 +356,7 @@ export default function InstructorCoursesPage() {
                               {course.title}
                             </p>
                             <p className="truncate text-sm text-muted-foreground">
-                              {course.modules.length} modules • {totalLessons}{" "}
-                              lessons
+                              {moduleCount} module{moduleCount !== 1 ? "s" : ""}
                             </p>
                           </div>
                         </div>

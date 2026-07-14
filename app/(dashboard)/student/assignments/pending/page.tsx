@@ -170,16 +170,16 @@ export default function PendingAssignmentsPage() {
 
         const courseIds = enrolments.map((e) => e.courseId)
 
+        // Fixed: API returns { assignments: [...] }, not array directly
         const assignResults = await Promise.all(
           courseIds.map((cid: string) =>
-            apiGet(`/assignments?courseId=${cid}`).then((r) =>
-              r.data ? r.data : []
-            )
+            apiGet<{ assignments: AssignmentItem[] }>(
+              `/assignments?courseId=${cid}`
+            ).then((r) => r.data?.assignments ?? [])
           )
         )
 
-        const allAssignments: AssignmentItem[] =
-          assignResults.flat() as AssignmentItem[]
+        const allAssignments: AssignmentItem[] = assignResults.flat()
 
         const subResult = await apiGet<SubmissionItem[]>(
           "/assignments/my-submissions"

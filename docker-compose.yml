@@ -1,26 +1,24 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: lms-postgres
+  mongodb:
+    image: mongo:7
+    container_name: lms-mongodb
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-lmsioweb}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mongodb}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-mongodb}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-lmsioweb}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Redis for caching and sessions (optional)
   redis:
     image: redis:7-alpine
     container_name: lms-redis
@@ -35,33 +33,33 @@ services:
       timeout: 3s
       retries: 5
 
-  # Next.js Application (Development)
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      target: development
+      target: runner
     container_name: lms-app
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-lmsioweb}
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
     depends_on:
-      postgres:
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: npm run dev
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
 
 volumes:
-  postgres_data:
+  mongo_data:
   redis_data:

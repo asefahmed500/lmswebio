@@ -17,7 +17,7 @@ import {
 import { SynexNavbar } from "@/components/synex/Navbar"
 import { HomepageFooter } from "@/components/homepage/homepage-footer"
 import { useAuth } from "@/components/auth-provider"
-import { apiPost } from "@/lib/api-client"
+import { apiGet, apiPost } from "@/lib/api-client"
 
 interface ApiLesson {
   id: string
@@ -60,6 +60,7 @@ export default function PublicCourseDetailPage() {
   const [course, setCourse] = React.useState<ApiCourse | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [enrolling, setEnrolling] = React.useState(false)
+  const [alreadyEnrolled, setAlreadyEnrolled] = React.useState(false)
   const [expandedModules, setExpandedModules] = React.useState<Set<string>>(
     new Set()
   )
@@ -69,13 +70,32 @@ export default function PublicCourseDetailPage() {
 
     async function loadCourse() {
       try {
-        const res = await fetch(`/api/courses/public/${params.id}`)
-        if (!res.ok) return
-        const data = await res.json()
+        const [courseRes, enrolRes] = await Promise.all([
+          apiGet<{ course: ApiCourse }>(`/courses/public/${params.id}`),
+          isAuthenticated && user?.role === "STUDENT"
+            ? apiGet("/enrolments/my").catch(() => null)
+            : Promise.resolve(null),
+        ])
+
         if (ignore) return
-        setCourse(data.course)
-        if (data.course.modules?.length > 0) {
-          setExpandedModules(new Set([data.course.modules[0].id]))
+        if (courseRes.error || !courseRes.data) {
+          setLoading(false)
+          return
+        }
+        const c = courseRes.data.course
+        setCourse(c)
+        if (c.modules?.length > 0) {
+          setExpandedModules(new Set([c.modules[0].id]))
+        }
+
+        if (enrolRes?.data) {
+          const data = enrolRes.data
+          const enrolled = Array.isArray(data)
+            ? (data as { courseId: string }[]).some(
+                (e) => e.courseId === c.id
+              )
+            : false
+          setAlreadyEnrolled(enrolled)
         }
       } catch {
       } finally {
@@ -90,7 +110,7 @@ export default function PublicCourseDetailPage() {
     return () => {
       ignore = true
     }
-  }, [params.id])
+  }, [params.id, isAuthenticated, user?.role])
 
   function toggleModule(id: string) {
     setExpandedModules((prev) => {
@@ -107,9 +127,10 @@ export default function PublicCourseDetailPage() {
     }
     setEnrolling(true)
     try {
-      const r = await apiPost<{ checkoutUrl?: string }>(
-        `/courses/${course!.id}/enrol`
-      )
+      const r = await apiPost<{
+        requiresPayment?: boolean
+        checkoutUrl?: string
+      }>(`/courses/${course!.id}/enrol`)
       if (r.error) {
         alert(r.error)
         return
@@ -118,6 +139,7 @@ export default function PublicCourseDetailPage() {
         window.location.href = r.data.checkoutUrl
         return
       }
+      setAlreadyEnrolled(true)
       router.push(`/student/courses/${course!.id}`)
     } catch (err) {
       console.error(err)
@@ -350,18 +372,27 @@ export default function PublicCourseDetailPage() {
                 </div>
 
                 {/* CTA */}
-                <button
-                  onClick={handleEnrol}
-                  disabled={enrolling}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9999px] bg-void-black px-6 py-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90 disabled:opacity-60"
-                >
-                  {enrolling && <Loader2 className="size-4 animate-spin" />}
-                  {enrolling
-                    ? "Processing..."
-                    : isFree
-                      ? "Enrol for Free"
-                      : "Purchase & Enrol"}
-                </button>
+                {alreadyEnrolled ? (
+                  <Link
+                    href={`/student/courses/${course.id}`}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9999px] border border-void-black/20 px-6 py-3 font-visueltpro text-sm font-medium text-void-black transition-colors hover:bg-void-black/5"
+                  >
+                    Go to Course
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleEnrol}
+                    disabled={enrolling}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9999px] bg-void-black px-6 py-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90 disabled:opacity-60"
+                  >
+                    {enrolling && <Loader2 className="size-4 animate-spin" />}
+                    {enrolling
+                      ? "Processing..."
+                      : isFree
+                        ? "Enrol for Free"
+                        : "Purchase & Enrol"}
+                  </button>
+                )}
 
                 {!isAuthenticated && (
                   <p className="mt-3 text-center font-visueltpro text-xs font-light text-smoke">

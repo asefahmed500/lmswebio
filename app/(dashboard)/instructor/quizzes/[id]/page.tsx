@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiPut } from "@/lib/api-client"
 import { QuestionType } from "@/types"
 import type { Quiz, QuizAttempt } from "@/types"
 
@@ -63,13 +64,12 @@ export default function QuizDetailPage() {
 
     let cancelled = false
 
-    fetch(`/api/quizzes/${params.id}`)
+    apiGet<{ quiz: QuizDetail }>(`/quizzes/${params.id}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch quiz")
-        return res.json()
-      })
-      .then((data) => {
-        if (!cancelled) setQuiz(data)
+        if (!cancelled) {
+          if (res.error) throw new Error(res.error)
+          setQuiz(res.data!.quiz)
+        }
       })
       .catch((err) => {
         if (!cancelled)
@@ -101,22 +101,14 @@ export default function QuizDetailPage() {
     if (!quiz) return
     setIsSaving(true)
     try {
-      const res = await fetch(`/api/quizzes/${params.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: editTitle.trim(),
-          description: editDescription.trim() || undefined,
-          timeLimit: editTimeLimit || undefined,
-          attemptsAllowed: editAttempts,
-        }),
+      const res = await apiPut<{ quiz: QuizDetail }>(`/quizzes/${params.id}`, {
+        title: editTitle.trim(),
+        description: editDescription.trim() || undefined,
+        timeLimit: editTimeLimit || undefined,
+        attemptsAllowed: editAttempts,
       })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to update quiz")
-      }
-      const updated = await res.json()
-      setQuiz(updated)
+      if (res.error) throw new Error(res.error)
+      setQuiz(res.data!.quiz)
       setIsEditing(false)
     } catch (err) {
       console.error("Failed to update quiz:", err)

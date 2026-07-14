@@ -24,10 +24,6 @@ interface SubmissionWithMeta extends AssignmentSubmission {
   assignmentTitle?: string
 }
 
-interface AssignmentDetailResponse {
-  submissions?: AssignmentSubmission[]
-}
-
 export default function GradingPage() {
   const { user } = useAuth()
   const [submissions, setSubmissions] = React.useState<SubmissionWithMeta[]>([])
@@ -39,21 +35,21 @@ export default function GradingPage() {
       if (!user) return
       setIsLoading(true)
       try {
-        const assignmentsResult = await apiGet<Assignment[]>("/assignments")
+        const assignmentsResult = await apiGet<{ assignments: Assignment[] }>(
+          "/assignments"
+        )
         if (assignmentsResult.error) throw new Error(assignmentsResult.error)
-        const assignments = assignmentsResult.data!
+        const assignments = assignmentsResult.data!.assignments
 
         const ungraded: SubmissionWithMeta[] = []
         for (const assignment of assignments) {
           try {
-            const subResult = await apiGet<AssignmentDetailResponse>(
-              `/assignments/${assignment.id}`
-            )
+            const subResult = await apiGet<{
+              assignment: { submissions: AssignmentSubmission[] }
+            }>(`/assignments/${assignment.id}`)
             if (!subResult.error) {
               const data = subResult.data
-              const subs = (
-                data?.submissions ?? (Array.isArray(data) ? data : [])
-              )
+              const subs = (data?.assignment?.submissions ?? [])
                 .filter(
                   (s: AssignmentSubmission) =>
                     s.grade === null || s.grade === undefined

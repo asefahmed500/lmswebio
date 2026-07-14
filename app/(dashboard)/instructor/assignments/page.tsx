@@ -48,6 +48,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiDelete } from "@/lib/api-client"
 import type { Assignment } from "@/types"
 
 interface AssignmentWithStats extends Assignment {
@@ -70,10 +71,11 @@ export default function InstructorAssignmentsPage() {
       if (!user) return
       setIsLoading(true)
       try {
-        const res = await fetch("/api/assignments")
-        if (!res.ok) throw new Error("Failed to fetch assignments")
-        const data = await res.json()
-        setAssignments(data)
+        const res = await apiGet<{ assignments: AssignmentWithStats[] }>(
+          "/assignments"
+        )
+        if (res.error) throw new Error(res.error)
+        setAssignments(res.data!.assignments)
       } catch (error) {
         console.error("Failed to load assignments:", error)
       } finally {
@@ -85,8 +87,8 @@ export default function InstructorAssignmentsPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/assignments/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete assignment")
+      const res = await apiDelete(`/assignments/${id}`)
+      if (res.error) throw new Error(res.error)
       setAssignments((prev) => prev.filter((a) => a.id !== id))
       setDeleteId(null)
     } catch (error) {

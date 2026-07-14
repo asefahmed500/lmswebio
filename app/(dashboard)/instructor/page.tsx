@@ -157,6 +157,7 @@ interface RecentSubmission {
 
 export default function InstructorDashboardPage() {
   const { user } = useAuth()
+  const [error, setError] = React.useState<string | null>(null)
   const [kpis, setKpis] = React.useState<KPICard[]>([])
   const [coursePerformance, setCoursePerformance] = React.useState<
     CoursePerformance[]
@@ -183,6 +184,7 @@ export default function InstructorDashboardPage() {
 
         if (dashResult.error || !dashResult.data) {
           console.error("Failed to load dashboard:", dashResult.error)
+          setError(dashResult.error || "Failed to load dashboard")
           return
         }
 
@@ -192,24 +194,20 @@ export default function InstructorDashboardPage() {
           {
             label: "My Courses",
             value: String(data.totalCourses),
-            trend: "up",
           },
           {
             label: "Total Students",
             value: String(data.totalStudents),
-            trend: "up",
           },
           {
             label: "Total Quizzes",
             value: String(data.totalQuizzes),
-            trend: "up",
           },
           {
             label: "Pending Grading",
             value: String(
               data.recentSubmissions.filter((s) => s.grade == null).length
             ),
-            trend: "up",
           },
         ]
 
@@ -226,9 +224,50 @@ export default function InstructorDashboardPage() {
           data.recentSubmissions.filter((s) => s.grade == null).length
         )
         setPendingSubmissions(pending)
-        setCoursePerformance([])
+
+        const anResult = await apiGet<{
+          coursePerformance: {
+            courseId: string
+            courseTitle: string
+            enrolled: number
+            completed: number
+            avgProgress: number
+          }[]
+          completionRates: {
+            courseId: string
+            courseTitle: string
+            completionRate: number
+          }[]
+        }>("/instructors/analytics")
+
+        if (!anResult.error && anResult.data) {
+          const perfMap = new Map(
+            anResult.data.coursePerformance.map((c) => [c.courseId, c])
+          )
+          const rateMap = new Map(
+            anResult.data.completionRates.map((c) => [c.courseId, c])
+          )
+          const allIds = new Set([
+            ...perfMap.keys(),
+            ...rateMap.keys(),
+          ])
+          setCoursePerformance(
+            Array.from(allIds).map((courseId) => {
+              const p = perfMap.get(courseId)
+              const r = rateMap.get(courseId)
+              return {
+                courseId,
+                courseName: p?.courseTitle ?? r?.courseTitle ?? "",
+                totalStudents: p?.enrolled ?? 0,
+                averageProgress: p?.avgProgress ?? 0,
+                completionRate: r?.completionRate ?? 0,
+              }
+            })
+          )
+        }
       } catch (error) {
         console.error("Failed to load dashboard data:", error)
+        setError("Failed to load dashboard data. Please try again.")
       } finally {
         setIsLoading(false)
       }
@@ -250,6 +289,12 @@ export default function InstructorDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Instructor Dashboard

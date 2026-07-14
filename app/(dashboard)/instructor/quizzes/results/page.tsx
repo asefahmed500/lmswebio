@@ -56,11 +56,11 @@ export default function QuizResultsPage() {
       if (!user) return
       setIsLoading(true)
       try {
-        const result = await apiGet<QuizWithResults[]>(
+        const result = await apiGet<{ quizzes: QuizWithResults[] }>(
           "/quizzes?includeResults=true"
         )
         if (result.error) throw new Error(result.error)
-        setQuizzes(result.data ?? [])
+        setQuizzes(result.data?.quizzes ?? [])
       } catch (error) {
         console.error("Failed to load quizzes:", error)
       } finally {

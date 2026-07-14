@@ -199,11 +199,12 @@ export default function StudentAssignmentsPage() {
 
         const courseIds = enrolments.map((e) => e.courseId)
 
+        // Fixed: API returns { assignments: [...] }, not array directly
         const assignResults = await Promise.all(
           courseIds.map((cid: number) =>
-            apiGet<AssignmentItem[]>(`/assignments?courseId=${cid}`).then(
-              (r) => r.data ?? []
-            )
+            apiGet<{ assignments: AssignmentItem[] }>(
+              `/assignments?courseId=${cid}`
+            ).then((r) => r.data?.assignments ?? [])
           )
         )
 

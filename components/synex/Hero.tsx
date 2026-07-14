@@ -134,7 +134,7 @@ export function SynexHero() {
               <div className="mb-3 font-visueltpro text-sm font-medium text-void-black">
                 Welcome back, John
               </div>
-              <div className="mb-4 grid grid-cols-4 gap-2">
+              <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {["12 Courses", "148 Hours", "8 Certs", "14d Streak"].map(
                   (s) => (
                     <div

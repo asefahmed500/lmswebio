@@ -45,7 +45,7 @@ import { useAuth } from "@/components/auth-provider"
 import { courseSchema } from "@/lib/validators"
 import { Level } from "@/types"
 import type { Course, Module, Lesson } from "@/types"
-import { apiPost, apiPut, apiPatch, apiDelete } from "@/lib/api-client"
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "@/lib/api-client"
 
 interface ApiCourse {
   id: string
@@ -333,10 +333,9 @@ export default function InstructorCourseEditPage() {
 
       setIsLoading(true)
       try {
-        const res = await fetch(`/api/courses/${courseId}`)
-        if (!res.ok) throw new Error("Failed to fetch course")
-        const data: ApiCourse = await res.json()
-        const mapped = mapCourse(data)
+        const res = await apiGet<{ course: ApiCourse }>(`/courses/${courseId}`)
+        if (res.error) throw new Error(res.error)
+        const mapped = mapCourse(res.data!.course)
         setCourse(mapped)
         setModules(mapped.modules.sort((a, b) => a.order - b.order))
 
@@ -451,7 +450,8 @@ export default function InstructorCourseEditPage() {
     }
   }
 
-  const handleMoveModule = (moduleId: string, direction: "up" | "down") => {
+  const handleMoveModule = async (moduleId: string, direction: "up" | "down") => {
+    let reordered: { id: string; order: number }[] = []
     setModules((prev) => {
       const index = prev.findIndex((m) => m.id === moduleId)
       if (index === -1) return prev
@@ -464,8 +464,16 @@ export default function InstructorCourseEditPage() {
       next[index] = { ...next[index], order: next[swapIndex].order }
       next[swapIndex] = { ...next[swapIndex], order: temp }
       next.sort((a, b) => a.order - b.order)
+      reordered = next.map((m, i) => ({ id: m.id, order: i }))
       return next
     })
+
+    if (reordered.length === 0) return
+    try {
+      await apiPut("/modules", { modules: reordered })
+    } catch (error) {
+      console.error("Failed to persist module reorder:", error)
+    }
   }
 
   const handleAddLesson = async (moduleId: string) => {

@@ -17,7 +17,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
-import { apiPut, apiDelete } from "@/lib/api-client"
+import { apiGet, apiPut, apiDelete } from "@/lib/api-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -79,16 +79,11 @@ export default function AdminUsersPage() {
 
   React.useEffect(() => {
     let cancelled = false
-    fetch("/api/admin/users")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed")
-        return res.json()
-      })
-      .then((data) => {
-        if (!cancelled) setUsers(Array.isArray(data) ? data : data.users || [])
-      })
-      .catch(() => {
-        if (!cancelled) toast.error("Failed to load users")
+    apiGet<{ users: AdminUser[] }>("/admin/users")
+      .then((result) => {
+        if (!cancelled && !result.error && result.data)
+          setUsers(result.data.users || [])
+        else if (!cancelled) toast.error("Failed to load users")
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false)

@@ -27,6 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiPost } from "@/lib/api-client"
 import type { Course } from "@/types"
 
 export default function NewAssignmentPage() {
@@ -52,10 +53,9 @@ export default function NewAssignmentPage() {
     async function loadCourses() {
       if (!user) return
       try {
-        const res = await fetch("/api/courses")
-        if (!res.ok) throw new Error("Failed to fetch courses")
-        const data = await res.json()
-        setCourses(data)
+        const res = await apiGet<{ courses: Course[] }>("/courses")
+        if (res.error) throw new Error(res.error)
+        setCourses(res.data!.courses)
       } catch (err) {
         console.error("Failed to load courses:", err)
       } finally {
@@ -69,15 +69,8 @@ export default function NewAssignmentPage() {
     setIsSubmitting(true)
     setError(null)
     try {
-      const res = await fetch("/api/assignments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to create assignment")
-      }
+      const res = await apiPost("/assignments", data as unknown as Record<string, unknown>)
+      if (res.error) throw new Error(res.error)
       router.push("/instructor/assignments")
     } catch (err) {
       setError(

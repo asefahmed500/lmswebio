@@ -44,7 +44,7 @@ interface DashboardHeaderProps {
 function UserMenu({ user }: { user: User }) {
   const { setTheme, theme } = useTheme()
   const { logout } = useAuth()
-  const isMobile = useMediaQuery("md" as Breakpoint)
+  const isMobile = !useMediaQuery("md" as Breakpoint)
 
   const initials = React.useMemo(() => {
     return user.fullName
@@ -98,8 +98,8 @@ function UserMenu({ user }: { user: User }) {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => {
-            logout()
+          onClick={async () => {
+            await logout()
             window.location.href = "/login"
           }}
         >
@@ -111,7 +111,7 @@ function UserMenu({ user }: { user: User }) {
 }
 
 interface NotificationItem {
-  id: number
+  id: string
   title: string
   message: string
   type: string
@@ -126,7 +126,7 @@ function Notifications({ user }: { user: User }) {
     []
   )
   const [unreadCount, setUnreadCount] = React.useState(0)
-  const isMobile = useMediaQuery("md" as Breakpoint)
+  const isMobile = !useMediaQuery("md" as Breakpoint)
   const rolePath = `/${user.role.toLowerCase()}`
 
   React.useEffect(() => {
@@ -151,7 +151,7 @@ function Notifications({ user }: { user: User }) {
     setUnreadCount(0)
   }
 
-  const markRead = async (id: number) => {
+  const markRead = async (id: string) => {
     const res = await apiPatch("/notifications", {
       notificationIds: [id],
       read: true,
@@ -164,10 +164,10 @@ function Notifications({ user }: { user: User }) {
     }
   }
 
-  const [nowRef] = React.useState(() => Date.now())
+  const nowRef = React.useRef(Date.now())
 
   const timeAgo = (dateStr: string) => {
-    const diff = nowRef - new Date(dateStr).getTime()
+    const diff = nowRef.current - new Date(dateStr).getTime()
     const m = Math.floor(diff / 60000)
     if (m < 1) return "Just now"
     if (m < 60) return `${m}m ago`
@@ -183,7 +183,7 @@ function Notifications({ user }: { user: User }) {
       case "warning":
         return <AlertTriangle className="text-warning size-4 shrink-0" />
       case "error":
-        return <XCircle className="size-4 shrink-0 text-destructive" />
+        return <XCircle className="text-destructive size-4 shrink-0" />
       default:
         return <Info className="text-info size-4 shrink-0" />
     }

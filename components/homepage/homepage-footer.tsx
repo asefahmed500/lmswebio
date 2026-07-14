@@ -4,27 +4,27 @@ const productLinks = [
   { label: "Browse Courses", href: "/courses" },
   { label: "Pricing", href: "#pricing-info" },
   { label: "Enterprise", href: "#enterprise" },
-  { label: "Changelog", href: "#" },
+  { label: "Changelog", href: "/changelog" },
 ]
 
 const companyLinks = [
-  { label: "About", href: "#about" },
-  { label: "Blog", href: "#" },
-  { label: "Careers", href: "#" },
-  { label: "Contact", href: "#" },
+  { label: "About", href: "/about" },
+  { label: "Blog", href: "/blog" },
+  { label: "Careers", href: "/careers" },
+  { label: "Contact", href: "/contact" },
 ]
 
 const resourceLinks = [
-  { label: "Documentation", href: "#" },
-  { label: "Help Center", href: "#" },
-  { label: "Community", href: "#" },
-  { label: "API Reference", href: "#" },
+  { label: "Documentation", href: "/docs" },
+  { label: "Help Center", href: "/help" },
+  { label: "Community", href: "/community" },
+  { label: "API Reference", href: "/api-reference" },
 ]
 
 const legalLinks = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
-  { label: "Cookie Policy", href: "#" },
+  { label: "Cookie Policy", href: "/cookie-policy" },
 ]
 
 const linkGroups = [
@@ -85,13 +85,17 @@ export function HomepageFooter() {
             &copy; {new Date().getFullYear()} LMSio. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
-            {["Twitter", "GitHub", "LinkedIn"].map((s) => (
+            {[
+              { label: "Twitter", href: "https://twitter.com/lmsio" },
+              { label: "GitHub", href: "https://github.com/lmsio" },
+              { label: "LinkedIn", href: "https://linkedin.com/company/lmsio" },
+            ].map((s) => (
               <Link
-                key={s}
-                href="#"
+                key={s.label}
+                href={s.href}
                 className="font-visueltpro text-xs font-light text-smoke transition-colors hover:text-void-black"
               >
-                {s}
+                {s.label}
               </Link>
             ))}
           </div>

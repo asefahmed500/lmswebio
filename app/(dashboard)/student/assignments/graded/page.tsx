@@ -24,6 +24,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
+import { apiGet } from "@/lib/api-client"
 
 interface GradedSubmission {
   id: number
@@ -145,10 +146,14 @@ export default function GradedAssignmentsPage() {
       setError(null)
 
       try {
-        const subRes = await fetch("/api/assignments/my-submissions")
-        if (!subRes.ok) throw new Error("Failed to fetch submissions")
+        // Fixed: replaced raw fetch with apiGet
+        const subRes = await apiGet<GradedSubmission[]>(
+          "/assignments/my-submissions"
+        )
+        if (subRes.error)
+          throw new Error(subRes.error || "Failed to fetch submissions")
 
-        const allSubmissions: GradedSubmission[] = await subRes.json()
+        const allSubmissions: GradedSubmission[] = subRes.data ?? []
         const graded = allSubmissions.filter((s) => s.grade !== null)
 
         setSubmissions(graded)

@@ -18,12 +18,12 @@ import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPost } from "@/lib/api-client"
 
 interface CheckoutCourse {
-  id: number
+  id: string
   title: string
   description: string | null
   level: string
   price: number
-  instructor?: { id: number; fullName: string }
+  instructor?: { id: string; fullName: string }
   _count?: { modules: number; enrolments: number }
 }
 
@@ -46,20 +46,17 @@ export default function CheckoutPage() {
       setIsLoading(true)
       try {
         const [courseResult, enrolResult] = await Promise.all([
-          apiGet<Record<string, unknown>>(`/courses/${courseId}`),
+          apiGet<{ course: CheckoutCourse }>(`/courses/public/${courseId}`),
           apiGet("/enrolments/my"),
         ])
 
-        if (courseResult.error) {
+        if (courseResult.error || !courseResult.data) {
           router.push("/student/courses/catalogue")
           return
         }
 
-        const courseData = courseResult.data!
-        setCourse(
-          ((courseData as Record<string, unknown>).course as CheckoutCourse) ||
-            (courseData as unknown as CheckoutCourse)
-        )
+        const loadedCourse = courseResult.data.course
+        setCourse(loadedCourse)
 
         if (enrolResult.data) {
           const data = enrolResult.data
@@ -73,10 +70,7 @@ export default function CheckoutPage() {
           }
         }
 
-        if (
-          !(courseData as Record<string, unknown>).price ||
-          ((courseData as Record<string, unknown>).price as number) <= 0
-        ) {
+        if (!loadedCourse.price || loadedCourse.price <= 0) {
           router.push(`/student/courses/${courseId}`)
         }
       } catch {
@@ -201,7 +195,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Price breakdown */}
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Course Price</span>
               <span>${course?.price?.toFixed(2)}</span>

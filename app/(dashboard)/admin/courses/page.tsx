@@ -34,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { apiPatch, apiDelete } from "@/lib/api-client"
+import { apiGet, apiPatch, apiDelete } from "@/lib/api-client"
 
 interface AdminCourse {
   id: string
@@ -45,7 +45,7 @@ interface AdminCourse {
   isPublished: boolean
   instructorId: string
   instructor?: { fullName: string; avatarUrl?: string }
-  _count?: { students: number }
+  _count?: { enrolments: number }
   createdAt: string
 }
 
@@ -60,17 +60,11 @@ export default function AdminCoursesPage() {
 
   React.useEffect(() => {
     let cancelled = false
-    fetch("/api/courses")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed")
-        return res.json()
-      })
-      .then((data) => {
-        if (!cancelled)
-          setCourses(Array.isArray(data) ? data : data.courses || [])
-      })
-      .catch(() => {
-        if (!cancelled) toast.error("Failed to load courses")
+    apiGet<{ courses: AdminCourse[] }>("/courses")
+      .then((result) => {
+        if (!cancelled && !result.error && result.data)
+          setCourses(result.data.courses || [])
+        else if (!cancelled) toast.error("Failed to load courses")
       })
       .finally(() => {
         if (!cancelled) {
@@ -337,7 +331,7 @@ export default function AdminCoursesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {course._count?.students ?? 0}
+                      {course._count?.enrolments ?? 0}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

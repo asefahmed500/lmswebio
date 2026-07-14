@@ -143,6 +143,7 @@ function EnrollmentChart({ data }: { data: WeeklyEnrollment[] }) {
 }
 
 export default function AdminDashboardPage() {
+  const [error, setError] = React.useState<string | null>(null)
   const [kpis, setKpis] = React.useState<KPICard[]>([])
   const [enrollmentData, setEnrollmentData] = React.useState<
     WeeklyEnrollment[]
@@ -217,6 +218,7 @@ export default function AdminDashboardPage() {
         setRecentUsers(recentUsersData || [])
       } catch (error) {
         console.error("Failed to load dashboard data:", error)
+        setError("Failed to load dashboard data. Please try again.")
       } finally {
         setIsLoading(false)
       }
@@ -238,6 +240,12 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
         <p className="mt-1 text-muted-foreground">
