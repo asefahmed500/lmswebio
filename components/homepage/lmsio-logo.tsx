@@ -28,7 +28,7 @@ export function LMSioLogo({
       )}
     >
       {/* Logo Icon */}
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground shadow-lg">
+      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-xl font-bold text-primary-foreground shadow-lg">
         <div className="relative flex h-10 w-10 items-center justify-center">
           {/* Outer Shape */}
           <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-green-500 shadow-lg" />
@@ -116,7 +116,7 @@ export function LMSioLogoHorizontal({ className }: { className?: string }) {
       )}
     >
       {/* Logo Icon */}
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground shadow-lg">
+      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-xl font-bold text-primary-foreground shadow-lg">
         <div className="relative flex h-10 w-10 items-center justify-center">
           {/* Outer Shape */}
           <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-green-500 shadow-lg" />

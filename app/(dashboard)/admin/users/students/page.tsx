@@ -7,13 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  Search,
-  Loader2,
-  UserPlus,
-  Mail,
-  Users,
-} from "lucide-react"
+import { Search, Loader2, UserPlus, Mail, Users } from "lucide-react"
 import { apiGet } from "@/lib/api-client"
 
 interface ApiUser {
@@ -81,7 +75,7 @@ export default function StudentsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Students</h1>
+          <h1 className="text-2xl font-semibold">Students</h1>
           <p className="text-muted-foreground">Manage student accounts</p>
         </div>
         <Button asChild>
@@ -167,7 +161,12 @@ export default function StudentsPage() {
                     <Badge variant={student.isActive ? "default" : "secondary"}>
                       {student.isActive ? "Active" : "Inactive"}
                     </Badge>
-                    <Button variant="ghost" size="icon" asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      asChild
+                      aria-label="Action"
+                    >
                       <Link href={`/admin/users/${student.id}`}>
                         <Users className="size-4" />
                       </Link>

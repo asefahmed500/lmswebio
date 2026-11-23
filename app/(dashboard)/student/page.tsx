@@ -2,9 +2,17 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { BookOpen, Clock, TrendingUp, Calendar, CheckCircle, ChevronRight, ArrowRight } from "lucide-react"
+import {
+  BookOpen,
+  Clock,
+  TrendingUp,
+  Calendar,
+  CheckCircle,
+  ChevronRight,
+  ArrowRight,
+} from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
-import { CourseCard } from "@/components/course/course-card"
+import { CourseCard } from "@/features/courses/course-card"
 import { apiGet } from "@/lib/api-client"
 import type { KPICard, Enrollment, Course, Assignment } from "@/types"
 import { Card, CardContent } from "@/components/ui/card"
@@ -107,7 +115,12 @@ function StatCard({ label, value, icon: Icon, accent }: StatCardProps) {
             accent ? "bg-primary/10" : "bg-muted"
           )}
         >
-          <Icon className={cn("size-4", accent ? "text-primary" : "text-muted-foreground")} />
+          <Icon
+            className={cn(
+              "size-4",
+              accent ? "text-primary" : "text-muted-foreground"
+            )}
+          />
         </div>
       </div>
     </Card>
@@ -125,20 +138,30 @@ function DeadlineItem({
 }) {
   const isUrgent = daysUntilDue <= 2
   return (
-    <div className="flex items-start gap-3 border-border border-b px-1 py-3.5 transition-colors last:border-b-0 hover:bg-muted/50">
+    <div className="flex items-start gap-3 border-b border-border px-1 py-3.5 transition-colors last:border-b-0 hover:bg-muted/50">
       <div
         className={cn(
           "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
           isUrgent ? "bg-primary/10" : "bg-muted"
         )}
       >
-        <Clock className={cn("size-3.5", isUrgent ? "text-primary" : "text-muted-foreground")} />
+        <Clock
+          className={cn(
+            "size-3.5",
+            isUrgent ? "text-primary" : "text-muted-foreground"
+          )}
+        />
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{title}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">{courseTitle}</p>
         <div className="mt-1 flex items-center gap-1">
-          <Calendar className={cn("size-3", isUrgent ? "text-primary" : "text-muted-foreground")} />
+          <Calendar
+            className={cn(
+              "size-3",
+              isUrgent ? "text-primary" : "text-muted-foreground"
+            )}
+          />
           <span
             className={cn(
               "text-[11px] font-medium",
@@ -149,7 +172,12 @@ function DeadlineItem({
           </span>
         </div>
       </div>
-      <Button asChild variant="link" size="sm" className="mt-0.5 shrink-0 h-auto p-0">
+      <Button
+        asChild
+        variant="link"
+        size="sm"
+        className="mt-0.5 h-auto shrink-0 p-0"
+      >
         <Link href="/student/assignments/pending">View</Link>
       </Button>
     </div>
@@ -161,7 +189,9 @@ export default function StudentDashboardPage() {
   const [error, setError] = React.useState<string | null>(null)
   const [kpis, setKpis] = React.useState<KPICard[]>([])
   const [enrollments, setEnrollments] = React.useState<Enrollment[]>([])
-  const [recommendedCourses, setRecommendedCourses] = React.useState<Course[]>([])
+  const [recommendedCourses, setRecommendedCourses] = React.useState<Course[]>(
+    []
+  )
   const [upcomingDeadlines, setUpcomingDeadlines] = React.useState<
     { title: string; courseTitle: string; daysUntilDue: number }[]
   >([])
@@ -212,10 +242,19 @@ export default function StudentDashboardPage() {
           }).length || 0
 
         const kpiData: KPICard[] = [
-          { label: "Enrolled Courses", value: studentEnrollments.length.toString() },
+          {
+            label: "Enrolled Courses",
+            value: studentEnrollments.length.toString(),
+          },
           { label: "Completed Courses", value: completedCourses.toString() },
-          { label: "Avg Progress", value: `${Math.round(progressData.overallProgress || 0)}%` },
-          { label: "Upcoming Deadlines", value: upcomingDeadlinesCount.toString() },
+          {
+            label: "Avg Progress",
+            value: `${Math.round(progressData.overallProgress || 0)}%`,
+          },
+          {
+            label: "Upcoming Deadlines",
+            value: upcomingDeadlinesCount.toString(),
+          },
         ]
 
         const enrolledCourseIds = studentEnrollments.map(
@@ -230,8 +269,12 @@ export default function StudentDashboardPage() {
             return { ...enrollment, course }
           })
           .sort((a, b) => {
-            const dateA = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0
-            const dateB = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0
+            const dateA = a.lastAccessedAt
+              ? new Date(a.lastAccessedAt).getTime()
+              : 0
+            const dateB = b.lastAccessedAt
+              ? new Date(b.lastAccessedAt).getTime()
+              : 0
             return dateB - dateA
           })
 
@@ -258,7 +301,8 @@ export default function StudentDashboardPage() {
                 title: a.title,
                 courseTitle: course?.title || "Course",
                 daysUntilDue: Math.ceil(
-                  (new Date(a.dueDate!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+                  (new Date(a.dueDate!).getTime() - now.getTime()) /
+                    (1000 * 60 * 60 * 24)
                 ),
               }
             }) || []
@@ -389,7 +433,8 @@ export default function StudentDashboardPage() {
                               id: enrollment.course.instructor.id,
                               fullName: enrollment.course.instructor.fullName,
                               avatarUrl:
-                                enrollment.course.instructor.avatarUrl || undefined,
+                                enrollment.course.instructor.avatarUrl ||
+                                undefined,
                             }
                           : { id: "", fullName: "Instructor" },
                         _count: {
@@ -411,7 +456,7 @@ export default function StudentDashboardPage() {
                   <h3 className="font-heading text-lg font-semibold text-foreground">
                     No courses yet
                   </h3>
-                  <p className="mb-5 mt-1.5 text-sm text-muted-foreground">
+                  <p className="mt-1.5 mb-5 text-sm text-muted-foreground">
                     Start your learning journey
                   </p>
                   <Button asChild>
@@ -428,7 +473,7 @@ export default function StudentDashboardPage() {
           <div className="flex flex-col gap-7">
             {/* Upcoming Deadlines */}
             <div>
-              <h2 className="mb-4 font-heading text-[22px] font-semibold tracking-tight text-foreground">
+              <h2 className="font-heading mb-4 text-[22px] font-semibold tracking-tight text-foreground">
                 Upcoming Deadlines
               </h2>
               <Card className="px-4">
@@ -458,7 +503,7 @@ export default function StudentDashboardPage() {
 
             {/* Recommended */}
             <div>
-              <h2 className="mb-4 font-heading text-[22px] font-semibold tracking-tight text-foreground">
+              <h2 className="font-heading mb-4 text-[22px] font-semibold tracking-tight text-foreground">
                 Recommended for You
               </h2>
               <div className="flex flex-col gap-4">

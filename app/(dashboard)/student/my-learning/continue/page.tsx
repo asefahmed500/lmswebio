@@ -6,7 +6,7 @@ import { BookOpen, ArrowRight } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-provider"
-import { CourseCard } from "@/components/course/course-card"
+import { CourseCard } from "@/features/courses/course-card"
 import { useEnrollments } from "@/lib/hooks/use-enrollments"
 
 export default function ContinueLearningPage() {
@@ -41,7 +41,9 @@ export default function ContinueLearningPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Continue Learning</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Continue Learning
+        </h1>
         <p className="mt-1 text-muted-foreground">Pick up where you left off</p>
       </div>
 

@@ -294,7 +294,9 @@ export default function StudentAssignmentsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Assignments</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          My Assignments
+        </h1>
         <p className="mt-1 text-muted-foreground">
           View and submit assignments for your enrolled courses
         </p>
@@ -329,7 +331,7 @@ export default function StudentAssignmentsPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="py-12 text-center">
-                    <CheckCircle2 className="text-success mx-auto mb-4 h-12 w-12" />
+                    <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" />
                     <h3 className="mb-2 text-lg font-semibold">
                       No pending assignments
                     </h3>

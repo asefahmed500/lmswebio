@@ -45,16 +45,26 @@ ChartJS.register(
   Filler
 )
 
+/**
+ * Mirrors the response of GET /api/admin/analytics.
+ *
+ * Note the mixed spelling, which is the route's, not a typo here: the outer key
+ * is `weeklyEnrolments` (matching the Prisma `Enrolment` model) while each entry
+ * is built as `{ week, enrollments }` with a double-L. This interface previously
+ * declared `totalEnrollments`, `weeklyEnrollments` and `count`, so
+ * `weeklyEnrollments.map(...)` threw "Cannot read properties of undefined" on
+ * every successful load and the Enrollments KPI always rendered 0.
+ */
 interface AnalyticsData {
   totalUsers: number
   totalInstructors: number
   totalStudents: number
   totalCourses: number
   totalPublished: number
-  totalEnrollments: number
+  totalEnrolments: number
   averageProgress: number
   completions: number
-  weeklyEnrollments: { week: string; count: number }[]
+  weeklyEnrolments: { week: string; enrollments: number }[]
   coursesByLevel: { level: string; count: number }[]
 }
 
@@ -77,15 +87,21 @@ export default function AdminAnalyticsPage() {
     }
   }, [])
 
+  // Guard the shape: a malformed payload must render an empty chart, not throw.
+  const weekly = Array.isArray(data?.weeklyEnrolments)
+    ? data.weeklyEnrolments
+    : []
+
   const weeklyChartData = data
     ? {
-        labels: data.weeklyEnrollments.map((d) => d.week),
+        labels: weekly.map((d) => d.week),
         datasets: [
           {
             label: "Enrollments",
-            data: data.weeklyEnrollments.map((d) => d.count),
-            borderColor: "hsl(var(--chart-1))",
-            backgroundColor: "hsl(var(--chart-1) / 0.1)",
+            data: weekly.map((d) => d.enrollments),
+            borderColor: "var(--chart-1)",
+            backgroundColor:
+              "color-mix(in srgb, var(--chart-1) 10%, transparent)",
             tension: 0.4,
             fill: true,
           },
@@ -101,9 +117,9 @@ export default function AdminAnalyticsPage() {
             label: "Courses",
             data: data.coursesByLevel.map((d) => d.count),
             backgroundColor: [
-              "hsl(var(--chart-2))",
-              "hsl(var(--chart-3))",
-              "hsl(var(--chart-5))",
+              "var(--chart-2)",
+              "var(--chart-3)",
+              "var(--chart-5)",
             ],
             borderRadius: 0,
           },
@@ -175,7 +191,7 @@ export default function AdminAnalyticsPage() {
     },
     {
       label: "Enrollments",
-      value: data?.totalEnrollments ?? 0,
+      value: data?.totalEnrolments ?? 0,
       icon: TrendingUp,
     },
   ]
@@ -183,7 +199,7 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
         <p className="mt-1 text-muted-foreground">
           Platform-wide metrics and performance data
         </p>

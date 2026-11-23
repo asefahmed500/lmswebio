@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 import { toast } from "sonner"
-import { BadgeDisplay } from "@/components/badges/badge-display"
+import { BadgeDisplay } from "@/features/gamification/badge-display"
 import Link from "next/link"
 
 interface BadgeItem {
@@ -91,13 +91,13 @@ export default function BadgesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Action">
           <Link href="/student/achievements">
             <ArrowLeft />
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Badges</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Badges</h1>
           <p className="mt-1 text-muted-foreground">
             Track your achievements and earned rewards
           </p>
@@ -126,7 +126,7 @@ export default function BadgesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Award className="text-success size-5" />
+              <Award className="size-5 text-success" />
               <div className="text-2xl font-bold">{earnedCount}</div>
             </div>
           </CardContent>

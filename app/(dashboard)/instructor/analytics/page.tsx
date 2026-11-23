@@ -157,8 +157,9 @@ export default function InstructorAnalyticsPage() {
         {
           label: "Students Enrolled",
           data: courses.map((c) => c.studentCount),
-          backgroundColor: "hsl(var(--chart-1) / 0.6)",
-          borderColor: "hsl(var(--chart-1))",
+          backgroundColor:
+            "color-mix(in srgb, var(--chart-1) 60%, transparent)",
+          borderColor: "var(--chart-1)",
           borderWidth: 1,
         },
       ],
@@ -197,7 +198,7 @@ export default function InstructorAnalyticsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
         <p className="mt-1 text-muted-foreground">
           Course performance and student engagement metrics
         </p>

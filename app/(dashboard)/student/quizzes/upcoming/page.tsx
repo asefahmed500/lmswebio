@@ -12,16 +12,31 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
+
+/** GET /api/quizzes returns a wrapper object, not a bare array. */
+interface QuizListResponse {
+  quizzes?: QuizListItem[]
+  pagination?: { total: number }
+}
+
+interface EnrolmentRow {
+  courseId: string
+}
+
+interface AttemptRow {
+  quizId: string
+}
 
 interface QuizListItem {
-  id: number
+  id: string
   title: string
   description: string | null
-  courseId: number
+  courseId: string
   timeLimit: number | null
   attemptsAllowed: number
   _count: { questions: number }
-  course: { id: number; title: string }
+  course: { id: string; title: string }
 }
 
 function QuizCard({ quiz }: { quiz: QuizListItem }) {
@@ -74,37 +89,40 @@ export default function UpcomingQuizzesPage() {
       setError(null)
 
       try {
-        const enrolRes = await fetch("/api/enrolments/my")
-        if (!enrolRes.ok) throw new Error("Failed to fetch enrollments")
-        const enrolments = await enrolRes.json()
+        // GET /api/quizzes returns `{ quizzes, pagination }`, not a bare array.
+        // The previous code did `quizResults.flat()`, which does not unwrap
+        // object wrappers (flat only descends into arrays), so every element
+        // stayed as `{ quizzes: [...] }`. `q.id` was therefore undefined, each
+        // follow-up hit /api/quizzes/undefined/attempt and 404'd, and the page
+        // then crashed in QuizCard on `quiz.course.title`.
+        //
+        // Attempt data now comes from the single batch endpoint
+        // GET /api/quizzes/my-attempts instead of one request per quiz.
+        const [enrolRes, attemptRes] = await Promise.all([
+          apiGet<EnrolmentRow[]>("/enrolments/my"),
+          apiGet<AttemptRow[]>("/quizzes/my-attempts"),
+        ])
 
-        const courseIds = enrolments.map(
-          (e: { courseId: number }) => e.courseId
+        const enrolments = enrolRes.data ?? []
+        const courseIds = Array.from(
+          new Set(enrolments.map((e) => e.courseId).filter(Boolean))
         )
 
-        const quizResults = await Promise.all(
-          courseIds.map((cid: number) =>
-            fetch(`/api/quizzes?courseId=${cid}`).then((r) =>
-              r.ok ? r.json() : []
-            )
+        const quizResponses = await Promise.all(
+          courseIds.map((cid) =>
+            apiGet<QuizListResponse>(`/quizzes?courseId=${cid}`)
           )
         )
 
-        const allQuizzes: QuizListItem[] = quizResults.flat()
-
-        const attemptResults = await Promise.all(
-          allQuizzes.map((q) =>
-            fetch(`/api/quizzes/${q.id}/attempt`).then((r) =>
-              r.ok ? r.json() : []
-            )
-          )
+        const allQuizzes = quizResponses.flatMap((res) =>
+          Array.isArray(res.data?.quizzes) ? res.data.quizzes : []
         )
 
-        const upcoming = allQuizzes.filter(
-          (_, i) => !attemptResults[i] || attemptResults[i].length === 0
+        const attemptedIds = new Set(
+          (attemptRes.data ?? []).map((a) => a.quizId).filter(Boolean)
         )
 
-        setQuizzes(upcoming)
+        setQuizzes(allQuizzes.filter((q) => !attemptedIds.has(q.id)))
       } catch (err) {
         console.error("Failed to load quizzes:", err)
         setError("Failed to load quizzes")
@@ -145,7 +163,9 @@ export default function UpcomingQuizzesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Upcoming Quizzes</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Upcoming Quizzes
+        </h1>
         <p className="mt-1 text-muted-foreground">
           Quizzes you haven&apos;t attempted yet
         </p>

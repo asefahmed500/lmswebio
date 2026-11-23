@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { BadgeDisplay } from "@/components/badges/badge-display"
-import { CertificateViewer } from "@/components/certificates/certificate-viewer"
+import { BadgeDisplay } from "@/features/gamification/badge-display"
+import { CertificateViewer } from "@/features/gamification/certificate-viewer"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
@@ -206,7 +206,7 @@ export default function AchievementsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Achievements</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Achievements</h1>
         <p className="mt-1 text-muted-foreground">
           Track your learning milestones, badges, and certificates
         </p>
@@ -231,8 +231,8 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Completed Courses
             </CardTitle>
-            <div className="bg-success/10 rounded-full p-2">
-              <CheckCircle className="text-success size-4" />
+            <div className="rounded-full bg-success/10 p-2">
+              <CheckCircle className="size-4 text-success" />
             </div>
           </CardHeader>
           <CardContent>
@@ -244,8 +244,8 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Average Progress
             </CardTitle>
-            <div className="bg-warning/10 rounded-full p-2">
-              <TrendingUp className="text-warning size-4" />
+            <div className="rounded-full bg-warning/10 p-2">
+              <TrendingUp className="size-4 text-warning" />
             </div>
           </CardHeader>
           <CardContent>
@@ -272,8 +272,8 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Points
             </CardTitle>
-            <div className="bg-warning/10 rounded-full p-2">
-              <Trophy className="text-warning size-4" />
+            <div className="rounded-full bg-warning/10 p-2">
+              <Trophy className="size-4 text-warning" />
             </div>
           </CardHeader>
           <CardContent>
@@ -316,7 +316,7 @@ export default function AchievementsPage() {
       {/* Certificates Section */}
       <div>
         <div className="mb-4 flex items-center gap-2">
-          <Trophy className="text-warning size-6" />
+          <Trophy className="size-6 text-warning" />
           <h2 className="text-xl font-semibold">Certificates</h2>
         </div>
         {certificates.length > 0 ? (

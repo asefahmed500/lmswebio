@@ -13,16 +13,32 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet } from "@/lib/api-client"
+
+/** GET /api/quizzes returns a wrapper object, not a bare array. */
+interface QuizListResponse {
+  quizzes?: CompletedQuiz[]
+  pagination?: { total: number }
+}
+
+interface EnrolmentRow {
+  courseId: string
+}
+
+interface AttemptRow {
+  quizId: string
+  score: number | null
+}
 
 interface CompletedQuiz {
-  id: number
+  id: string
   title: string
   description: string | null
-  courseId: number
+  courseId: string
   timeLimit: number | null
   attemptsAllowed: number
   _count: { questions: number }
-  course: { id: number; title: string }
+  course: { id: string; title: string }
   bestScore: number
   attemptCount: number
 }
@@ -92,46 +108,53 @@ export default function CompletedQuizzesPage() {
       setError(null)
 
       try {
-        const enrolRes = await fetch("/api/enrolments/my")
-        if (!enrolRes.ok) throw new Error("Failed to fetch enrollments")
-        const enrolments = await enrolRes.json()
+        // GET /api/quizzes returns `{ quizzes, pagination }`, so the previous
+        // `quizResults.flat()` left `{ quizzes: [...] }` wrappers in place
+        // (flat only descends into arrays). q.id was undefined, every
+        // /api/quizzes/undefined/attempt request 404'd, and the page always
+        // rendered "No completed quizzes" even after a pass.
+        //
+        // Attempts now come from the batch endpoint GET /api/quizzes/my-attempts.
+        const [enrolRes, attemptRes] = await Promise.all([
+          apiGet<EnrolmentRow[]>("/enrolments/my"),
+          apiGet<AttemptRow[]>("/quizzes/my-attempts"),
+        ])
 
-        const courseIds = enrolments.map(
-          (e: { courseId: number }) => e.courseId
+        const courseIds = Array.from(
+          new Set((enrolRes.data ?? []).map((e) => e.courseId).filter(Boolean))
         )
 
-        const quizResults = await Promise.all(
-          courseIds.map((cid: number) =>
-            fetch(`/api/quizzes?courseId=${cid}`).then((r) =>
-              r.ok ? r.json() : []
-            )
+        const quizResponses = await Promise.all(
+          courseIds.map((cid) =>
+            apiGet<QuizListResponse>(`/quizzes?courseId=${cid}`)
           )
         )
 
-        const allQuizzes: CompletedQuiz[] = quizResults.flat()
-
-        const attemptResults = await Promise.all(
-          allQuizzes.map((q) =>
-            fetch(`/api/quizzes/${q.id}/attempt`).then((r) =>
-              r.ok ? r.json() : []
-            )
-          )
+        const allQuizzes = quizResponses.flatMap((res) =>
+          Array.isArray(res.data?.quizzes) ? res.data.quizzes : []
         )
 
-        const completed = allQuizzes
-          .map((q, i) => {
-            const attempts: { score: number | null }[] = attemptResults[i] || []
-            if (attempts.length === 0) return null
-            const scores = attempts
-              .map((a) => a.score)
-              .filter((s): s is number => s !== null)
-            return {
-              ...q,
-              bestScore: scores.length > 0 ? Math.max(...scores) : 0,
-              attemptCount: attempts.length,
-            }
+        const byQuiz = new Map<string, { score: number | null }[]>()
+        for (const attempt of attemptRes.data ?? []) {
+          if (!attempt.quizId) continue
+          const list = byQuiz.get(attempt.quizId) ?? []
+          list.push({ score: attempt.score })
+          byQuiz.set(attempt.quizId, list)
+        }
+
+        const completed: CompletedQuiz[] = []
+        for (const quiz of allQuizzes) {
+          const attempts = byQuiz.get(quiz.id)
+          if (!attempts || attempts.length === 0) continue
+          const scores = attempts
+            .map((a) => a.score)
+            .filter((s): s is number => s !== null)
+          completed.push({
+            ...quiz,
+            bestScore: scores.length > 0 ? Math.max(...scores) : 0,
+            attemptCount: attempts.length,
           })
-          .filter((q): q is CompletedQuiz => q !== null)
+        }
 
         setQuizzes(completed)
       } catch (err) {
@@ -174,7 +197,9 @@ export default function CompletedQuizzesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Completed Quizzes</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Completed Quizzes
+        </h1>
         <p className="mt-1 text-muted-foreground">
           Quizzes you&apos;ve attempted with your best scores
         </p>

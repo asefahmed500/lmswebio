@@ -123,10 +123,10 @@ function GradedSubmissionResult({
 }) {
   return (
     <div className="flex items-start gap-4 rounded-lg border bg-muted/30 p-4">
-      <Award className="text-success mt-0.5 size-5" />
+      <Award className="mt-0.5 size-5 text-success" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className="text-success font-semibold">
+          <span className="font-semibold text-success">
             Grade: {submission.grade}/{submission.assignment?.maxPoints || "?"}
           </span>
           <Badge variant="secondary" className="gap-1">
@@ -228,7 +228,7 @@ export default function AssignmentDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Action">
           <Link href="/instructor/assignments">
             <ArrowLeft />
           </Link>
@@ -295,7 +295,7 @@ export default function AssignmentDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <CheckCircle className="text-success size-5" />
+              <CheckCircle className="size-5 text-success" />
               <div className="text-2xl font-bold">{gradedCount}</div>
             </div>
           </CardContent>
@@ -308,7 +308,7 @@ export default function AssignmentDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Clock className="text-warning size-5" />
+              <Clock className="size-5 text-warning" />
               <div className="text-2xl font-bold">{pendingCount}</div>
             </div>
           </CardContent>
@@ -369,7 +369,7 @@ export default function AssignmentDetailPage() {
                         {submission.grade}/{assignment.maxPoints}
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-warning gap-1">
+                      <Badge variant="outline" className="gap-1 text-warning">
                         <Clock className="size-3" />
                         Pending
                       </Badge>

@@ -39,11 +39,14 @@ export async function cleanupExpiredSessions(): Promise<void> {
   }
 }
 
-const sessionCleanupTimer = setInterval(async () => {
-  try {
-    await cleanupExpiredSessions()
-  } catch {
-    // Intentionally swallowed — interval must survive
-  }
-}, 24 * 60 * 60 * 1000)
+const sessionCleanupTimer = setInterval(
+  async () => {
+    try {
+      await cleanupExpiredSessions()
+    } catch {
+      // Intentionally swallowed — interval must survive
+    }
+  },
+  24 * 60 * 60 * 1000
+)
 sessionCleanupTimer.unref()

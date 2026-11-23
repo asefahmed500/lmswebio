@@ -29,21 +29,22 @@ describe("Button Component", () => {
     expect(screen.getByRole("button")).toHaveClass("bg-primary")
 
     rerender(<Button variant="destructive">Destructive</Button>)
-    expect(screen.getByRole("button")).toHaveClass("bg-destructive/10")
+    expect(screen.getByRole("button")).toHaveClass("bg-destructive")
 
     rerender(<Button variant="outline">Outline</Button>)
     expect(screen.getByRole("button")).toHaveClass("border-border")
   })
 
+  // 36px default, 32px small, 40px large — the project control-height scale.
   it("should apply size classes correctly", () => {
     const { rerender } = render(<Button size="default">Default</Button>)
-    expect(screen.getByRole("button")).toHaveClass("h-10")
-
-    rerender(<Button size="sm">Small</Button>)
     expect(screen.getByRole("button")).toHaveClass("h-9")
 
+    rerender(<Button size="sm">Small</Button>)
+    expect(screen.getByRole("button")).toHaveClass("h-8")
+
     rerender(<Button size="lg">Large</Button>)
-    expect(screen.getByRole("button")).toHaveClass("h-11")
+    expect(screen.getByRole("button")).toHaveClass("h-10")
   })
 
   it("should render as different element when asChild is true", () => {

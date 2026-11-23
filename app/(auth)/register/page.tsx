@@ -89,7 +89,7 @@ export default function RegisterPage() {
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="fullName"
-                className="text-xs font-medium tracking-normal normal-case text-graphite"
+                className="text-xs font-medium tracking-normal text-graphite normal-case"
               >
                 Full Name
               </Label>
@@ -111,7 +111,7 @@ export default function RegisterPage() {
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="email"
-                className="text-xs font-medium tracking-normal normal-case text-graphite"
+                className="text-xs font-medium tracking-normal text-graphite normal-case"
               >
                 Email address
               </Label>
@@ -133,7 +133,7 @@ export default function RegisterPage() {
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="password"
-                className="text-xs font-medium tracking-normal normal-case text-graphite"
+                className="text-xs font-medium tracking-normal text-graphite normal-case"
               >
                 Password
               </Label>
@@ -155,7 +155,7 @@ export default function RegisterPage() {
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="confirmPassword"
-                className="text-xs font-medium tracking-normal normal-case text-graphite"
+                className="text-xs font-medium tracking-normal text-graphite normal-case"
               >
                 Confirm Password
               </Label>
@@ -177,7 +177,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               size="lg"
-              className="mt-1 h-12 w-full rounded-lg tracking-wide"
+              className="mt-1 h-10 w-full rounded-lg tracking-wide"
               disabled={isLoading}
             >
               {isLoading ? (

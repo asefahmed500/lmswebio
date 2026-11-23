@@ -1,13 +1,35 @@
 "use client"
 
-import React, { useState } from "react"
-import { ArrowRight, Menu, X } from "lucide-react"
+import * as React from "react"
 import Link from "next/link"
+import { ArrowRight, Menu, X } from "lucide-react"
+
 import { useAuth } from "@/components/auth-provider"
+
+/**
+ * Public marketing navigation.
+ *
+ * Every entry here resolves to a real route or a real in-page section. An
+ * earlier version linked to /about, /blog, /careers, /contact, /docs, /help,
+ * /community, /api-reference, /changelog and /cookie-policy, none of which
+ * exist, and pointed a link labelled "Enterprise" at a section that no longer
+ * advertised enterprise features.
+ *
+ * Controls follow the project scale: 36px height, 14px type, 6px radius. The
+ * pill-shaped CTAs (`rounded-[9999px]`) were removed to match the rest of the
+ * product.
+ */
+
+const NAV_LINKS = [
+  { label: "Courses", href: "/courses" },
+  { label: "Features", href: "#enterprise" },
+  { label: "Pricing", href: "#pricing-info" },
+  { label: "Try it", href: "#try-it" },
+] as const
 
 export function SynexNavbar() {
   const { isAuthenticated, user } = useAuth()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = React.useState(false)
 
   function getDashboardHref(): string {
     if (!user) return "/login"
@@ -23,74 +45,68 @@ export function SynexNavbar() {
     }
   }
 
+  const close = () => setMobileOpen(false)
+
   return (
-    <nav className="sticky top-0 z-50 border-b border-graphite/10 bg-canvas/80 backdrop-blur-lg">
-      <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between px-5">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-sm bg-void-black">
+    <nav className="sticky top-0 z-50 border-b border-graphite/10 bg-canvas/85 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between gap-4 px-5">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
+          <span className="flex size-7 items-center justify-center rounded-sm bg-void-black">
             <span className="font-visueltpro text-xs font-bold text-chalk">
               L
             </span>
-          </div>
-          <span className="font-visueltpro text-lg font-normal tracking-[-0.02em] text-void-black">
+          </span>
+          <span className="font-visueltpro text-lg tracking-[-0.02em] text-void-black">
             LMSio
           </span>
         </Link>
 
-        <div className="hidden items-center gap-8 md:flex">
-          {[
-            { label: "Courses", href: "/courses" },
-            { label: "Pricing", href: "#pricing-info" },
-            { label: "Enterprise", href: "#enterprise" },
-          ].map((link) => (
+        <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
+          {NAV_LINKS.map((link) => (
             <Link
-              key={link.label}
+              key={link.href}
               href={link.href}
-              className="font-visueltpro text-sm font-light text-graphite transition-colors hover:text-void-black"
+              className="font-visueltpro text-sm text-graphite transition-colors hover:text-void-black"
             >
               {link.label}
             </Link>
           ))}
-        </div>
+        </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
           {isAuthenticated ? (
-            <>
-              <Link
-                href={getDashboardHref()}
-                className="font-visueltpro text-sm font-light text-graphite transition-colors hover:text-void-black"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href={getDashboardHref()}
-                className="rounded-[9999px] bg-void-black px-5 py-2 font-visueltpro text-sm font-medium text-chalk"
-              >
-                Go to app
-              </Link>
-            </>
+            <Link
+              href={getDashboardHref()}
+              className="inline-flex h-9 items-center rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-colors hover:bg-graphite"
+            >
+              Go to dashboard
+              <ArrowRight className="ml-1.5 size-4" />
+            </Link>
           ) : (
             <>
               <Link
                 href="/login"
-                className="font-visueltpro text-sm font-light text-graphite transition-colors hover:text-void-black"
+                className="font-visueltpro text-sm text-graphite transition-colors hover:text-void-black"
               >
                 Log in
               </Link>
               <Link
                 href="/register"
-                className="rounded-[9999px] bg-void-black px-5 py-2 font-visueltpro text-sm font-medium text-chalk"
+                className="inline-flex h-9 items-center rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-colors hover:bg-graphite"
               >
-                Get started
+                Create account
+                <ArrowRight className="ml-1.5 size-4" />
               </Link>
             </>
           )}
         </div>
 
         <button
-          className="flex items-center justify-center md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
+          type="button"
+          onClick={() => setMobileOpen((prev) => !prev)}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
+          className="-mr-1 flex size-9 shrink-0 items-center justify-center rounded-md md:hidden"
         >
           {mobileOpen ? (
             <X className="size-5 text-graphite" />
@@ -100,55 +116,53 @@ export function SynexNavbar() {
         </button>
       </div>
 
-      {mobileOpen && (
+      {mobileOpen ? (
         <div className="border-t border-graphite/10 bg-canvas md:hidden">
-          <div className="mx-auto max-w-[1280px] px-5 py-4">
-            <div className="flex flex-col gap-3">
-              {[
-                { label: "Courses", href: "/courses" },
-                { label: "Pricing", href: "#pricing-info" },
-                { label: "Enterprise", href: "#enterprise" },
-              ].map((link) => (
+          <div className="mx-auto max-w-[1280px] px-5 py-3">
+            <nav aria-label="Mobile" className="flex flex-col">
+              {NAV_LINKS.map((link) => (
                 <Link
-                  key={link.label}
+                  key={link.href}
                   href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="py-2 font-visueltpro text-sm font-light text-graphite transition-colors hover:text-void-black"
+                  onClick={close}
+                  className="rounded-md px-2 py-2.5 font-visueltpro text-sm text-graphite transition-colors hover:bg-linen hover:text-void-black"
                 >
                   {link.label}
                 </Link>
               ))}
-              <div className="my-2 border-t border-graphite/10" />
-              {isAuthenticated ? (
+            </nav>
+
+            <div className="my-3 border-t border-graphite/10" />
+
+            {isAuthenticated ? (
+              <Link
+                href={getDashboardHref()}
+                onClick={close}
+                className="flex h-9 items-center justify-center rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk"
+              >
+                Go to dashboard
+              </Link>
+            ) : (
+              <div className="flex flex-col gap-2">
                 <Link
-                  href={getDashboardHref()}
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-[9999px] bg-void-black px-5 py-2.5 text-center font-visueltpro text-sm font-medium text-chalk"
+                  href="/login"
+                  onClick={close}
+                  className="flex h-9 items-center justify-center rounded-md border border-graphite/15 font-visueltpro text-sm text-graphite"
                 >
-                  Go to Dashboard
+                  Log in
                 </Link>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileOpen(false)}
-                    className="py-2 font-visueltpro text-sm font-light text-graphite"
-                  >
-                    Log in
-                  </Link>
-                  <Link
-                    href="/register"
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded-[9999px] bg-void-black px-5 py-2.5 text-center font-visueltpro text-sm font-medium text-chalk"
-                  >
-                    Get started <ArrowRight className="inline size-3" />
-                  </Link>
-                </>
-              )}
-            </div>
+                <Link
+                  href="/register"
+                  onClick={close}
+                  className="flex h-9 items-center justify-center rounded-md bg-void-black font-visueltpro text-sm font-medium text-chalk"
+                >
+                  Create account
+                </Link>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      ) : null}
     </nav>
   )
 }

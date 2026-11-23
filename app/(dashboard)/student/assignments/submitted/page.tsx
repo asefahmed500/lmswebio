@@ -102,7 +102,7 @@ export default function SubmittedAssignmentsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Submitted Assignments
         </h1>
         <p className="mt-1 text-muted-foreground">
@@ -155,7 +155,7 @@ export default function SubmittedAssignmentsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="py-12 text-center">
-              <CheckCircle2 className="text-success mx-auto mb-4 h-12 w-12" />
+              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" />
               <h3 className="mb-2 text-lg font-semibold">
                 No submissions awaiting grading
               </h3>

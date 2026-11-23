@@ -2,12 +2,7 @@
 
 import * as React from "react"
 import { Search, Users, BookOpen, TrendingUp } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -117,7 +112,7 @@ export default function StudentPerformancePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Student Performance
         </h1>
         <p className="mt-1 text-muted-foreground">
@@ -147,7 +142,7 @@ export default function StudentPerformancePage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <BookOpen className="text-info size-5" />
+              <BookOpen className="size-5 text-info" />
               <div className="text-2xl font-bold">
                 {totalStudents > 0
                   ? (
@@ -167,7 +162,7 @@ export default function StudentPerformancePage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <TrendingUp className="text-success size-5" />
+              <TrendingUp className="size-5 text-success" />
               <div className="text-2xl font-bold">{avgProgressAll}%</div>
             </div>
           </CardContent>

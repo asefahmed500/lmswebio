@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* Provides the `animate-in` / `fade-in-0` / `slide-in-from-*` / `zoom-in-95`
+   utilities that the shadcn dialog, alert-dialog, sheet, select, tooltip and
+   navigation-menu primitives depend on for their enter and exit transitions.
+   Without this import every one of those overlays pops in with no animation. */
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -47,58 +52,84 @@
     "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
 
-  /* shadcn mapping */
-  --background: var(--color-pearl);
-  --foreground: var(--color-midnight-ink);
-  --card: var(--color-white);
-  --card-foreground: var(--color-midnight-ink);
-  --popover: var(--color-white);
-  --popover-foreground: var(--color-midnight-ink);
-  --primary: var(--color-brand-teal);
-  --primary-foreground: var(--color-white);
-  --secondary: var(--color-snow);
-  --secondary-foreground: var(--color-midnight-ink);
-  --muted: var(--color-pearl);
-  --muted-foreground: var(--color-zinc-500);
-  --accent: var(--color-brand-teal);
-  --accent-foreground: var(--color-white);
+  /* shadcn mapping
+     Off-white application background with near-white surfaces, a hairline
+     neutral border and one restrained accent. Restrained on purpose: this is a
+     dense work UI, so colour is reserved for state and the primary action. */
+  --background: #faf9f7;
+  --foreground: #1c1b19;
+  --card: #fffdfc;
+  --card-foreground: #1c1b19;
+  --popover: #fffdfc;
+  --popover-foreground: #1c1b19;
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f3f1;
+  --secondary-foreground: #1c1b19;
+  --muted: #f4f3f1;
+  --muted-foreground: #6b6862;
+  --accent: #eeece8;
+  --accent-foreground: #1c1b19;
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: var(--color-white);
-  --border: var(--color-mist);
-  --input: var(--color-snow);
-  --ring: var(--color-brand-teal);
-  --chart-1: var(--color-brand-teal);
+  --destructive-foreground: #ffffff;
+  --border: #e3e1dc;
+  --input: #e3e1dc;
+  --ring: #0f766e;
+  --chart-1: #0f766e;
   --chart-2: oklch(0.7 0.15 180);
   --chart-3: oklch(0.6 0.15 250);
   --chart-4: oklch(0.75 0.12 100);
   --chart-5: oklch(0.65 0.15 30);
-  --sidebar: var(--color-white);
-  --sidebar-foreground: var(--color-midnight-ink);
-  --sidebar-primary: var(--color-brand-teal);
-  --sidebar-primary-foreground: var(--color-white);
-  --sidebar-accent: var(--color-pearl);
-  --sidebar-accent-foreground: var(--color-midnight-ink);
-  --sidebar-border: var(--color-mist);
-  --sidebar-ring: var(--color-brand-teal);
+  --sidebar: #fffdfc;
+  --sidebar-foreground: #1c1b19;
+  --sidebar-primary: #0f766e;
+  --sidebar-primary-foreground: #ffffff;
+  /* Active navigation uses a neutral tint, not the brand colour, so the current
+     section is readable at a glance without shouting. */
+  --sidebar-accent: #f1efeb;
+  --sidebar-accent-foreground: #1c1b19;
+  --sidebar-border: #e3e1dc;
+  --sidebar-ring: #0f766e;
 
   --font-sans: var(--font-inter);
   --font-serif: var(--font-dm-sans);
   --font-mono: Geist Mono, ui-monospace, monospace;
 
-  --radius: 8px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
+  /* Small, controlled radii. */
+  --radius: 6px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
 
+  /* ====== Motion scale ======
+     Durations and easings are tokens, not literals. Anything animated in the
+     shell should reference these so timing stays consistent app-wide. */
+  --motion-duration-instant: 80ms;
+  --motion-duration-fast: 140ms;
+  --motion-duration-base: 200ms;
+  --motion-duration-slow: 320ms;
+
+  /* Asymmetric overlay timing: enter reads as "arriving", exit as "leaving". */
+  --motion-duration-enter: var(--motion-duration-fast);
+  --motion-duration-exit: var(--motion-duration-instant);
+
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Minimal elevation. Previously every step from `sm` to `2xl` resolved to the
+     same value, so cards and overlays had no discernible depth. Kept
+     deliberately shallow — separation comes from the 1px border, and shadow is
+     reserved for things that float. */
   --shadow-2xs: none;
-  --shadow-xs: none;
-  --shadow-sm: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
-  --shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
-  --shadow-md: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
-  --shadow-lg: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
-  --shadow-xl: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
-  --shadow-2xl: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+  --shadow-xs: 0 1px 2px 0 rgb(28 27 25 / 0.04);
+  --shadow-sm: 0 1px 2px 0 rgb(28 27 25 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(28 27 25 / 0.06), 0 1px 2px -1px rgb(28 27 25 / 0.05);
+  --shadow-md: 0 2px 4px -1px rgb(28 27 25 / 0.06), 0 1px 2px -1px rgb(28 27 25 / 0.05);
+  --shadow-lg: 0 4px 8px -2px rgb(28 27 25 / 0.08), 0 2px 4px -2px rgb(28 27 25 / 0.05);
+  --shadow-xl: 0 8px 16px -4px rgb(28 27 25 / 0.1), 0 4px 6px -2px rgb(28 27 25 / 0.05);
+  --shadow-2xl: 0 12px 24px -6px rgb(28 27 25 / 0.12);
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
 }
@@ -208,32 +239,60 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
-}
 
+  /* Sequel x Warm Canvas elevation — previously declared in :root but never
+     mapped here, so no utility was generated for them. */
+  --shadow-sq-card: var(--shadow-sq-card);
+  --shadow-sq-button: var(--shadow-sq-button);
+  --shadow-sq-hero: var(--shadow-sq-hero);
+
+  --motion-duration-instant: var(--motion-duration-instant);
+  --motion-duration-fast: var(--motion-duration-fast);
+  --motion-duration-base: var(--motion-duration-base);
+  --motion-duration-slow: var(--motion-duration-slow);
+  --motion-duration-enter: var(--motion-duration-enter);
+  --motion-duration-exit: var(--motion-duration-exit);
+  --motion-ease-standard: var(--motion-ease-standard);
+  --motion-ease-emphasized: var(--motion-ease-emphasized);
+  --motion-ease-exit: var(--motion-ease-exit);
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background font-sans text-foreground antialiased;
+    @apply bg-background font-sans text-sm text-foreground antialiased;
     letter-spacing: -0.011em;
+    /* 14px body copy on a 400 weight, tightened for UI density. */
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
+  /* Only three weights are used in the product: 400 body, 500 labels and
+     controls, 600 headings. Default heading weights are pinned here so a bare
+     <h1> in a page can never render heavier than the scale allows. */
   h1 {
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    @apply text-2xl leading-tight font-semibold tracking-[-0.02em];
   }
   h2 {
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    @apply text-lg leading-snug font-semibold tracking-[-0.01em];
   }
   h3 {
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    @apply text-[15px] leading-snug font-semibold tracking-[-0.01em];
   }
-  h4, h5, h6 {
-    font-weight: 600;
-    letter-spacing: -0.008em;
+  h4,
+  h5,
+  h6 {
+    @apply text-sm leading-snug font-semibold;
   }
+}
+/* Single card surface. Replaces the per-file repetition of
+   border + rounded-card + shadow that had drifted across ~95 call sites. */
+@utility surface-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background-color: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--shadow-sm);
 }
 
 .scrollbar-none {

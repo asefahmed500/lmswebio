@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/components/auth-provider"
-import { CourseCard } from "@/components/course/course-card"
+import { CourseCard } from "@/features/courses/course-card"
 import { useEnrollments } from "@/lib/hooks/use-enrollments"
 
 export default function EnrolledCoursesPage() {
@@ -41,7 +41,7 @@ export default function EnrolledCoursesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           My Enrolled Courses
         </h1>
         <p className="mt-1 text-muted-foreground">

@@ -17,12 +17,7 @@ import {
   HelpCircle,
   Send,
 } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -159,7 +154,7 @@ function SingleChoiceQuestion({
                 {label}
               </Label>
               {isCorrectOption && (
-                <CheckCircle2 className="text-success h-4 w-4" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
               )}
               {isWrongOption && (
                 <XCircle className="h-4 w-4 text-destructive" />
@@ -232,10 +227,10 @@ function MultiChoiceQuestion({
               {label}
             </Label>
             {isCorrectOption && (
-              <CheckCircle2 className="text-success h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4 text-success" />
             )}
             {isWrongOption && <XCircle className="h-4 w-4 text-destructive" />}
-            {isMissing && <AlertCircle className="text-warning h-4 w-4" />}
+            {isMissing && <AlertCircle className="h-4 w-4 text-warning" />}
           </div>
         )
       })}
@@ -487,7 +482,7 @@ function QuizResults({
             <Card
               key={question.id}
               className={cn(
-                isCorrect === true && "border-l-success border-l-4",
+                isCorrect === true && "border-l-4 border-l-success",
                 isCorrect === false && "border-l-4 border-l-destructive"
               )}
             >

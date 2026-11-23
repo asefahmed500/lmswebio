@@ -121,7 +121,7 @@ export default function QuizResultsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Quiz Results</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Quiz Results</h1>
         <p className="mt-1 text-muted-foreground">
           View combined results and performance across all quizzes
         </p>
@@ -149,7 +149,7 @@ export default function QuizResultsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Users className="text-info size-5" />
+              <Users className="size-5 text-info" />
               <div className="text-2xl font-bold">{totalAttempts}</div>
             </div>
           </CardContent>
@@ -162,7 +162,7 @@ export default function QuizResultsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <BarChart3 className="text-warning size-5" />
+              <BarChart3 className="size-5 text-warning" />
               <div className="text-2xl font-bold">{quizzesWithAttempts}</div>
             </div>
           </CardContent>

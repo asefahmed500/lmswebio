@@ -2,6 +2,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/auth-provider"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { Toaster } from "@/components/ui/sonner"
 
 export const metadata = {
   title: "LMSio — Learn Without Limits",
@@ -36,7 +37,11 @@ export default function RootLayout({
         </a>
         <ErrorBoundary>
           <AuthProvider>
-            <ThemeProvider>{children}</ThemeProvider>
+            <ThemeProvider>
+              {children}
+              {/* Required host for every toast() call in the dashboard. */}
+              <Toaster />
+            </ThemeProvider>
           </AuthProvider>
         </ErrorBoundary>
       </body>

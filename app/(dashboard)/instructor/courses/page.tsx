@@ -218,7 +218,7 @@ export default function InstructorCoursesPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Courses</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">My Courses</h1>
           <p className="mt-1 text-muted-foreground">
             Manage and organize your course content
           </p>
@@ -403,7 +403,11 @@ export default function InstructorCoursesPage() {
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="More actions"
+                            >
                               <MoreHorizontal />
                             </Button>
                           </DropdownMenuTrigger>

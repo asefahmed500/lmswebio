@@ -194,7 +194,7 @@ export default function QuizDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Action">
           <Link href="/instructor/quizzes">
             <ArrowLeft />
           </Link>
@@ -325,7 +325,7 @@ export default function QuizDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <FileText className="text-info size-5" />
+              <FileText className="size-5 text-info" />
               <div className="text-2xl font-bold">{totalPoints}</div>
             </div>
           </CardContent>
@@ -338,7 +338,7 @@ export default function QuizDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Users className="text-warning size-5" />
+              <Users className="size-5 text-warning" />
               <div className="text-2xl font-bold">{totalAttempts}</div>
             </div>
           </CardContent>
@@ -407,7 +407,7 @@ export default function QuizDetailPage() {
                                 }`}
                               >
                                 {isCorrect ? (
-                                  <CheckCircle className="text-success h-3.5 w-3.5" />
+                                  <CheckCircle className="h-3.5 w-3.5 text-success" />
                                 ) : (
                                   <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />
                                 )}

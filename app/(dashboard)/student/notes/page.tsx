@@ -7,7 +7,7 @@
 
 import * as React from "react"
 import { Bookmark, Search } from "lucide-react"
-import { NotesEditor } from "@/components/notes/notes-editor"
+import { NotesEditor } from "@/features/learning/notes/notes-editor"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,9 +26,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { LoadingCard } from "@/components/loading-skeleton"
+import { useDebounced } from "@/hooks/use-media-query"
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api-client"
 
 interface Note {
@@ -70,8 +72,13 @@ export default function StudentNotesPage() {
   const [selectedNote, setSelectedNote] = React.useState<Note | undefined>()
   const [isLoading, setIsLoading] = React.useState(true)
   const [searchQuery, setSearchQuery] = React.useState("")
+  // The fetch effect depends on the debounced value, so typing does not fire
+  // a request per keystroke.
+  const debouncedQuery = useDebounced(searchQuery, 300)
   const [courseFilter, setCourseFilter] = React.useState<string>("all")
   const [isNewNote, setIsNewNote] = React.useState(false)
+  // A failed save must not silently close the note dialog.
+  const [saveError, setSaveError] = React.useState<string | null>(null)
   const [newNoteLessonId, setNewNoteLessonId] = React.useState<string>("")
 
   React.useEffect(() => {
@@ -92,20 +99,19 @@ export default function StudentNotesPage() {
           const enrolments = coursesRes.data
           // Load full course data with modules/lessons for the lesson picker
           const coursesWithData: EnrolledCourse[] = await Promise.all(
-            (enrolments as EnrolledCourse[]).map(
-              async (e: EnrolledCourse) => {
-                try {
-                  const res = await apiGet<Record<string, unknown>>(
-                    `/courses/${e.courseId}`
-                  )
-                  if (res.data) {
-                    const courseData = res.data as unknown as EnrolledCourse["course"]
-                    return { courseId: e.courseId, course: courseData }
-                  }
-                } catch {}
-                return { courseId: e.courseId, course: e.course }
-              }
-            )
+            (enrolments as EnrolledCourse[]).map(async (e: EnrolledCourse) => {
+              try {
+                const res = await apiGet<Record<string, unknown>>(
+                  `/courses/${e.courseId}`
+                )
+                if (res.data) {
+                  const courseData =
+                    res.data as unknown as EnrolledCourse["course"]
+                  return { courseId: e.courseId, course: courseData }
+                }
+              } catch {}
+              return { courseId: e.courseId, course: e.course }
+            })
           )
           setEnrolledCourses(coursesWithData)
         }
@@ -123,7 +129,7 @@ export default function StudentNotesPage() {
     async function loadNotes() {
       try {
         const params = new URLSearchParams()
-        if (searchQuery) params.append("search", searchQuery)
+        if (searchQuery) params.append("search", debouncedQuery)
         if (courseFilter !== "all") params.append("courseId", courseFilter)
 
         // Fixed: replaced raw fetch with apiGet
@@ -136,7 +142,7 @@ export default function StudentNotesPage() {
       }
     }
     loadNotes()
-  }, [searchQuery, courseFilter, isLoading])
+  }, [debouncedQuery, courseFilter, isLoading])
 
   const handleSaveNote = async (content: string, timestamp?: number) => {
     try {
@@ -155,28 +161,32 @@ export default function StudentNotesPage() {
         }
       }
 
-      // Fixed: replaced raw fetch with apiPatch/apiPost
-      if (selectedNote) {
-        const result = await apiPatch<{ note: Note }>(
-          `/notes/${selectedNote.id}`,
-          body
-        )
-        if (result.data) {
-          setNotes((prev) =>
-            prev.map((n) => (n.id === selectedNote.id ? result.data!.note : n))
-          )
-          setSelectedNote(result.data.note)
-        }
-      } else {
-        const result = await apiPost<{ note: Note }>("/notes", body)
-        if (result.data) {
-          setNotes((prev) => [result.data!.note, ...prev])
-          setSelectedNote(result.data.note)
-        }
+      // apiPost/apiPatch resolve `{ error }` and never throw, so a failed save fell
+      // through both `if (result.data)` branches, skipped the catch, and still
+      // ran setIsNewNote(false) — closing the dialog and discarding whatever the
+      // student had typed, with no error and no list entry.
+      const result = selectedNote
+        ? await apiPatch<{ note: Note }>(`/notes/${selectedNote.id}`, body)
+        : await apiPost<{ note: Note }>("/notes", body)
+
+      if (result.error || !result.data) {
+        setSaveError(result.error ?? "Failed to save note")
+        return
       }
+
+      setSaveError(null)
+      if (selectedNote) {
+        setNotes((prev) =>
+          prev.map((n) => (n.id === selectedNote.id ? result.data!.note : n))
+        )
+      } else {
+        setNotes((prev) => [result.data!.note, ...prev])
+      }
+      setSelectedNote(result.data.note)
       setIsNewNote(false)
     } catch (error) {
       console.error("Failed to save note:", error)
+      setSaveError("Failed to save note")
     }
   }
 
@@ -199,7 +209,7 @@ export default function StudentNotesPage() {
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Notes</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">My Notes</h1>
           <p className="mt-1 text-muted-foreground">
             View and manage your lesson notes
           </p>
@@ -214,7 +224,7 @@ export default function StudentNotesPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Notes</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">My Notes</h1>
           <p className="mt-1 text-muted-foreground">
             View and manage your lesson notes
           </p>
@@ -261,6 +271,11 @@ export default function StudentNotesPage() {
                 </SelectContent>
               </Select>
             </div>
+            {saveError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{saveError}</AlertDescription>
+              </Alert>
+            ) : null}
             {newNoteLessonId && <NotesEditor onSave={handleSaveNote} />}
           </DialogContent>
         </Dialog>

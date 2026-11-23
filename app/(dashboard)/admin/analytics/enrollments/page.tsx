@@ -129,7 +129,7 @@ export default function AdminEnrollmentsAnalyticsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Enrollment Analytics
         </h1>
         <p className="mt-1 text-muted-foreground">
@@ -195,7 +195,7 @@ export default function AdminEnrollmentsAnalyticsPage() {
                   <Line
                     type="monotone"
                     dataKey="newUsers"
-                    stroke="hsl(var(--chart-2))"
+                    stroke="var(--chart-2)"
                     strokeWidth={2}
                     name="New Users"
                     dot={{ r: 3 }}
@@ -287,7 +287,7 @@ export default function AdminEnrollmentsAnalyticsPage() {
                     />
                     <Bar
                       dataKey="count"
-                      fill="hsl(var(--chart-2))"
+                      fill="var(--chart-2)"
                       radius={[4, 4, 0, 0]}
                       name="New Users"
                     />

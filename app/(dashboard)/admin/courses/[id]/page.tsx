@@ -187,13 +187,13 @@ export default function AdminCourseDetailPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="Action">
             <Link href="/admin/courses">
               <ArrowLeft />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight">
               {course.title}
             </h1>
             <p className="mt-1 text-muted-foreground">Course management</p>
@@ -231,7 +231,7 @@ export default function AdminCourseDetailPage() {
               onClick={handleTogglePublish}
             >
               {course.isPublished ? (
-                <ToggleRight className="text-success mr-1 size-5" />
+                <ToggleRight className="mr-1 size-5 text-success" />
               ) : (
                 <ToggleLeft className="mr-1 size-5 text-muted-foreground" />
               )}

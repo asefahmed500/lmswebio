@@ -58,7 +58,11 @@ function ResetPasswordForm() {
             <p className="mt-1 text-sm text-smoke">{success}</p>
           </AlertDescription>
         </Alert>
-        <Button size="lg" className="h-12 w-full rounded-lg tracking-wide" asChild>
+        <Button
+          size="lg"
+          className="h-10 w-full rounded-lg tracking-wide"
+          asChild
+        >
           <Link href="/login">Sign in with new password</Link>
         </Button>
       </div>
@@ -111,7 +115,7 @@ function ResetPasswordForm() {
       <div className="flex flex-col gap-2">
         <Label
           htmlFor="newPassword"
-          className="text-xs font-medium tracking-normal normal-case text-graphite"
+          className="text-xs font-medium tracking-normal text-graphite normal-case"
         >
           New Password
         </Label>
@@ -165,7 +169,7 @@ function ResetPasswordForm() {
       <div className="flex flex-col gap-2">
         <Label
           htmlFor="confirmPassword"
-          className="text-xs font-medium tracking-normal normal-case text-graphite"
+          className="text-xs font-medium tracking-normal text-graphite normal-case"
         >
           Confirm Password
         </Label>
@@ -191,7 +195,7 @@ function ResetPasswordForm() {
       <Button
         type="submit"
         size="lg"
-        className="mt-1 h-12 w-full rounded-lg tracking-wide"
+        className="mt-1 h-10 w-full rounded-lg tracking-wide"
         disabled={isLoading}
       >
         {isLoading ? <Loader2 className="animate-spin" /> : "Reset password"}

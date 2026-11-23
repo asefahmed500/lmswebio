@@ -44,7 +44,7 @@ function KPICardComponent({ kpi }: { kpi: KPICard }) {
         <div className="text-2xl font-bold">{kpi.value}</div>
         {kpi.change !== undefined && (
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-            {isPositive && <ArrowUpRight className="text-success size-3" />}
+            {isPositive && <ArrowUpRight className="size-3 text-success" />}
             {isNegative && <ArrowUpRight className="size-3 text-destructive" />}
             <span
               className={
@@ -247,10 +247,7 @@ export default function InstructorDashboardPage() {
           const rateMap = new Map(
             anResult.data.completionRates.map((c) => [c.courseId, c])
           )
-          const allIds = new Set([
-            ...perfMap.keys(),
-            ...rateMap.keys(),
-          ])
+          const allIds = new Set([...perfMap.keys(), ...rateMap.keys()])
           setCoursePerformance(
             Array.from(allIds).map((courseId) => {
               const p = perfMap.get(courseId)
@@ -296,7 +293,7 @@ export default function InstructorDashboardPage() {
       )}
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Instructor Dashboard
         </h1>
         <p className="mt-1 text-muted-foreground">

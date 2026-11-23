@@ -82,7 +82,7 @@ function SubmissionForm({
 
   if (success) {
     return (
-      <div className="bg-success/10 text-success flex items-center gap-2 rounded-lg p-3 text-sm">
+      <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
         <CheckCircle2 className="h-4 w-4" />
         Assignment submitted successfully!
       </div>
@@ -243,7 +243,7 @@ export default function PendingAssignmentsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Pending Assignments
         </h1>
         <p className="mt-1 text-muted-foreground">
@@ -313,7 +313,7 @@ export default function PendingAssignmentsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="py-12 text-center">
-              <CheckCircle2 className="text-success mx-auto mb-4 h-12 w-12" />
+              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" />
               <h3 className="mb-2 text-lg font-semibold">
                 No pending assignments
               </h3>

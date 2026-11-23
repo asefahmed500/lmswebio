@@ -136,7 +136,7 @@ export default function EditUserPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit User</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Edit User</h1>
           <p className="mt-1 text-muted-foreground">
             Update user details and settings
           </p>

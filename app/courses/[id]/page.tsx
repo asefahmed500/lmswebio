@@ -91,9 +91,7 @@ export default function PublicCourseDetailPage() {
         if (enrolRes?.data) {
           const data = enrolRes.data
           const enrolled = Array.isArray(data)
-            ? (data as { courseId: string }[]).some(
-                (e) => e.courseId === c.id
-              )
+            ? (data as { courseId: string }[]).some((e) => e.courseId === c.id)
             : false
           setAlreadyEnrolled(enrolled)
         }
@@ -166,7 +164,7 @@ export default function PublicCourseDetailPage() {
       <div className="flex min-h-screen flex-col bg-canvas">
         <SynexNavbar />
         <div className="flex flex-1 items-center justify-center">
-          <div className="size-6 animate-spin rounded-full border-2 border-graphite/20 border-t-void-black" />
+          <div className="size-6 animate-spin rounded-md border-2 border-graphite/20 border-t-void-black" />
         </div>
         <HomepageFooter />
       </div>
@@ -182,7 +180,7 @@ export default function PublicCourseDetailPage() {
           </h1>
           <Link
             href="/"
-            className="rounded-[9999px] border border-graphite/20 px-5 py-2 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/40"
+            className="rounded-md border border-graphite/20 px-5 py-2 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/40"
           >
             Back to Home
           </Link>
@@ -197,7 +195,7 @@ export default function PublicCourseDetailPage() {
     <div className="flex min-h-screen flex-col bg-canvas">
       <SynexNavbar />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-[1280px] px-5 py-10">
           <Link
             href="/courses"
@@ -314,7 +312,7 @@ export default function PublicCourseDetailPage() {
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-3">
-                                    <span className="rounded-full bg-canvas px-2 py-0.5 font-visueltpro text-[10px] text-smoke">
+                                    <span className="rounded-md bg-canvas px-2 py-0.5 font-visueltpro text-[10px] text-smoke">
                                       {lesson.contentType}
                                     </span>
                                     {lesson.duration && (
@@ -341,11 +339,11 @@ export default function PublicCourseDetailPage() {
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2">
                   {course.category && (
-                    <span className="rounded-full bg-canvas px-3 py-1 font-visueltpro text-xs font-light text-graphite">
+                    <span className="rounded-md bg-canvas px-3 py-1 font-visueltpro text-xs font-light text-graphite">
                       {course.category}
                     </span>
                   )}
-                  <span className="rounded-full bg-canvas px-3 py-1 font-visueltpro text-xs font-light text-graphite">
+                  <span className="rounded-md bg-canvas px-3 py-1 font-visueltpro text-xs font-light text-graphite">
                     {levelLabels[course.level] || course.level}
                   </span>
                 </div>
@@ -375,7 +373,7 @@ export default function PublicCourseDetailPage() {
                 {alreadyEnrolled ? (
                   <Link
                     href={`/student/courses/${course.id}`}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9999px] border border-void-black/20 px-6 py-3 font-visueltpro text-sm font-medium text-void-black transition-colors hover:bg-void-black/5"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-void-black/20 px-6 py-3 font-visueltpro text-sm font-medium text-void-black transition-colors hover:bg-void-black/5"
                   >
                     Go to Course
                   </Link>
@@ -383,7 +381,7 @@ export default function PublicCourseDetailPage() {
                   <button
                     onClick={handleEnrol}
                     disabled={enrolling}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9999px] bg-void-black px-6 py-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90 disabled:opacity-60"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-void-black px-6 py-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90 disabled:opacity-60"
                   >
                     {enrolling && <Loader2 className="size-4 animate-spin" />}
                     {enrolling
@@ -414,10 +412,10 @@ export default function PublicCourseDetailPage() {
                       alt=""
                       width={40}
                       height={40}
-                      className="rounded-full"
+                      className="rounded-md"
                     />
                   ) : (
-                    <div className="flex size-10 items-center justify-center rounded-full bg-void-black font-visueltpro text-xs font-bold text-chalk">
+                    <div className="flex size-10 items-center justify-center rounded-md bg-void-black font-visueltpro text-xs font-bold text-chalk">
                       {course.instructor.fullName
                         .split(" ")
                         .map((n) => n[0])
@@ -441,7 +439,7 @@ export default function PublicCourseDetailPage() {
                     {course.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full border border-graphite/10 px-2.5 py-0.5 font-visueltpro text-[11px] text-smoke"
+                        className="rounded-md border border-graphite/10 px-2.5 py-0.5 font-visueltpro text-[11px] text-smoke"
                       >
                         {tag}
                       </span>

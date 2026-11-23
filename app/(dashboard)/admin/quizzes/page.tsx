@@ -146,7 +146,7 @@ export default function AdminQuizzesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Quizzes</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Quizzes</h1>
         <p className="mt-1 text-muted-foreground">
           Manage all quizzes across the platform
         </p>

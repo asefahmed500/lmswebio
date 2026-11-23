@@ -82,7 +82,7 @@ export default function QuestionBankPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Question Bank</h1>
+          <h1 className="text-2xl font-semibold">Question Bank</h1>
           <p className="text-muted-foreground">
             Browse all quiz questions across courses
           </p>

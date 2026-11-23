@@ -77,14 +77,16 @@ export default function ForgotPasswordPage() {
               <Alert>
                 <CheckCircle className="size-4 text-emerald-500" />
                 <AlertDescription>
-                  <p className="font-medium text-void-black">Check your email</p>
+                  <p className="font-medium text-void-black">
+                    Check your email
+                  </p>
                   <p className="mt-1 text-sm text-smoke">{success}</p>
                 </AlertDescription>
               </Alert>
               <Button
                 variant="outline"
                 size="lg"
-                className="h-12 w-full rounded-lg tracking-wide"
+                className="h-10 w-full rounded-lg tracking-wide"
                 asChild
               >
                 <Link href="/login">Back to sign in</Link>
@@ -107,7 +109,7 @@ export default function ForgotPasswordPage() {
               <div className="flex flex-col gap-2">
                 <Label
                   htmlFor="email"
-                  className="text-xs font-medium tracking-normal normal-case text-graphite"
+                  className="text-xs font-medium tracking-normal text-graphite normal-case"
                 >
                   Email address
                 </Label>
@@ -135,7 +137,7 @@ export default function ForgotPasswordPage() {
               <Button
                 type="submit"
                 size="lg"
-                className="mt-1 h-12 w-full rounded-lg tracking-wide"
+                className="mt-1 h-10 w-full rounded-lg tracking-wide"
                 disabled={isLoading}
               >
                 {isLoading ? (

@@ -145,7 +145,9 @@ export default function AllSubmissionsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">All Submissions</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          All Submissions
+        </h1>
         <p className="mt-1 text-muted-foreground">
           View and manage all student submissions across your courses
         </p>
@@ -173,7 +175,7 @@ export default function AllSubmissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <CheckCircle className="text-success size-5" />
+              <CheckCircle className="size-5 text-success" />
               <div className="text-2xl font-bold">{gradedCount}</div>
             </div>
           </CardContent>
@@ -186,7 +188,7 @@ export default function AllSubmissionsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Clock className="text-warning size-5" />
+              <Clock className="size-5 text-warning" />
               <div className="text-2xl font-bold">{pendingCount}</div>
             </div>
           </CardContent>
@@ -281,7 +283,7 @@ export default function AllSubmissionsPage() {
                           {submission.grade} pts
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-warning gap-1">
+                        <Badge variant="outline" className="gap-1 text-warning">
                           <Clock className="size-3" />
                           Pending
                         </Badge>

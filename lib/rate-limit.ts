@@ -22,7 +22,9 @@ export async function rateLimit(
 
   const mem = memoryRateLimit.get(identifier)
   if (mem) {
-    const validTimestamps = mem.timestamps.filter((t) => t > now - config.windowMs)
+    const validTimestamps = mem.timestamps.filter(
+      (t) => t > now - config.windowMs
+    )
     if (validTimestamps.length >= config.maxRequests) {
       mem.timestamps = validTimestamps
       return { success: false, remaining: 0 }
@@ -87,7 +89,11 @@ if (typeof setInterval !== "undefined") {
       }
     }
   }, 60_000)
-  if (cleanupTimer && typeof cleanupTimer === "object" && "unref" in cleanupTimer) {
+  if (
+    cleanupTimer &&
+    typeof cleanupTimer === "object" &&
+    "unref" in cleanupTimer
+  ) {
     cleanupTimer.unref()
   }
 }

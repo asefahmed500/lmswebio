@@ -172,13 +172,13 @@ export default function ProgressPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Action">
           <Link href="/student/achievements">
             <ArrowLeft />
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Learning Progress
           </h1>
           <p className="mt-1 text-muted-foreground">
@@ -209,7 +209,7 @@ export default function ProgressPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <TrendingUp className="text-info size-5" />
+              <TrendingUp className="size-5 text-info" />
               <div className="text-2xl font-bold">{stats.inProgress}</div>
             </div>
           </CardContent>
@@ -222,7 +222,7 @@ export default function ProgressPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <CheckCircle className="text-success size-5" />
+              <CheckCircle className="size-5 text-success" />
               <div className="text-2xl font-bold">{stats.completed}</div>
             </div>
           </CardContent>
@@ -235,7 +235,7 @@ export default function ProgressPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <TrendingUp className="text-warning size-5" />
+              <TrendingUp className="size-5 text-warning" />
               <div className="text-2xl font-bold">{stats.avgProgress}%</div>
             </div>
           </CardContent>
@@ -291,7 +291,7 @@ export default function ProgressPage() {
                     {course.level}
                   </Badge>
                   {isCompleted && (
-                    <Badge className="bg-success hover:bg-success/90 absolute top-2 left-2 gap-1">
+                    <Badge className="absolute top-2 left-2 gap-1 bg-success hover:bg-success/90">
                       <CheckCircle className="size-3" />
                       Completed
                     </Badge>

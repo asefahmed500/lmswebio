@@ -3,7 +3,8 @@ import { HomepageFooter } from "@/components/homepage/homepage-footer"
 
 export const metadata = {
   title: "Privacy Policy — LMSio",
-  description: "LMSio privacy policy — how we collect, use, and protect your data.",
+  description:
+    "LMSio privacy policy — how we collect, use, and protect your data.",
 }
 
 export default function PrivacyPage() {
@@ -15,9 +16,7 @@ export default function PrivacyPage() {
         <h1 className="font-visueltpro text-3xl font-semibold tracking-tight text-void-black">
           Privacy Policy
         </h1>
-        <p className="mt-2 text-sm text-smoke">
-          Last updated: June 10, 2026
-        </p>
+        <p className="mt-2 text-sm text-smoke">Last updated: June 10, 2026</p>
 
         <article className="prose prose-gray mt-10 max-w-none font-visueltpro text-sm leading-[1.8] text-graphite">
           <section className="mb-10">
@@ -40,7 +39,9 @@ export default function PrivacyPage() {
             <ul className="ml-4 list-disc space-y-2">
               <li>To provide and personalize our educational services</li>
               <li>To process enrollments and payments securely</li>
-              <li>To send course updates, recommendations, and support messages</li>
+              <li>
+                To send course updates, recommendations, and support messages
+              </li>
               <li>
                 To analyze platform usage and improve content and features
               </li>
@@ -64,9 +65,10 @@ export default function PrivacyPage() {
               4. Cookies & Tracking
             </h2>
             <p>
-              We use essential cookies for authentication and session management.
-              Analytics cookies help us understand how the platform is used. You
-              can disable non-essential cookies in your browser settings.
+              We use essential cookies for authentication and session
+              management. Analytics cookies help us understand how the platform
+              is used. You can disable non-essential cookies in your browser
+              settings.
             </p>
           </section>
 
@@ -87,8 +89,8 @@ export default function PrivacyPage() {
             </h2>
             <p>
               You may request access to, correction of, or deletion of your
-              personal data at any time by contacting us. If you are in the EU or
-              UK, you have additional rights under GDPR including data
+              personal data at any time by contacting us. If you are in the EU
+              or UK, you have additional rights under GDPR including data
               portability and the right to object to processing.
             </p>
           </section>
@@ -119,9 +121,9 @@ export default function PrivacyPage() {
               9. Changes to This Policy
             </h2>
             <p>
-              We may update this privacy policy from time to time. We will notify
-              you of any material changes by posting the updated policy on this
-              page and updating the &quot;Last updated&quot; date.
+              We may update this privacy policy from time to time. We will
+              notify you of any material changes by posting the updated policy
+              on this page and updating the &quot;Last updated&quot; date.
             </p>
           </section>
 

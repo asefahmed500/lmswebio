@@ -98,7 +98,7 @@ export default function GradingPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">To Grade</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">To Grade</h1>
         <p className="mt-1 text-muted-foreground">
           Review and grade student submissions that need your attention
         </p>
@@ -113,7 +113,7 @@ export default function GradingPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Clock className="text-warning size-5" />
+              <Clock className="size-5 text-warning" />
               <div className="text-2xl font-bold">{submissions.length}</div>
             </div>
           </CardContent>
@@ -126,7 +126,7 @@ export default function GradingPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <GraduationCap className="text-info size-5" />
+              <GraduationCap className="size-5 text-info" />
               <div className="text-2xl font-bold">
                 {new Set(submissions.map((s) => s.userId)).size}
               </div>
@@ -209,7 +209,7 @@ export default function GradingPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-warning gap-1">
+                      <Badge variant="outline" className="gap-1 text-warning">
                         <Clock className="size-3" />
                         Pending
                       </Badge>

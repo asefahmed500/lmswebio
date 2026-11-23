@@ -180,7 +180,7 @@ export default function AdminIntegrationsPage() {
         preview.
       </div>
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Integrations</h1>
         <p className="mt-1 text-muted-foreground">
           Connect third-party services to extend platform capabilities
         </p>

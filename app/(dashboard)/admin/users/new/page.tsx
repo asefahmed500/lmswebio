@@ -81,7 +81,7 @@ export default function NewUserPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Add User</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Add User</h1>
           <p className="mt-1 text-muted-foreground">
             Create a new platform user account
           </p>

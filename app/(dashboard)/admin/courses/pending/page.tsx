@@ -150,7 +150,9 @@ export default function AdminPendingCoursesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Pending Courses</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Pending Courses
+        </h1>
         <p className="mt-1 text-muted-foreground">
           Review and publish courses submitted by instructors
         </p>
@@ -182,7 +184,7 @@ export default function AdminPendingCoursesPage() {
       {filteredCourses.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <CheckCircle2 className="text-success mb-4 size-12" />
+            <CheckCircle2 className="mb-4 size-12 text-success" />
             <p className="text-lg font-medium">No pending courses</p>
             <p className="text-sm text-muted-foreground">
               {search || levelFilter !== "ALL"
@@ -251,9 +253,9 @@ export default function AdminPendingCoursesPage() {
                           disabled={publishingId === course.id}
                         >
                           {publishingId === course.id ? (
-                            <Loader2 className="text-success h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-success" />
                           ) : (
-                            <CheckCircle2 className="text-success h-3.5 w-3.5" />
+                            <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                           )}
                         </Button>
                         <Button

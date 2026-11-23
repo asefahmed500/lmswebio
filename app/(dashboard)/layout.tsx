@@ -1,4 +1,4 @@
-import { DashboardLayoutShell } from "@/components/dashboard/layout/dashboard-layout"
+import { AppShell } from "@/features/dashboard/layout/app-shell"
 import { ErrorBoundary } from "@/components/error-boundary"
 
 export default function DashboardLayout({
@@ -8,7 +8,7 @@ export default function DashboardLayout({
 }) {
   return (
     <ErrorBoundary>
-      <DashboardLayoutShell>{children}</DashboardLayoutShell>
+      <AppShell>{children}</AppShell>
     </ErrorBoundary>
   )
 }

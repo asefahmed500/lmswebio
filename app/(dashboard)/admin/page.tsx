@@ -64,7 +64,7 @@ function KPICardComponent({ kpi }: { kpi: KPICard }) {
         <div className="text-2xl font-bold">{kpi.value}</div>
         {kpi.change !== undefined && (
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-            {isPositive && <ArrowUpRight className="text-success size-3" />}
+            {isPositive && <ArrowUpRight className="size-3 text-success" />}
             {isNegative && (
               <ArrowDownRight className="size-3 text-destructive" />
             )}
@@ -95,8 +95,8 @@ function EnrollmentChart({ data }: { data: WeeklyEnrollment[] }) {
       {
         label: "New Enrollments",
         data: data.map((d) => d.enrollments),
-        borderColor: "hsl(var(--chart-1))",
-        backgroundColor: "hsl(var(--chart-1) / 0.1)",
+        borderColor: "var(--chart-1)",
+        backgroundColor: "color-mix(in srgb, var(--chart-1) 10%, transparent)",
         tension: 0.4,
         fill: true,
       },
@@ -247,7 +247,9 @@ export default function AdminDashboardPage() {
       )}
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Admin Dashboard
+        </h1>
         <p className="mt-1 text-muted-foreground">
           Overview of platform performance and user activity
         </p>

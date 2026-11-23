@@ -72,8 +72,8 @@ function LessonItem({
       disabled={isLocked}
       className={cn(
         "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
-        isActive && "bg-[var(--color-ink)] text-[var(--color-canvas)]",
-        !isActive && "hover:bg-[var(--color-soft-cloud)]",
+        isActive && "bg-[var(--foreground)] text-[var(--color-canvas)]",
+        !isActive && "hover:bg-[var(--muted)]",
         isLocked && "cursor-not-allowed opacity-30"
       )}
     >
@@ -85,7 +85,7 @@ function LessonItem({
             className={cn(
               "size-4",
               isActive
-                ? "text-[var(--color-success-bright)]"
+                ? "text-[var(--color-success)]"
                 : "text-[var(--color-success)]"
             )}
           />
@@ -98,7 +98,7 @@ function LessonItem({
         <div
           className={cn(
             "mt-0.5 flex items-center gap-2 text-[12px]",
-            isActive ? "text-white/60" : "text-[var(--color-mute)]"
+            isActive ? "text-white/60" : "text-[var(--muted-foreground)]"
           )}
         >
           <span>{lesson.contentType}</span>
@@ -235,7 +235,7 @@ export default function CoursePlayerPage() {
   if (isLoading)
     return (
       <div className="flex h-96 items-center justify-center">
-        <div className="size-8 animate-spin rounded-full border-2 border-[var(--color-ink)]/20 border-t-[var(--color-ink)]" />
+        <div className="size-8 animate-spin rounded-full border-2 border-[var(--foreground)]/20 border-t-[var(--foreground)]" />
       </div>
     )
   if (!course || !activeLesson)
@@ -243,7 +243,7 @@ export default function CoursePlayerPage() {
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
           <h3 className="mb-2 text-[24px] font-medium">Not found</h3>
-          <Button asChild className="nike-pill bg-[var(--color-ink)]">
+          <Button asChild className="rounded-md bg-[var(--foreground)]">
             <Link href="/student/courses/catalogue">Browse</Link>
           </Button>
         </div>
@@ -254,28 +254,34 @@ export default function CoursePlayerPage() {
     const tl = course.modules.reduce((s, m) => s + m.lessons.length, 0)
     return (
       <div className="mx-auto max-w-3xl p-6">
-        <Button variant="ghost" asChild className="nike-pill-sm mb-6">
+        <Button variant="ghost" asChild className="mb-6 rounded-md">
           <Link href="/student/courses/catalogue">
             <ChevronLeft /> Catalogue
           </Link>
         </Button>
         <div className="text-center">
           <h1 className="mb-3 text-[32px] font-medium">{course.title}</h1>
-          <p className="mb-8 text-[var(--color-mute)]">{course.description}</p>
+          <p className="mb-8 text-[var(--muted-foreground)]">
+            {course.description}
+          </p>
           <div className="mx-auto mb-8 grid max-w-sm grid-cols-2 gap-4">
             <div>
               <p className="text-[32px] font-medium">{course.modules.length}</p>
-              <p className="text-[14px] text-[var(--color-mute)]">Modules</p>
+              <p className="text-[14px] text-[var(--muted-foreground)]">
+                Modules
+              </p>
             </div>
             <div>
               <p className="text-[32px] font-medium">{tl}</p>
-              <p className="text-[14px] text-[var(--color-mute)]">Lessons</p>
+              <p className="text-[14px] text-[var(--muted-foreground)]">
+                Lessons
+              </p>
             </div>
           </div>
           <Button
             onClick={handleEnrol}
             disabled={isEnrolling}
-            className="nike-pill min-w-[200px] bg-[var(--color-ink)] text-[var(--color-canvas)]"
+            className="min-w-[200px] rounded-md bg-[var(--foreground)] text-[var(--color-canvas)]"
           >
             {isEnrolling ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
@@ -291,19 +297,19 @@ export default function CoursePlayerPage() {
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
-      <div className="border-b border-[var(--color-hairline)] p-5">
+      <div className="border-b border-[var(--border)] p-5">
         <h3 className="text-[16px] font-medium">{course.title}</h3>
-        <p className="mt-1 text-[14px] text-[var(--color-mute)]">
+        <p className="mt-1 text-[14px] text-[var(--muted-foreground)]">
           {course.modules.length} modules · {totalLessons} lessons
         </p>
         <div className="mt-4">
           <div className="mb-1.5 flex justify-between text-[14px]">
-            <span className="text-[var(--color-mute)]">Progress</span>
+            <span className="text-[var(--muted-foreground)]">Progress</span>
             <span className="font-medium">{Math.round(progress)}%</span>
           </div>
-          <div className="h-[3px] bg-[var(--color-soft-cloud)]">
+          <div className="h-[3px] bg-[var(--muted)]">
             <div
-              className="h-full bg-[var(--color-ink)]"
+              className="h-full bg-[var(--foreground)]"
               style={{ width: `${Math.round(progress)}%` }}
             />
           </div>
@@ -313,7 +319,7 @@ export default function CoursePlayerPage() {
         <div className="flex flex-col">
           {course.modules.map((mod, mi) => (
             <div key={mod.id}>
-              <div className="px-5 pt-5 pb-2 text-[12px] font-medium tracking-wider text-[var(--color-mute)] uppercase">
+              <div className="px-5 pt-5 pb-2 text-xs font-medium text-[var(--muted-foreground)]">
                 {String(mi + 1).padStart(2, "0")} — {mod.title}
               </div>
               {mod.lessons.map((l) => (
@@ -337,7 +343,7 @@ export default function CoursePlayerPage() {
     <div className="h-[calc(100vh-8rem)]">
       <div className="flex h-full">
         {!isMobile && (
-          <aside className="w-80 shrink-0 border-r border-[var(--color-hairline)]">
+          <aside className="w-80 shrink-0 border-r border-[var(--border)]">
             {sidebarContent}
           </aside>
         )}
@@ -346,7 +352,8 @@ export default function CoursePlayerPage() {
             <SheetTrigger asChild>
               <Button
                 size="icon"
-                className="fixed right-4 bottom-4 z-50 size-12 rounded-full border-0 bg-[var(--color-ink)] text-[var(--color-canvas)] shadow-none"
+                className="fixed right-4 bottom-4 z-50 size-12 rounded-full border-0 bg-[var(--foreground)] text-[var(--color-canvas)] shadow-none"
+                aria-label="Open menu"
               >
                 {sidebarOpen ? <X /> : <Menu />}
               </Button>
@@ -362,14 +369,14 @@ export default function CoursePlayerPage() {
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto flex max-w-4xl flex-col gap-8 p-6 sm:p-8">
             <div>
-              <span className="text-[14px] font-medium tracking-wide text-[var(--color-mute)] uppercase">
+              <span className="text-[14px] font-medium text-[var(--muted-foreground)]">
                 {activeLesson.contentType}
               </span>
-              <h1 className="mt-2 text-[32px] leading-tight font-medium text-[var(--color-ink)]">
+              <h1 className="mt-2 text-[32px] leading-tight font-medium text-[var(--foreground)]">
                 {activeLesson.title}
               </h1>
               {activeLesson.duration && (
-                <p className="mt-2 flex items-center gap-1 text-[14px] text-[var(--color-mute)]">
+                <p className="mt-2 flex items-center gap-1 text-[14px] text-[var(--muted-foreground)]">
                   <Clock className="size-3" />
                   {activeLesson.duration} minutes
                 </p>
@@ -377,7 +384,7 @@ export default function CoursePlayerPage() {
             </div>
 
             {activeLesson.contentType === "video" && activeLesson.content ? (
-              <div className="aspect-video overflow-hidden bg-[var(--color-ink)]">
+              <div className="aspect-video overflow-hidden bg-[var(--foreground)]">
                 <iframe
                   src={activeLesson.content}
                   className="h-full w-full"
@@ -387,34 +394,34 @@ export default function CoursePlayerPage() {
               </div>
             ) : activeLesson.contentType === "text" && activeLesson.content ? (
               <div
-                className="prose prose-sm prose-headings:font-medium prose-a:underline prose-a:text-[var(--color-ink)] max-w-none"
+                className="prose prose-sm prose-headings:font-medium prose-a:underline prose-a:text-[var(--foreground)] max-w-none"
                 dangerouslySetInnerHTML={{
                   __html: sanitizeHtml(activeLesson.content),
                 }}
               />
             ) : (
-              <div className="py-12 text-center text-[var(--color-mute)]">
+              <div className="py-12 text-center text-[var(--muted-foreground)]">
                 <p className="text-[16px]">
                   No content available for this lesson.
                 </p>
               </div>
             )}
 
-            <div className="flex items-center justify-between border-t border-[var(--color-hairline)] pt-4">
+            <div className="flex items-center justify-between border-t border-[var(--border)] pt-4">
               <Button
                 variant="outline"
                 onClick={() => navigate("prev")}
-                className="nike-pill-sm border-[var(--color-hairline)]"
+                className="rounded-md border-[var(--border)]"
               >
                 <ChevronLeft /> Previous
               </Button>
               <Button
                 onClick={() => handleComplete(activeLesson.id)}
                 className={cn(
-                  "nike-pill-sm",
+                  "rounded-md",
                   isCompleted
-                    ? "border border-[var(--color-hairline)] bg-transparent text-[var(--color-ink)]"
-                    : "bg-[var(--color-ink)] text-[var(--color-canvas)]"
+                    ? "border border-[var(--border)] bg-transparent text-[var(--foreground)]"
+                    : "bg-[var(--foreground)] text-[var(--color-canvas)]"
                 )}
               >
                 {isCompleted ? (
@@ -429,7 +436,7 @@ export default function CoursePlayerPage() {
               </Button>
               <Button
                 onClick={() => navigate("next")}
-                className="nike-pill-sm bg-[var(--color-ink)] text-[var(--color-canvas)]"
+                className="rounded-md bg-[var(--foreground)] text-[var(--color-canvas)]"
               >
                 Next <ChevronRight />
               </Button>

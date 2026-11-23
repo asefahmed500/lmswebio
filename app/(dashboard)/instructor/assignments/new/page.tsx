@@ -69,7 +69,10 @@ export default function NewAssignmentPage() {
     setIsSubmitting(true)
     setError(null)
     try {
-      const res = await apiPost("/assignments", data as unknown as Record<string, unknown>)
+      const res = await apiPost(
+        "/assignments",
+        data as unknown as Record<string, unknown>
+      )
       if (res.error) throw new Error(res.error)
       router.push("/instructor/assignments")
     } catch (err) {
@@ -85,13 +88,13 @@ export default function NewAssignmentPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Action">
           <Link href="/instructor/assignments">
             <ArrowLeft />
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Create New Assignment
           </h1>
           <p className="mt-1 text-muted-foreground">

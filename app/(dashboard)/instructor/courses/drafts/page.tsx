@@ -104,7 +104,7 @@ export default function InstructorDraftsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Drafts</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Drafts</h1>
           <p className="mt-1 text-muted-foreground">
             Unpublished courses ready to be finished and published
           </p>

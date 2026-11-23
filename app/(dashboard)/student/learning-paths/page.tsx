@@ -7,7 +7,7 @@
 
 import * as React from "react"
 import { TrendingUp, BookOpen, Clock, Users } from "lucide-react"
-import { LearningPathCard } from "@/components/learning-paths/learning-path-card"
+import { LearningPathCard } from "@/features/gamification/learning-path-card"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Select,
@@ -117,7 +117,9 @@ export default function StudentLearningPathsPage() {
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Learning Paths</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Learning Paths
+          </h1>
           <p className="mt-1 text-muted-foreground">
             Structured course sequences for your learning journey
           </p>
@@ -132,7 +134,9 @@ export default function StudentLearningPathsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Learning Paths</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Learning Paths
+          </h1>
           <p className="mt-1 text-muted-foreground">
             Structured course sequences for your learning journey
           </p>
@@ -154,8 +158,8 @@ export default function StudentLearningPathsPage() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="bg-success/10 rounded-full p-3">
-              <BookOpen className="text-success size-5" />
+            <div className="rounded-full bg-success/10 p-3">
+              <BookOpen className="size-5 text-success" />
             </div>
             <div>
               <p className="text-xl font-bold">{enrolledPaths.size}</p>
@@ -165,8 +169,8 @@ export default function StudentLearningPathsPage() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="bg-info/10 rounded-full p-3">
-              <Clock className="text-info size-5" />
+            <div className="rounded-full bg-info/10 p-3">
+              <Clock className="size-5 text-info" />
             </div>
             <div>
               <p className="text-xl font-bold">

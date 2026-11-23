@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { BookOpen, Search } from "lucide-react"
-import { CourseCard } from "@/components/course/course-card"
+import { CourseCard } from "@/features/courses/course-card"
 import { SynexNavbar } from "@/components/synex/Navbar"
 import { HomepageFooter } from "@/components/homepage/homepage-footer"
 import { useAuth } from "@/components/auth-provider"
@@ -26,13 +26,26 @@ export default function PublicCoursesPage() {
   const { isAuthenticated } = useAuth()
   const [courses, setCourses] = React.useState<ApiCourse[]>([])
   const [loading, setLoading] = React.useState(true)
-  const [search, setSearch] = React.useState(() => {
+
+  // Two values: `searchDraft` is the controlled input, `search` is the applied
+  // query the fetch effect depends on. Previously the input wrote straight into
+  // `search` while the effect's dependency array was `[page, category, level]`
+  // and handleSearch only called setPage(1) — so on page 1 React bailed on the
+  // identical state and never refetched. Typing in the search box did nothing.
+  //
+  // ?q= / ?search= on the URL seeds both values, so a link from the command
+  // palette or navbar lands on a filtered catalogue. A lazy initializer is used
+  // rather than an effect because an effect calling setState synchronously
+  // triggers a cascading render.
+  function initialSearchFromUrl(): string {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
       return params.get("q") || params.get("search") || ""
     }
     return ""
-  })
+  }
+  const [searchDraft, setSearchDraft] = React.useState(initialSearchFromUrl)
+  const [search, setSearch] = React.useState(initialSearchFromUrl)
   const [category, setCategory] = React.useState("all")
   const [level, setLevel] = React.useState("all")
   const [page, setPage] = React.useState(1)
@@ -71,9 +84,16 @@ export default function PublicCoursesPage() {
       }
     }
     load()
-  }, [page, category, level])
+  }, [page, category, level, search])
 
-  function handleSearch() {
+  // Adopt ?q= / ?search= from the URL on first mount, so a link from the
+  // command palette or navbar lands on a filtered catalogue. This is a lazy
+  // state initializer rather than an effect: an effect calling setState
+  // synchronously triggers a cascading render, which the React Compiler lint
+  // rejects.
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    setSearch(searchDraft.trim())
     setPage(1)
   }
 
@@ -81,7 +101,7 @@ export default function PublicCoursesPage() {
     <div className="flex min-h-screen flex-col bg-canvas">
       <SynexNavbar />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="border-b border-graphite/10 py-12">
           <div className="mx-auto max-w-[1280px] px-5">
             <div className="mb-8">
@@ -99,10 +119,12 @@ export default function PublicCoursesPage() {
                 <input
                   type="text"
                   placeholder="Search courses..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="h-11 w-full rounded-xl border border-graphite/15 bg-chalk pr-4 pl-10 font-visueltpro text-sm font-light text-void-black transition-colors outline-none placeholder:text-smoke focus:border-graphite/30"
+                  value={searchDraft}
+                  onChange={(e) => setSearchDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSearch(e)
+                  }}
+                  className="h-9 w-full rounded-md border border-graphite/15 bg-chalk pr-3 pl-9 font-visueltpro text-sm text-void-black transition-colors outline-none placeholder:text-smoke focus:border-graphite/30"
                 />
               </div>
               <select
@@ -111,7 +133,7 @@ export default function PublicCoursesPage() {
                   setCategory(e.target.value)
                   setPage(1)
                 }}
-                className="h-11 rounded-xl border border-graphite/15 bg-chalk px-4 font-visueltpro text-sm font-light text-graphite outline-none focus:border-graphite/30"
+                className="h-9 rounded-md border border-graphite/15 bg-chalk px-4 font-visueltpro text-sm font-light text-graphite outline-none focus:border-graphite/30"
               >
                 <option value="all">All Categories</option>
                 {categories.map((cat) => (
@@ -126,7 +148,7 @@ export default function PublicCoursesPage() {
                   setLevel(e.target.value)
                   setPage(1)
                 }}
-                className="h-11 rounded-xl border border-graphite/15 bg-chalk px-4 font-visueltpro text-sm font-light text-graphite outline-none focus:border-graphite/30"
+                className="h-9 rounded-md border border-graphite/15 bg-chalk px-4 font-visueltpro text-sm font-light text-graphite outline-none focus:border-graphite/30"
               >
                 <option value="all">All Levels</option>
                 <option value="BEGINNER">Beginner</option>
@@ -134,8 +156,9 @@ export default function PublicCoursesPage() {
                 <option value="ADVANCED">Advanced</option>
               </select>
               <button
+                type="button"
                 onClick={handleSearch}
-                className="rounded-[9999px] bg-void-black px-6 py-2.5 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
+                className="h-9 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
               >
                 Search
               </button>
@@ -174,12 +197,13 @@ export default function PublicCoursesPage() {
               {(search || category !== "all" || level !== "all") && (
                 <button
                   onClick={() => {
+                    setSearchDraft("")
                     setSearch("")
                     setCategory("all")
                     setLevel("all")
                     setPage(1)
                   }}
-                  className="mt-4 rounded-[9999px] border border-graphite/20 px-5 py-2 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/40"
+                  className="mt-4 rounded-md border border-graphite/20 px-3 py-1.5 font-visueltpro text-sm text-graphite transition-colors hover:border-graphite/40"
                 >
                   Clear Filters
                 </button>

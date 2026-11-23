@@ -27,8 +27,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   })
 
+  /**
+   * Guards against a stale session read overwriting a fresh authentication.
+   *
+   * The mount-time `fetchSession()` calls /api/auth/me and then
+   * /api/auth/refresh. If the user submits the login form before that chain
+   * finishes, `login()` writes the authenticated state first, and then the
+   * still-in-flight `fetchSession` — whose refresh request was issued *before*
+   * the login cookies existed, so it 401s — overwrites it back to
+   * `{ user: null }`. AppShell then redirects to /login, bouncing the user out
+   * immediately after a successful sign-in.
+   *
+   * `login`/`register`/`logout` bump this counter; every write inside
+   * `fetchSession` is skipped when its captured sequence is no longer current.
+   */
+  const authSeq = React.useRef(0)
+
+  const isStale = React.useCallback(
+    (seq: number) => seq !== authSeq.current,
+    []
+  )
+
   React.useEffect(() => {
     const controller = new AbortController()
+    const seq = authSeq.current
 
     async function fetchSession() {
       try {
@@ -36,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           signal: controller.signal,
         })
         const data = await res.json()
+        if (isStale(seq) || controller.signal.aborted) return
         if (data.user) {
           setAuthState({
             user: data.user,
@@ -54,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
       } catch {
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && !isStale(seq)) {
           setAuthState({
             user: null,
             isAuthenticated: false,
@@ -70,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           signal: controller.signal,
         })
         const refreshData = await refreshRes.json()
+        if (isStale(seq) || controller.signal.aborted) return
         if (refreshData.user) {
           setAuthState({
             user: refreshData.user,
@@ -80,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch {}
 
+      if (isStale(seq) || controller.signal.aborted) return
       setAuthState({
         user: null,
         isAuthenticated: false,
@@ -92,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       controller.abort()
     }
-  }, [])
+  }, [isStale])
 
   const login = React.useCallback(
     async (
@@ -112,6 +137,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return { success: false, error: data.error || "Login failed" }
         }
 
+        // Invalidate any in-flight mount-time session read before writing.
+        authSeq.current += 1
         setAuthState({
           user: data.user,
           isAuthenticated: true,
@@ -148,6 +175,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        // Invalidate any in-flight mount-time session read before writing.
+        authSeq.current += 1
         setAuthState({
           user: data.user,
           isAuthenticated: true,
@@ -156,7 +185,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         return { success: true, user: data.user }
       } catch {
-        return { success: false, error: "An error occurred during registration" }
+        return {
+          success: false,
+          error: "An error occurred during registration",
+        }
       }
     },
     []
@@ -169,6 +201,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     invalidateCSRFToken()
 
+    // Drop any in-flight session read so it cannot resurrect a logged-out user.
+    authSeq.current += 1
     setAuthState({
       user: null,
       isAuthenticated: false,
@@ -177,6 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const setUser = React.useCallback((user: User | null) => {
+    authSeq.current += 1
     setAuthState({
       user,
       isAuthenticated: !!user,

@@ -8,12 +8,7 @@ import {
   Shield,
   Clock,
   GraduationCap,
-  Star,
-  Building2,
   BarChart3,
-  Globe,
-  Headphones,
-  Lock,
   Award,
   CheckCircle2,
   Play,
@@ -21,6 +16,9 @@ import {
   Calendar,
   Settings,
   TrendingUp,
+  Users,
+  ClipboardCheck,
+  MessageCircle,
   Circle,
 } from "lucide-react"
 import {
@@ -30,7 +28,7 @@ import {
   useMotionValue,
   useTransform,
 } from "framer-motion"
-import { CourseCard } from "@/components/course/course-card"
+import { CourseCard } from "@/features/courses/course-card"
 import type { HomepageStats } from "@/types/homepage"
 
 interface ApiCourse {
@@ -77,108 +75,133 @@ function AnimatedCounter({
   )
 }
 
-const testimonials = [
+/**
+ * Seeded demo accounts (prisma/seed.ts).
+ *
+ * This replaces a set of invented testimonials. The previous version attributed
+ * quotes and metrics ("500+ employees", "onboarding dropped 40%") to named
+ * people at companies that do not exist, which is fabricated endorsement and
+ * cannot ship. Pointing a visitor at real, working credentials is both honest
+ * and more useful.
+ */
+const demoAccounts = [
   {
-    quote:
-      "LMSio transformed how our team upskills. The structured paths and certificates gave us a clear way to measure growth.",
-    name: "Sarah Chen",
-    role: "VP of Engineering, TechForward",
+    role: "Student",
+    email: "student@lms.com",
+    password: "Student123!",
+    blurb:
+      "Browse the catalogue, enrol in a course, take a quiz and submit an assignment.",
   },
   {
-    quote:
-      "I went from junior developer to team lead in 8 months. The instructors are world-class and the curriculum is laser-focused.",
-    name: "Marcus Johnson",
-    role: "Engineering Lead, DataSphere",
+    role: "Instructor",
+    email: "instructor@lms.com",
+    password: "Instructor123!",
+    blurb:
+      "Create a course, publish it, add modules and lessons, and grade submissions.",
   },
   {
-    quote:
-      "We rolled out LMSio to 500+ employees. Onboarding time dropped 40% and satisfaction scores hit an all-time high.",
-    name: "Priya Patel",
-    role: "CLO, GlobalEdge Corp.",
+    role: "Admin",
+    email: "admin@lms.com",
+    password: "Admin123!",
+    blurb:
+      "Approve courses, manage users and roles, and read platform analytics.",
   },
 ]
 
-const enterpriseFeatures = [
+/**
+ * Platform capabilities, all of which are implemented.
+ *
+ * The previous list advertised white-label branding, custom domains, SSO,
+ * "SOC 2 compliance" and a dedicated account manager. None of those exist in
+ * this codebase — each string appeared exactly once, here, and nowhere else.
+ * Every entry below maps to a feature that is actually built.
+ */
+const platformCapabilities = [
   {
-    icon: Building2,
-    title: "Team Management",
-    desc: "Assign courses, track team progress, and manage licenses from a single dashboard.",
+    icon: BookOpen,
+    title: "Course catalogue",
+    desc: "Publish priced or free courses with modules, lessons, tags and categories.",
   },
   {
-    icon: BarChart3,
-    title: "Advanced Analytics",
-    desc: "Real-time reporting on completion rates, skill gaps, and ROI per department.",
+    icon: Users,
+    title: "Role-based access",
+    desc: "Separate student, instructor and admin workspaces, enforced in middleware.",
   },
   {
-    icon: Globe,
-    title: "Custom Branding",
-    desc: "White-label the platform with your company logo, colors, and custom domain.",
-  },
-  {
-    icon: Headphones,
-    title: "Dedicated Support",
-    desc: "Priority 24/7 support with a dedicated account manager for your organization.",
-  },
-  {
-    icon: Lock,
-    title: "Enterprise Security",
-    desc: "SSO integration, SOC 2 compliance, and role-based access control built in.",
+    icon: ClipboardCheck,
+    title: "Quizzes and grading",
+    desc: "Timed quizzes with auto-scoring, plus assignments with a manual grading queue.",
   },
   {
     icon: Award,
-    title: "Custom Learning Paths",
-    desc: "Build tailored curricula aligned to your organization's competency frameworks.",
+    title: "Certificates",
+    desc: "Issued on course completion, each with a publicly verifiable ID.",
+  },
+  {
+    icon: BarChart3,
+    title: "Progress analytics",
+    desc: "Per-course completion, aggregate progress, and platform-level enrolment trends.",
+  },
+  {
+    icon: MessageCircle,
+    title: "Course community",
+    desc: "Threaded discussions with nested replies and up or down voting.",
   },
 ]
 
+/**
+ * The real commerce model.
+ *
+ * Courses are priced individually by the instructor. Checkout creates a
+ * one-time Stripe payment (`mode: "payment"`) per course — there is no
+ * subscription, no seat-based tier and no trial anywhere in the codebase. The
+ * previous table advertised a $29/month "Pro" subscription, a free trial, a
+ * "Contact sales" enterprise plan and offline downloads, none of which exist.
+ */
 const pricingTiers = [
   {
-    name: "Starter",
+    name: "Free courses",
     price: "Free",
     period: "",
-    desc: "For individual learners getting started.",
+    desc: "Any course an instructor publishes with no price set.",
     features: [
-      "Access to free courses",
-      "Basic progress tracking",
-      "Community forums",
-      "Email support",
+      "Full enrolment and progress tracking",
+      "Quizzes with auto-scoring",
+      "Assignments and feedback",
+      "Verifiable certificate on completion",
     ],
-    cta: "Get started free",
-    href: "/register",
+    cta: "Browse free courses",
+    href: "/courses",
     featured: false,
   },
   {
-    name: "Pro",
-    price: "$29",
-    period: "/mo",
-    desc: "For professionals serious about growth.",
+    name: "Paid courses",
+    price: "One-time",
+    period: "",
+    desc: "A single payment per course, set by the instructor.",
     features: [
-      "Unlimited course access",
-      "Verified certificates",
-      "Offline downloads",
-      "Priority support",
-      "Learning paths",
-      "Skill assessments",
+      "Everything in free courses",
+      "One-time Stripe checkout",
+      "Enrolment on confirmed payment",
+      "Payment history in your account",
     ],
-    cta: "Start free trial",
-    href: "/register",
+    cta: "Browse the catalogue",
+    href: "/courses",
     featured: true,
   },
   {
-    name: "Enterprise",
-    price: "Custom",
+    name: "Sell your own",
+    price: "Set by you",
     period: "",
-    desc: "For teams and organizations that scale.",
+    desc: "Instructor accounts can create and publish courses.",
     features: [
-      "Everything in Pro",
-      "Team analytics dashboard",
-      "Custom learning paths",
-      "SSO & integrations",
-      "Dedicated account manager",
-      "SLA guarantee",
+      "Create courses, modules and lessons",
+      "Set your own price per course",
+      "Grade submissions and review attempts",
+      "Per-course completion analytics",
     ],
-    cta: "Contact sales",
-    href: "#",
+    cta: "Create an account",
+    href: "/register",
     featured: false,
   },
 ]
@@ -233,8 +256,8 @@ const categories = [
 const features = [
   {
     icon: GraduationCap,
-    title: "Expert Instructors",
-    desc: "Learn from industry leaders with real-world experience and proven track records.",
+    title: "Instructor profiles",
+    desc: "Instructors publish courses with bio, expertise and aggregated learner reviews.",
   },
   {
     icon: BookOpen,
@@ -244,12 +267,12 @@ const features = [
   {
     icon: Clock,
     title: "Self-Paced Learning",
-    desc: "No deadlines. Learn on your schedule with lifetime access to every course.",
+    desc: "Work through modules and lessons at your own pace, with progress saved as you go.",
   },
   {
     icon: Shield,
     title: "Verified Certificates",
-    desc: "Earn recognized credentials that showcase your expertise to employers.",
+    desc: "Completing a course issues a certificate with a public verification ID.",
   },
 ]
 
@@ -291,7 +314,6 @@ export function HomepageContent() {
               value={stats.totalInstructors}
               label="Instructors"
             />
-            <AnimatedCounter value="4.9" label="Avg. rating" />
           </div>
         </div>
       </section>
@@ -349,7 +371,7 @@ export function HomepageContent() {
           <div className="mt-10 text-center">
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 rounded-full border border-graphite/15 bg-chalk px-5 py-2.5 font-visueltpro text-sm font-medium text-void-black transition-colors hover:border-graphite/30"
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-graphite/15 bg-chalk px-5 py-2.5 font-visueltpro text-sm font-medium text-void-black transition-colors hover:border-graphite/30"
             >
               View all courses <ArrowRight className="size-3.5" />
             </Link>
@@ -371,7 +393,7 @@ export function HomepageContent() {
               <Link
                 key={cat}
                 href={`/courses?category=${cat.toLowerCase()}`}
-                className="rounded-full border border-graphite/10 bg-chalk px-4 py-2 font-visueltpro text-sm font-light text-graphite transition-all hover:border-graphite/25 hover:bg-void-black hover:text-chalk"
+                className="rounded-md border border-graphite/10 bg-chalk px-3 font-visueltpro text-sm font-light text-graphite transition-all hover:border-graphite/25 hover:bg-void-black hover:text-chalk"
               >
                 {cat}
               </Link>
@@ -396,7 +418,7 @@ export function HomepageContent() {
                   key={item.title}
                   className="rounded-xl border border-graphite/10 bg-chalk p-7"
                 >
-                  <div className="mb-5 flex size-10 items-center justify-center rounded-full bg-void-black">
+                  <div className="mb-5 flex size-8 items-center justify-center rounded-md bg-void-black">
                     <Icon className="size-4 text-chalk" />
                   </div>
                   <h3 className="mb-2 font-visueltpro text-[18px] font-medium tracking-[-0.01em] text-void-black">
@@ -467,7 +489,7 @@ export function HomepageContent() {
 
                 <div className="border-t border-graphite/8 p-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex size-7 items-center justify-center rounded-full bg-graphite/10">
+                    <div className="flex size-7 items-center justify-center rounded-md bg-graphite/10">
                       <span className="font-visueltpro text-[10px] font-medium text-graphite">
                         JD
                       </span>
@@ -477,7 +499,7 @@ export function HomepageContent() {
                         John Doe
                       </div>
                       <div className="font-visueltpro text-[10px] font-light text-smoke">
-                        Pro Plan
+                        Enrolled course
                       </div>
                     </div>
                   </div>
@@ -495,7 +517,7 @@ export function HomepageContent() {
                       Continue where you left off
                     </div>
                   </div>
-                  <div className="rounded-full bg-canvas px-3 py-1 font-visueltpro text-[10px] font-medium tracking-[0.04em] text-graphite uppercase">
+                  <div className="rounded bg-canvas px-2 py-0.5 font-visueltpro text-[10px] font-medium tracking-[0.04em] text-graphite uppercase">
                     This week
                   </div>
                 </div>
@@ -583,7 +605,7 @@ export function HomepageContent() {
                                   {d.type}
                                 </div>
                               </div>
-                              <span className="shrink-0 rounded-full bg-chalk px-2 py-0.5 font-visueltpro text-[10px] font-medium text-graphite">
+                              <span className="shrink-0 rounded bg-chalk px-2 py-0.5 font-visueltpro text-[10px] font-medium text-graphite">
                                 {d.date}
                               </span>
                             </div>
@@ -622,7 +644,7 @@ export function HomepageContent() {
           <div className="mt-8 text-center">
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-full bg-void-black px-5 py-2.5 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
             >
               Try it yourself <ArrowRight className="size-3.5" />
             </Link>
@@ -630,88 +652,100 @@ export function HomepageContent() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="py-20">
+      {/* TRY IT — real seeded accounts, replacing invented testimonials */}
+      <section id="try-it" className="py-20">
         <div className="mx-auto max-w-[1280px] px-5">
-          <div className="mb-12 text-center">
+          <div className="mb-12 max-w-2xl">
             <h2 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
-              Trusted by learners & leaders
+              Log in and try it
             </h2>
+            <p className="mt-3 font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
+              The seed script creates one account per role. Sign in as any of
+              them to see the workspace that role actually gets.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            {testimonials.map((t) => (
+            {demoAccounts.map((account) => (
               <div
-                key={t.name}
-                className="rounded-xl border border-graphite/10 bg-chalk p-6"
+                key={account.role}
+                className="flex flex-col rounded-xl border border-graphite/10 bg-chalk p-6"
               >
-                <div className="mb-4 flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="size-3.5 fill-void-black text-void-black"
-                    />
-                  ))}
-                </div>
-                <p className="mb-5 font-visueltpro text-sm leading-[1.6] font-light text-graphite">
-                  &ldquo;{t.quote}&rdquo;
+                <h3 className="mb-4 font-visueltpro text-[11px] font-medium tracking-[0.08em] text-smoke uppercase">
+                  {account.role}
+                </h3>
+                <dl className="mb-4 flex flex-col gap-1 font-mono text-[13px]">
+                  <div className="flex items-baseline gap-2">
+                    <dt className="w-14 shrink-0 text-smoke">email</dt>
+                    <dd className="text-graphite select-all">
+                      {account.email}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <dt className="w-14 shrink-0 text-smoke">password</dt>
+                    <dd className="text-graphite select-all">
+                      {account.password}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-auto font-visueltpro text-sm leading-[1.6] font-light text-graphite">
+                  {account.blurb}
                 </p>
-                <div className="border-t border-graphite/8 pt-3">
-                  <div className="font-visueltpro text-sm font-medium text-void-black">
-                    {t.name}
-                  </div>
-                  <div className="font-visueltpro text-xs font-light text-smoke">
-                    {t.role}
-                  </div>
-                </div>
               </div>
             ))}
+          </div>
+          <div className="mt-8">
+            <Link
+              href="/login"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
+            >
+              Go to sign in <ArrowRight className="size-3.5" />
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ENTERPRISE */}
+      {/* WHAT'S BUILT */}
       <section id="enterprise" className="py-20">
         <div className="mx-auto max-w-[1280px] px-5">
-          <div className="mb-6 text-center">
-            <span className="inline-flex rounded-full border border-graphite/15 px-3 py-1 font-visueltpro text-[10px] font-medium tracking-[0.08em] text-smoke uppercase">
-              Enterprise
+          <div className="mb-6">
+            <span className="inline-flex rounded border border-graphite/15 px-2.5 py-0.5 font-visueltpro text-[10px] font-medium tracking-[0.08em] text-smoke uppercase">
+              Built in
             </span>
           </div>
-          <h2 className="mb-3 text-center font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
-            Built for teams that scale
+          <h2 className="mb-3 font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
+            What you actually get
           </h2>
-          <p className="mx-auto mb-14 max-w-lg text-center font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
-            Equip your entire organization with the skills to compete. LMSio
-            Enterprise gives you the tools to manage, measure, and maximize
-            learning at scale.
+          <p className="mb-14 max-w-lg font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
+            Every feature below is implemented in this codebase and reachable
+            from the three demo accounts.
           </p>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {enterpriseFeatures.map((item) => {
+            {platformCapabilities.map((item) => {
               const Icon = item.icon
               return (
                 <div
                   key={item.title}
                   className="rounded-xl border border-graphite/10 bg-chalk p-6"
                 >
-                  <div className="mb-4 flex size-9 items-center justify-center rounded-full bg-void-black">
+                  <div className="mb-4 flex size-8 items-center justify-center rounded-md bg-void-black">
                     <Icon className="size-3.5 text-chalk" />
                   </div>
                   <h3 className="mb-1.5 font-visueltpro text-[16px] font-medium tracking-[-0.01em] text-void-black">
                     {item.title}
                   </h3>
-                  <p className="font-visueltpro text-sm leading-[1.6] font-light text-smoke">
+                  <p className="font-visueltpro text-sm leading-[1.6] font-light text-graphite">
                     {item.desc}
                   </p>
                 </div>
               )
             })}
           </div>
-          <div className="mt-10 text-center">
+          <div className="mt-10">
             <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 rounded-full bg-void-black px-5 py-2.5 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
+              href="/register"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
             >
-              Request a demo <ArrowRight className="size-3.5" />
+              Create an account <ArrowRight className="size-3.5" />
             </Link>
           </div>
         </div>
@@ -722,10 +756,11 @@ export function HomepageContent() {
         <div className="mx-auto max-w-[1280px] px-5">
           <div className="mb-14 text-center">
             <h2 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
-              Simple pricing
+              Course pricing
             </h2>
             <p className="mx-auto mt-3 max-w-md font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
-              Start free. Upgrade when you need more.
+              Free or paid, per course. Instructors set the price; there is no
+              subscription.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -791,7 +826,7 @@ export function HomepageContent() {
                 </ul>
                 <Link
                   href={tier.href}
-                  className={`mt-auto flex w-full items-center justify-center rounded-full px-5 py-2.5 font-visueltpro text-sm font-medium transition-opacity hover:opacity-90 ${
+                  className={`mt-auto flex h-9 w-full items-center justify-center rounded-md px-3 font-visueltpro text-sm font-medium transition-opacity hover:opacity-90 ${
                     tier.featured
                       ? "bg-chalk text-void-black"
                       : "bg-void-black text-chalk"
@@ -812,19 +847,20 @@ export function HomepageContent() {
             Ready to start learning?
           </h2>
           <p className="mx-auto mt-3 mb-10 max-w-md font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
-            Join {stats.totalStudents}+ learners who have already chosen to grow
-            with LMSio.
+            {stats.totalCourses > 0
+              ? `${stats.totalCourses} courses, taught and tracked end to end.`
+              : "Create an account and start publishing or learning."}
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-full bg-void-black px-7 py-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
             >
               Create free account <ArrowRight className="size-3.5" />
             </Link>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 rounded-full border border-graphite/15 px-7 py-3 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/30"
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-graphite/15 px-3 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/30"
             >
               Sign in
             </Link>

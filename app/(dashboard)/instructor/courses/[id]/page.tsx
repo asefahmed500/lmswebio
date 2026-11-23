@@ -167,13 +167,13 @@ export default function InstructorCourseDetailPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="Action">
             <Link href="/instructor/courses">
               <ArrowLeft />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight">
               {course.title}
             </h1>
             <p className="mt-1 text-muted-foreground">

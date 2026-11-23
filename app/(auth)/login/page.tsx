@@ -81,7 +81,7 @@ export default function LoginPage() {
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="email"
-                className="text-xs font-medium tracking-normal normal-case text-graphite"
+                className="text-xs font-medium tracking-normal text-graphite normal-case"
               >
                 Email address
               </Label>
@@ -104,7 +104,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <Label
                   htmlFor="password"
-                  className="text-xs font-medium tracking-normal normal-case text-graphite"
+                  className="text-xs font-medium tracking-normal text-graphite normal-case"
                 >
                   Password
                 </Label>
@@ -141,7 +141,7 @@ export default function LoginPage() {
               />
               <Label
                 htmlFor="remember"
-                className="cursor-pointer text-sm font-normal tracking-normal normal-case text-graphite"
+                className="cursor-pointer text-sm font-normal tracking-normal text-graphite normal-case"
               >
                 Remember me
               </Label>
@@ -150,7 +150,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               size="lg"
-              className="mt-1 h-12 w-full rounded-lg tracking-wide"
+              className="mt-1 h-10 w-full rounded-lg tracking-wide"
               disabled={isLoading}
             >
               {isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}

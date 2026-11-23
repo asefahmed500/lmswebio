@@ -7,7 +7,7 @@
 
 import * as React from "react"
 import { Clock, MapPin, Users, Check } from "lucide-react"
-import { CalendarView } from "@/components/calendar/calendar-view"
+import { CalendarView } from "@/features/learning/calendar/calendar-view"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -99,7 +99,7 @@ export default function StudentCalendarPage() {
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
           <p className="mt-1 text-muted-foreground">
             View your schedule and upcoming events
           </p>
@@ -129,7 +129,7 @@ export default function StudentCalendarPage() {
     <div className="flex flex-col gap-6">
       {/* Page header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
         <p className="mt-1 text-muted-foreground">
           View your schedule and upcoming events
         </p>

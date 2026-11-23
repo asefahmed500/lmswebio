@@ -170,7 +170,7 @@ export default function AdminCoursesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Courses</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Courses</h1>
         <p className="mt-1 text-muted-foreground">
           Manage all courses on the platform
         </p>
@@ -190,26 +190,26 @@ export default function AdminCoursesPage() {
         </Card>
         <Card size="sm">
           <CardHeader>
-            <CardTitle className="text-success flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-success">
               <BookOpen className="h-4 w-4" />
               Published
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-success text-3xl font-bold">
+            <div className="text-3xl font-bold text-success">
               {stats.published}
             </div>
           </CardContent>
         </Card>
         <Card size="sm">
           <CardHeader>
-            <CardTitle className="text-warning flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-warning">
               <BookOpen className="h-4 w-4" />
               Draft
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-warning text-3xl font-bold">{stats.draft}</div>
+            <div className="text-3xl font-bold text-warning">{stats.draft}</div>
           </CardContent>
         </Card>
       </div>
@@ -346,9 +346,9 @@ export default function AdminCoursesPage() {
                           onClick={() => handleTogglePublish(course)}
                         >
                           {course.isPublished ? (
-                            <BookOpen className="text-warning h-3.5 w-3.5" />
+                            <BookOpen className="h-3.5 w-3.5 text-warning" />
                           ) : (
-                            <BookOpen className="text-success h-3.5 w-3.5" />
+                            <BookOpen className="h-3.5 w-3.5 text-success" />
                           )}
                         </Button>
                         <Button

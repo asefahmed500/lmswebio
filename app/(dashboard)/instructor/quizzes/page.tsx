@@ -141,7 +141,7 @@ export default function InstructorQuizzesPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quizzes</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Quizzes</h1>
           <p className="mt-1 text-muted-foreground">
             Create and manage quizzes for your courses
           </p>
@@ -176,7 +176,7 @@ export default function InstructorQuizzesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <HelpCircle className="text-info size-5" />
+              <HelpCircle className="size-5 text-info" />
               <div className="text-2xl font-bold">{totalQuestions}</div>
             </div>
           </CardContent>
@@ -189,7 +189,7 @@ export default function InstructorQuizzesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Users className="text-warning size-5" />
+              <Users className="size-5 text-warning" />
               <div className="text-2xl font-bold">{totalAttempts}</div>
             </div>
           </CardContent>
@@ -268,7 +268,11 @@ export default function InstructorQuizzesPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="More actions"
+                          >
                             <MoreHorizontal />
                           </Button>
                         </DropdownMenuTrigger>

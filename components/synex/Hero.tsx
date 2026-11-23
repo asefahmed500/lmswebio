@@ -25,14 +25,14 @@ export function SynexHero() {
       {bannerVisible && (
         <div className="border-b border-graphite/10 bg-canvas">
           <div className="mx-auto flex h-10 max-w-[1280px] items-center justify-center gap-3 px-5">
-            <span className="rounded-[9999px] bg-void-black px-2 py-0.5 font-visueltpro text-[10px] font-medium tracking-[0.06em] text-chalk uppercase">
+            <span className="rounded bg-void-black px-2 py-0.5 font-visueltpro text-[10px] font-medium tracking-[0.06em] text-chalk uppercase">
               New
             </span>
             <span className="font-visueltpro text-sm font-light text-graphite">
-              Introducing AI-powered learning paths — personalized for you.
+              Learning paths — ordered course sequences you can enrol in.
             </span>
             <Link
-              href="#"
+              href="/student/learning-paths"
               className="inline-flex items-center gap-1 font-visueltpro text-sm font-medium text-void-black hover:opacity-70"
             >
               Learn more <ArrowRight className="size-3" />
@@ -66,14 +66,14 @@ export function SynexHero() {
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-[9999px] bg-void-black px-6 py-3 font-visueltpro text-sm font-medium text-chalk"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk"
               style={{ boxShadow: "var(--shadow-sq-button)" }}
             >
               Get started for free <ArrowRight className="size-4" />
             </Link>
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 rounded-[9999px] border border-graphite/20 px-6 py-3 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/40"
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-graphite/20 px-3 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/40"
             >
               <Play className="size-3.5" />
               Browse courses

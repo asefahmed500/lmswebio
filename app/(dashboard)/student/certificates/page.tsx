@@ -8,7 +8,7 @@
 import * as React from "react"
 import { Award } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { CertificateViewer } from "@/components/certificates/certificate-viewer"
+import { CertificateViewer } from "@/features/gamification/certificate-viewer"
 import { LoadingCard } from "@/components/loading-skeleton"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
@@ -63,7 +63,9 @@ export default function StudentCertificatesPage() {
     return (
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Certificates</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            My Certificates
+          </h1>
           <p className="mt-1 text-muted-foreground">
             View and download your earned certificates
           </p>
@@ -76,7 +78,9 @@ export default function StudentCertificatesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Certificates</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          My Certificates
+        </h1>
         <p className="mt-1 text-muted-foreground">
           View and download your earned certificates
         </p>

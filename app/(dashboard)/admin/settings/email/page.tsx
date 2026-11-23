@@ -1,14 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
-  Mail,
-  Eye,
-  EyeOff,
-  Send,
-  Loader2,
-  Info,
-} from "lucide-react"
+import { Mail, Eye, EyeOff, Send, Loader2, Info } from "lucide-react"
 import { toast } from "sonner"
 import {
   Card,
@@ -130,7 +123,9 @@ export default function AdminEmailSettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Email Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Email Settings
+        </h1>
         <p className="mt-1 text-muted-foreground">
           Configure SMTP and email notification settings
         </p>

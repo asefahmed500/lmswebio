@@ -3,7 +3,8 @@ import { HomepageFooter } from "@/components/homepage/homepage-footer"
 
 export const metadata = {
   title: "Terms of Service — LMSio",
-  description: "LMSio terms of service — the rules and guidelines for using our platform.",
+  description:
+    "LMSio terms of service — the rules and guidelines for using our platform.",
 }
 
 export default function TermsPage() {
@@ -15,9 +16,7 @@ export default function TermsPage() {
         <h1 className="font-visueltpro text-3xl font-semibold tracking-tight text-void-black">
           Terms of Service
         </h1>
-        <p className="mt-2 text-sm text-smoke">
-          Last updated: June 10, 2026
-        </p>
+        <p className="mt-2 text-sm text-smoke">Last updated: June 10, 2026</p>
 
         <article className="prose prose-gray mt-10 max-w-none font-visueltpro text-sm leading-[1.8] text-graphite">
           <section className="mb-10">
@@ -37,9 +36,9 @@ export default function TermsPage() {
             </h2>
             <p>
               You must provide accurate, complete information when creating an
-              account. You are responsible for maintaining the confidentiality of
-              your credentials and for all activity under your account. You must
-              notify us immediately of any unauthorized use.
+              account. You are responsible for maintaining the confidentiality
+              of your credentials and for all activity under your account. You
+              must notify us immediately of any unauthorized use.
             </p>
           </section>
 
@@ -56,7 +55,9 @@ export default function TermsPage() {
               <li>
                 Attempt to gain unauthorized access to any part of the Platform
               </li>
-              <li>Use automated tools to scrape or download content at scale</li>
+              <li>
+                Use automated tools to scrape or download content at scale
+              </li>
               <li>
                 Upload malicious code, viruses, or content that infringes
                 intellectual property
@@ -86,7 +87,8 @@ export default function TermsPage() {
               Paid courses are processed securely through our payment provider.
               Refund requests must be submitted within 7 days of purchase if you
               have completed less than 25% of the course content. Refunds are
-              processed to the original payment method within 5–10 business days.
+              processed to the original payment method within 5–10 business
+              days.
             </p>
           </section>
 
@@ -95,8 +97,8 @@ export default function TermsPage() {
               6. Certificates
             </h2>
             <p>
-              Certificates of completion are issued when all required lessons and
-              assessments are completed. Certificates are for personal
+              Certificates of completion are issued when all required lessons
+              and assessments are completed. Certificates are for personal
               achievement and do not constitute formal academic credit unless
               stated otherwise.
             </p>
@@ -119,8 +121,8 @@ export default function TermsPage() {
               8. Limitation of Liability
             </h2>
             <p>
-              LMSio is provided &quot;as is&quot; without warranties of any kind.
-              We shall not be liable for any indirect, incidental, or
+              LMSio is provided &quot;as is&quot; without warranties of any
+              kind. We shall not be liable for any indirect, incidental, or
               consequential damages arising from your use of the Platform. Our
               total liability shall not exceed the amount you paid in the 12
               months preceding the claim.
@@ -144,15 +146,13 @@ export default function TermsPage() {
             </h2>
             <p>
               We reserve the right to modify these Terms at any time. Material
-              changes will be communicated via email or a prominent notice on the
-              Platform. Continued use after changes constitutes acceptance.
+              changes will be communicated via email or a prominent notice on
+              the Platform. Continued use after changes constitutes acceptance.
             </p>
           </section>
 
           <section className="mb-10">
-            <h2 className="text-lg font-medium text-void-black">
-              11. Contact
-            </h2>
+            <h2 className="text-lg font-medium text-void-black">11. Contact</h2>
             <p>
               For questions about these Terms, please contact us at{" "}
               <a

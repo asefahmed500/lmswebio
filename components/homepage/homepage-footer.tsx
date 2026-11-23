@@ -1,74 +1,89 @@
 import Link from "next/link"
 
-const productLinks = [
-  { label: "Browse Courses", href: "/courses" },
+/**
+ * Marketing footer.
+ *
+ * The previous version linked to /changelog, /about, /blog, /careers,
+ * /contact, /docs, /help, /community, /api-reference and /cookie-policy —
+ * none of those routes exist, so ten of the fourteen links 404'd. It also
+ * pointed at twitter.com/lmsio, github.com/lmsio and
+ * linkedin.com/company/lmsio, which are invented URLs.
+ *
+ * Only routes and in-page sections that actually exist are listed here. When
+ * those pages are built, add them back.
+ */
+
+const LEARN_LINKS = [
+  { label: "Browse courses", href: "/courses" },
+  { label: "Course catalogue", href: "/student/courses/catalogue" },
+  { label: "What is included", href: "#enterprise" },
   { label: "Pricing", href: "#pricing-info" },
-  { label: "Enterprise", href: "#enterprise" },
-  { label: "Changelog", href: "/changelog" },
 ]
 
-const companyLinks = [
-  { label: "About", href: "/about" },
-  { label: "Blog", href: "/blog" },
-  { label: "Careers", href: "/careers" },
-  { label: "Contact", href: "/contact" },
+const ACCOUNT_LINKS = [
+  { label: "Sign in", href: "/login" },
+  { label: "Create an account", href: "/register" },
+  { label: "Forgot password", href: "/forgot-password" },
 ]
 
-const resourceLinks = [
-  { label: "Documentation", href: "/docs" },
-  { label: "Help Center", href: "/help" },
-  { label: "Community", href: "/community" },
-  { label: "API Reference", href: "/api-reference" },
-]
-
-const legalLinks = [
+const LEGAL_LINKS = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
-  { label: "Cookie Policy", href: "/cookie-policy" },
 ]
 
-const linkGroups = [
-  { title: "Product", links: productLinks },
-  { title: "Company", links: companyLinks },
-  { title: "Resources", links: resourceLinks },
-  { title: "Legal", links: legalLinks },
+const LINK_GROUPS = [
+  { title: "Learn", links: LEARN_LINKS },
+  { title: "Account", links: ACCOUNT_LINKS },
+  { title: "Legal", links: LEGAL_LINKS },
 ]
 
 export function HomepageFooter() {
   return (
     <footer className="border-t border-graphite/10 bg-canvas">
-      <div className="mx-auto max-w-[1280px] px-5 py-16">
-        <div className="flex flex-col gap-12 md:flex-row md:gap-16">
-          {/* Logo + tagline */}
-          <div className="md:w-[220px]">
+      <div className="mx-auto max-w-[1280px] px-5 py-12">
+        <div className="flex flex-col gap-10 md:flex-row md:gap-16">
+          <div className="md:w-[260px]">
             <Link href="/" className="inline-flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-sm bg-void-black">
+              <span className="flex size-7 items-center justify-center rounded-sm bg-void-black">
                 <span className="font-visueltpro text-xs font-bold text-chalk">
                   L
                 </span>
-              </div>
-              <span className="font-visueltpro text-lg font-normal tracking-[-0.02em] text-void-black">
+              </span>
+              <span className="font-visueltpro text-lg tracking-[-0.02em] text-void-black">
                 LMSio
               </span>
             </Link>
-            <p className="mt-4 max-w-[200px] font-visueltpro text-sm leading-[1.6] font-light text-smoke">
-              The modern learning platform for curious minds.
+            <p className="mt-3 max-w-[240px] font-visueltpro text-sm leading-[1.6] text-smoke">
+              Create courses, sell them, and track progress through to
+              completion.
+            </p>
+            <p className="mt-4 font-visueltpro text-[13px] leading-[1.6] text-smoke">
+              Seeded demo accounts for each role are listed on the{" "}
+              <Link
+                href="#try-it"
+                className="text-graphite underline underline-offset-4 hover:text-void-black"
+              >
+                try it
+              </Link>{" "}
+              section.
             </p>
           </div>
 
-          {/* Sitemap columns */}
-          <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-4">
-            {linkGroups.map((group) => (
+          <nav
+            aria-label="Footer"
+            className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3"
+          >
+            {LINK_GROUPS.map((group) => (
               <div key={group.title}>
-                <h4 className="mb-4 font-visueltpro text-xs font-medium tracking-[0.08em] text-void-black uppercase">
+                <h2 className="mb-3 font-visueltpro text-[13px] font-medium text-void-black">
                   {group.title}
-                </h4>
-                <ul className="flex flex-col gap-2.5">
+                </h2>
+                <ul className="flex flex-col gap-2">
                   {group.links.map((link) => (
-                    <li key={link.label}>
+                    <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="font-visueltpro text-sm font-light text-smoke transition-colors hover:text-void-black"
+                        className="font-visueltpro text-sm text-smoke transition-colors hover:text-void-black"
                       >
                         {link.label}
                       </Link>
@@ -77,28 +92,13 @@ export function HomepageFooter() {
                 </ul>
               </div>
             ))}
-          </div>
+          </nav>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-graphite/10 pt-6 sm:flex-row">
-          <p className="font-visueltpro text-xs font-light text-smoke">
-            &copy; {new Date().getFullYear()} LMSio. All rights reserved.
+        <div className="mt-10 border-t border-graphite/10 pt-6">
+          <p className="font-visueltpro text-xs text-smoke">
+            &copy; {new Date().getFullYear()} LMSio
           </p>
-          <div className="flex items-center gap-4">
-            {[
-              { label: "Twitter", href: "https://twitter.com/lmsio" },
-              { label: "GitHub", href: "https://github.com/lmsio" },
-              { label: "LinkedIn", href: "https://linkedin.com/company/lmsio" },
-            ].map((s) => (
-              <Link
-                key={s.label}
-                href={s.href}
-                className="font-visueltpro text-xs font-light text-smoke transition-colors hover:text-void-black"
-              >
-                {s.label}
-              </Link>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

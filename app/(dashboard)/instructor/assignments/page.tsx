@@ -132,7 +132,7 @@ export default function InstructorAssignmentsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Assignments</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Assignments</h1>
           <p className="mt-1 text-muted-foreground">
             Create and manage assignments for your courses
           </p>
@@ -167,7 +167,7 @@ export default function InstructorAssignmentsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Users className="text-info size-5" />
+              <Users className="size-5 text-info" />
               <div className="text-2xl font-bold">{totalSubmissions}</div>
             </div>
           </CardContent>
@@ -180,7 +180,7 @@ export default function InstructorAssignmentsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Clock className="text-warning size-5" />
+              <Clock className="size-5 text-warning" />
               <div className="text-2xl font-bold">{totalPendingGrading}</div>
             </div>
           </CardContent>
@@ -261,7 +261,7 @@ export default function InstructorAssignmentsPage() {
                           {(assignment.pendingGradingCount || 0) > 0 && (
                             <Badge
                               variant="outline"
-                              className="text-warning gap-1"
+                              className="gap-1 text-warning"
                             >
                               <Clock className="size-3" />
                               {assignment.pendingGradingCount} pending
@@ -272,7 +272,11 @@ export default function InstructorAssignmentsPage() {
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="More actions"
+                            >
                               <MoreHorizontal />
                             </Button>
                           </DropdownMenuTrigger>
@@ -289,7 +293,7 @@ export default function InstructorAssignmentsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link
-                                href={`/instructor/assignments/${assignment.id}/edit`}
+                                href={`/instructor/assignments/${assignment.id}`}
                               >
                                 <Edit className="mr-2 size-4" />
                                 Edit

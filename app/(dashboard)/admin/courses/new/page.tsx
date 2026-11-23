@@ -90,13 +90,13 @@ export default function NewCoursePage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Action">
           <Link href="/admin/courses">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Create New Course
           </h1>
           <p className="mt-1 text-muted-foreground">

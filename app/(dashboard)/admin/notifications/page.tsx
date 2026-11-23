@@ -13,6 +13,7 @@ import {
   ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
@@ -31,13 +32,13 @@ interface Notification {
 function getNotifIcon(type: string) {
   switch (type) {
     case "success":
-      return <CheckCircle className="text-success size-5 shrink-0" />
+      return <CheckCircle className="size-5 shrink-0 text-success" />
     case "warning":
-      return <AlertTriangle className="text-warning size-5 shrink-0" />
+      return <AlertTriangle className="size-5 shrink-0 text-warning" />
     case "error":
       return <XCircle className="size-5 shrink-0 text-destructive" />
     default:
-      return <Info className="text-info size-5 shrink-0" />
+      return <Info className="size-5 shrink-0 text-info" />
   }
 }
 
@@ -55,6 +56,8 @@ export default function AdminNotificationsPage() {
   const { user } = useAuth()
   const [notifications, setNotifications] = React.useState<Notification[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
+  // Mutation failures surface here; apiPost/apiPatch/apiDelete resolve { error }`n  // and never throw, so without this a failed write silently changed the UI.
+  const [error, setError] = React.useState<string | null>(null)
   const [filter, setFilter] = React.useState<"all" | "unread">("all")
 
   React.useEffect(() => {
@@ -77,28 +80,46 @@ export default function AdminNotificationsPage() {
   }, [user])
 
   const handleMarkAllRead = async () => {
-    await apiPatch("/notifications", { markAll: true } as unknown as Record<
-      string,
-      unknown
-    >)
+    // apiPatch resolves `{ error }` and never throws, so a failed request
+    // previously still flipped every row to read in local state. The list then
+    // claimed everything was read while the server still had it unread.
+    const res = await apiPatch("/notifications", {
+      markAll: true,
+    } as unknown as Record<string, unknown>)
+    if (res.error) {
+      setError(res.error)
+      return
+    }
+    setError(null)
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
   }
 
   const handleMarkRead = async (id: number) => {
-    await apiPatch("/notifications", {
+    const res = await apiPatch("/notifications", {
       notificationIds: [id],
       read: true,
     } as unknown as Record<string, unknown>)
+    if (res.error) {
+      setError(res.error)
+      return
+    }
+    setError(null)
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
   }
 
   const handleDeleteAll = async () => {
-    await apiDelete("/notifications")
+    // Same defect: a failed DELETE emptied the list and rendered
+    // "No notifications" while nothing was actually removed.
+    const res = await apiDelete("/notifications")
+    if (res.error) {
+      setError(res.error)
+      return
+    }
+    setError(null)
     setNotifications([])
   }
-
   const filteredNotifications =
     filter === "unread" ? notifications.filter((n) => !n.read) : notifications
 
@@ -108,13 +129,15 @@ export default function AdminNotificationsPage() {
     return (
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="Action">
             <Link href="/admin">
               <ArrowLeft className="size-4" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Notifications
+            </h1>
             <p className="text-muted-foreground">Loading notifications...</p>
           </div>
         </div>
@@ -128,13 +151,15 @@ export default function AdminNotificationsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Action">
           <Link href="/admin">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Notifications
+          </h1>
           <p className="text-muted-foreground">
             {unreadCount > 0
               ? `You have ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
@@ -173,6 +198,12 @@ export default function AdminNotificationsPage() {
           Unread ({unreadCount})
         </Button>
       </div>
+
+      {error ? (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <Card>
         <CardContent className="p-0">

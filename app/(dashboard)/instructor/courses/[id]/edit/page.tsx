@@ -315,6 +315,58 @@ export default function InstructorCourseEditPage() {
   const [tags, setTags] = React.useState<string[]>([])
   const [tagInput, setTagInput] = React.useState("")
 
+  /**
+   * Debounced persistence for the inline module/lesson editors.
+   *
+   * These handlers are wired straight to input onChange handlers, so the
+   * original implementation issued one PUT per keystroke. Three problems:
+   *   1. Overlapping requests could land out of order, leaving an intermediate
+   *      keystroke persisted and silently losing the final text on reload.
+   *   2. `apiPut` resolves `{ error }` and never throws, so the `catch` blocks
+   *      were dead code and a 403/404/500 left the UI showing the new text as
+   *      if it had saved.
+   *   3. State was updated before the request, so a failure was never rolled
+   *      back.
+   *
+   * Now: local state updates immediately (typing stays responsive), the write is
+   * debounced, patches accumulate per entity so two fields edited in quick
+   * succession are both persisted, and a failed write surfaces in `saveError`.
+   */
+  const saveTimers = React.useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({})
+  const pendingPatches = React.useRef<Record<string, Record<string, unknown>>>(
+    {}
+  )
+
+  React.useEffect(() => {
+    const timers = saveTimers.current
+    return () => {
+      Object.values(timers).forEach((t) => clearTimeout(t))
+    }
+  }, [])
+
+  const queueSave = React.useCallback(
+    (key: string, endpoint: string, patch: Record<string, unknown>) => {
+      pendingPatches.current[key] = {
+        ...(pendingPatches.current[key] ?? {}),
+        ...patch,
+      }
+
+      if (saveTimers.current[key]) clearTimeout(saveTimers.current[key])
+      saveTimers.current[key] = setTimeout(async () => {
+        const payload = pendingPatches.current[key] ?? {}
+        delete pendingPatches.current[key]
+        delete saveTimers.current[key]
+
+        const res = await apiPut(endpoint, payload)
+        // apiPut resolves `{ error }`; it does not throw.
+        setSaveError(res.error ?? null)
+      }, 500)
+    },
+    []
+  )
+
   const form = useForm({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -429,15 +481,14 @@ export default function InstructorCourseEditPage() {
     moduleId: string,
     data: Partial<Module>
   ) => {
+    // Same debounce/error handling as lessons — see queueSave.
     setModules((prev) =>
       prev.map((m) => (m.id === moduleId ? { ...m, ...data } : m))
     )
 
-    try {
-      await apiPut(`/modules/${moduleId}`, data)
-    } catch (error) {
-      console.error("Failed to update module:", error)
-    }
+    queueSave(`module:${moduleId}`, `/modules/${moduleId}`, {
+      ...(data as Record<string, unknown>),
+    })
   }
 
   const handleDeleteModule = async (moduleId: string) => {
@@ -450,29 +501,39 @@ export default function InstructorCourseEditPage() {
     }
   }
 
-  const handleMoveModule = async (moduleId: string, direction: "up" | "down") => {
-    let reordered: { id: string; order: number }[] = []
-    setModules((prev) => {
-      const index = prev.findIndex((m) => m.id === moduleId)
-      if (index === -1) return prev
-      if (direction === "up" && index === 0) return prev
-      if (direction === "down" && index === prev.length - 1) return prev
+  const handleMoveModule = async (
+    moduleId: string,
+    direction: "up" | "down"
+  ) => {
+    // State updaters must be pure. This used to assign the persistence payload
+    // to an outer `let` from inside the setModules updater; React only runs an
+    // updater synchronously on its eager-state fast path, so whenever the fiber
+    // already had pending lanes the updater deferred to render time and
+    // `reordered` was still empty at the guard below. The reorder PUT was then
+    // silently skipped while the UI showed the new order — server and client
+    // disagreed until reload. The swap is now computed outside the updater.
+    const index = modules.findIndex((m) => m.id === moduleId)
+    if (index === -1) return
+    if (direction === "up" && index === 0) return
+    if (direction === "down" && index === modules.length - 1) return
 
-      const next = [...prev]
-      const swapIndex = direction === "up" ? index - 1 : index + 1
-      const temp = next[index].order
-      next[index] = { ...next[index], order: next[swapIndex].order }
-      next[swapIndex] = { ...next[swapIndex], order: temp }
-      next.sort((a, b) => a.order - b.order)
-      reordered = next.map((m, i) => ({ id: m.id, order: i }))
-      return next
-    })
+    const next = [...modules]
+    const swapIndex = direction === "up" ? index - 1 : index + 1
+    const temp = next[index].order
+    next[index] = { ...next[index], order: next[swapIndex].order }
+    next[swapIndex] = { ...next[swapIndex], order: temp }
+    next.sort((a, b) => a.order - b.order)
 
-    if (reordered.length === 0) return
-    try {
-      await apiPut("/modules", { modules: reordered })
-    } catch (error) {
-      console.error("Failed to persist module reorder:", error)
+    setModules(next)
+
+    const reordered = next.map((m, i) => ({ id: m.id, order: i }))
+    const res = await apiPut("/modules", { modules: reordered })
+    if (res.error) {
+      setSaveError(res.error)
+      // Restore the previous order so the UI matches the server.
+      setModules(modules)
+    } else {
+      setSaveError(null)
     }
   }
 
@@ -524,6 +585,7 @@ export default function InstructorCourseEditPage() {
     lessonId: string,
     data: Partial<Lesson>
   ) => {
+    // Optimistic local update keeps typing responsive; the write is debounced.
     setModules((prev) =>
       prev.map((m) =>
         m.id === moduleId
@@ -537,11 +599,9 @@ export default function InstructorCourseEditPage() {
       )
     )
 
-    try {
-      await apiPut(`/lessons/${lessonId}`, data as Record<string, unknown>)
-    } catch (error) {
-      console.error("Failed to update lesson:", error)
-    }
+    queueSave(`lesson:${lessonId}`, `/lessons/${lessonId}`, {
+      ...(data as Record<string, unknown>),
+    })
   }
 
   const handleDeleteLesson = async (moduleId: string, lessonId: string) => {
@@ -605,13 +665,15 @@ export default function InstructorCourseEditPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="Action">
             <Link href={`/instructor/courses/${courseId}`}>
               <ArrowLeft />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Edit Course</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Edit Course
+            </h1>
             <p className="mt-1 text-muted-foreground">
               Manage course settings and content
             </p>

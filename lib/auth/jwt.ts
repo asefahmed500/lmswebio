@@ -181,7 +181,10 @@ export async function getSession(): Promise<{
   }
 
   const result = { user }
-  sessionCache.set(payload.sub, { data: result, expiry: Date.now() + SESSION_CACHE_TTL })
+  sessionCache.set(payload.sub, {
+    data: result,
+    expiry: Date.now() + SESSION_CACHE_TTL,
+  })
 
   return result
 }

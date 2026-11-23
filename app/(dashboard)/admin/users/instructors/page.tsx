@@ -7,13 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  Search,
-  Loader2,
-  UserPlus,
-  Mail,
-  Users,
-} from "lucide-react"
+import { Search, Loader2, UserPlus, Mail, Users } from "lucide-react"
 import { apiGet } from "@/lib/api-client"
 
 interface ApiUser {
@@ -80,7 +74,7 @@ export default function InstructorsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Instructors</h1>
+          <h1 className="text-2xl font-semibold">Instructors</h1>
           <p className="text-muted-foreground">Manage instructor accounts</p>
         </div>
         <Button asChild>
@@ -109,7 +103,9 @@ export default function InstructorsPage() {
           {filtered.length === 0 ? (
             <div className="py-12 text-center">
               <Users className="mx-auto mb-4 size-12 text-muted-foreground/40" />
-              <h3 className="mb-2 text-lg font-semibold">No instructors found</h3>
+              <h3 className="mb-2 text-lg font-semibold">
+                No instructors found
+              </h3>
               <p className="mb-4 text-sm text-muted-foreground">
                 {searchQuery
                   ? "No instructors match your search. Try a different query."
@@ -168,7 +164,12 @@ export default function InstructorsPage() {
                     >
                       {instructor.isActive ? "Active" : "Inactive"}
                     </Badge>
-                    <Button variant="ghost" size="icon" asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      asChild
+                      aria-label="Action"
+                    >
                       <Link href={`/admin/users/${instructor.id}`}>
                         <Users className="size-4" />
                       </Link>

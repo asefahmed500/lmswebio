@@ -124,7 +124,7 @@ export default function CheckoutPage() {
   if (isAlreadyEnrolled) {
     return (
       <div className="mx-auto max-w-2xl p-6 text-center">
-        <ShieldCheck className="text-success mx-auto mb-4 size-16" />
+        <ShieldCheck className="mx-auto mb-4 size-16 text-success" />
         <h2 className="text-2xl font-bold">Already Enrolled</h2>
         <p className="mt-2 text-muted-foreground">
           You&apos;re already enrolled in this course.
@@ -139,8 +139,8 @@ export default function CheckoutPage() {
   if (demoMode) {
     return (
       <div className="mx-auto max-w-2xl p-6 text-center">
-        <div className="bg-success/10 mx-auto mb-4 flex size-16 items-center justify-center rounded-full">
-          <ShieldCheck className="text-success size-8" />
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success/10">
+          <ShieldCheck className="size-8 text-success" />
         </div>
         <h2 className="text-2xl font-bold">Enrollment Complete!</h2>
         <p className="mt-2 text-muted-foreground">
@@ -152,7 +152,13 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <Button variant="ghost" size="icon" asChild className="w-fit">
+      <Button
+        variant="ghost"
+        size="icon"
+        asChild
+        className="w-fit"
+        aria-label="Action"
+      >
         <Link href={`/student/courses/catalogue`}>
           <ArrowLeft className="size-4" />
         </Link>

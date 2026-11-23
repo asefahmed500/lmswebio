@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/components/auth-provider"
+import { apiGet, apiPost } from "@/lib/api-client"
 import { QuestionType } from "@/types"
 import type { Course } from "@/types"
 
@@ -79,10 +80,10 @@ export default function NewQuizPage() {
     async function loadCourses() {
       if (!user) return
       try {
-        const res = await fetch("/api/courses")
-        if (!res.ok) throw new Error("Failed to fetch courses")
-        const data = await res.json()
-        setCourses(data.courses || data)
+        const res = await apiGet<{ courses?: unknown[] }>("/courses")
+        if (res.error) throw new Error(res.error)
+        const data = res.data as { courses?: unknown[] } | undefined
+        setCourses((data?.courses as typeof courses) || [])
       } catch (err) {
         console.error("Failed to load courses:", err)
       } finally {
@@ -183,33 +184,31 @@ export default function NewQuizPage() {
     setIsSubmitting(true)
     setError(null)
     try {
-      const res = await fetch("/api/quizzes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          courseId,
-          timeLimit: timeLimit || undefined,
-          attemptsAllowed,
-          questions: questions.map((q) => ({
-            text: q.text.trim(),
-            type: q.type,
-            points: q.points,
-            options:
-              q.type === QuestionType.MC_SINGLE ||
-              q.type === QuestionType.MC_MULTI
-                ? Object.fromEntries(
-                    Object.entries(q.options).filter(([, v]) => v.trim())
-                  )
-                : undefined,
-            correctAnswer: q.correctAnswer,
-          })),
-        }),
+      // apiPost attaches the X-CSRF-Token header. A raw fetch here is rejected
+      // by the middleware with 403 "Invalid CSRF token", which made quiz
+      // creation impossible.
+      const res = await apiPost<{ quiz: unknown }>("/quizzes", {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        courseId,
+        timeLimit: timeLimit || undefined,
+        attemptsAllowed,
+        questions: questions.map((q) => ({
+          text: q.text.trim(),
+          type: q.type,
+          points: q.points,
+          options:
+            q.type === QuestionType.MC_SINGLE ||
+            q.type === QuestionType.MC_MULTI
+              ? Object.fromEntries(
+                  Object.entries(q.options).filter(([, v]) => v.trim())
+                )
+              : undefined,
+          correctAnswer: q.correctAnswer,
+        })),
       })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to create quiz")
+      if (res.error) {
+        throw new Error(res.error)
       }
       router.push("/instructor/quizzes")
     } catch (err) {
@@ -323,13 +322,15 @@ export default function NewQuizPage() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="Action">
           <Link href="/instructor/quizzes">
             <ArrowLeft />
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Create New Quiz</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Create New Quiz
+          </h1>
           <p className="mt-1 text-muted-foreground">
             Fill in the details and add questions to create a new quiz
           </p>
@@ -486,6 +487,7 @@ export default function NewQuizPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => removeQuestion(qIndex)}
+                        aria-label="Delete question"
                         disabled={isSubmitting}
                       >
                         <Trash2 className="size-4 text-destructive" />
