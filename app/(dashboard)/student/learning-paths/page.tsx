@@ -147,7 +147,7 @@ export default function StudentLearningPathsPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="rounded-full bg-primary/10 p-3">
+            <div className="rounded-md bg-primary/10 p-2">
               <TrendingUp className="size-5 text-primary" />
             </div>
             <div>
@@ -158,7 +158,7 @@ export default function StudentLearningPathsPage() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="rounded-full bg-success/10 p-3">
+            <div className="rounded-md bg-success/10 p-2">
               <BookOpen className="size-5 text-success" />
             </div>
             <div>
@@ -169,7 +169,7 @@ export default function StudentLearningPathsPage() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="rounded-full bg-info/10 p-3">
+            <div className="rounded-md bg-info/10 p-2">
               <Clock className="size-5 text-info" />
             </div>
             <div>
@@ -183,7 +183,7 @@ export default function StudentLearningPathsPage() {
         </Card>
         <Card>
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="rounded-full bg-primary/10 p-3">
+            <div className="rounded-md bg-primary/10 p-2">
               <Users className="size-5 text-primary" />
             </div>
             <div>

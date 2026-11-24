@@ -59,7 +59,7 @@ function KPICard({
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {label}
         </CardTitle>
-        <div className="rounded-full bg-primary/10 p-2">
+        <div className="rounded-md bg-primary/10 p-2">
           <Icon className="size-4 text-primary" />
         </div>
       </CardHeader>

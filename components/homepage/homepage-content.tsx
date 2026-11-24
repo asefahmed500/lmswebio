@@ -68,9 +68,7 @@ function AnimatedCounter({
           value
         )}
       </div>
-      <div className="mt-1 font-visueltpro text-xs font-light tracking-[0.06em] text-smoke uppercase">
-        {label}
-      </div>
+      <div className="mt-1 font-visueltpro text-xs text-smoke">{label}</div>
     </div>
   )
 }
@@ -517,7 +515,7 @@ export function HomepageContent() {
                       Continue where you left off
                     </div>
                   </div>
-                  <div className="rounded bg-canvas px-2 py-0.5 font-visueltpro text-[10px] font-medium tracking-[0.04em] text-graphite uppercase">
+                  <div className="rounded bg-canvas px-2 py-0.5 font-visueltpro text-[10px] font-medium text-graphite">
                     This week
                   </div>
                 </div>
@@ -533,7 +531,7 @@ export function HomepageContent() {
                         >
                           <div className="flex items-center gap-1.5">
                             <Icon className="size-3 text-smoke" />
-                            <span className="font-visueltpro text-[9px] font-medium tracking-[0.05em] text-smoke uppercase">
+                            <span className="font-visueltpro text-[9px] font-medium text-smoke">
                               {m.label}
                             </span>
                           </div>
@@ -670,7 +668,7 @@ export function HomepageContent() {
                 key={account.role}
                 className="flex flex-col rounded-xl border border-graphite/10 bg-chalk p-6"
               >
-                <h3 className="mb-4 font-visueltpro text-[11px] font-medium tracking-[0.08em] text-smoke uppercase">
+                <h3 className="mb-4 font-visueltpro text-[11px] font-medium text-smoke">
                   {account.role}
                 </h3>
                 <dl className="mb-4 flex flex-col gap-1 font-mono text-[13px]">
@@ -708,7 +706,7 @@ export function HomepageContent() {
       <section id="enterprise" className="py-20">
         <div className="mx-auto max-w-[1280px] px-5">
           <div className="mb-6">
-            <span className="inline-flex rounded border border-graphite/15 px-2.5 py-0.5 font-visueltpro text-[10px] font-medium tracking-[0.08em] text-smoke uppercase">
+            <span className="inline-flex rounded border border-graphite/15 px-2.5 py-0.5 font-visueltpro text-[10px] font-medium text-smoke">
               Built in
             </span>
           </div>
@@ -774,7 +772,7 @@ export function HomepageContent() {
                 }`}
               >
                 <h3
-                  className={`font-visueltpro text-[10px] font-medium tracking-[0.08em] uppercase ${
+                  className={`font-visueltpro text-[10px] font-medium ${
                     tier.featured ? "text-chalk/60" : "text-smoke"
                   }`}
                 >

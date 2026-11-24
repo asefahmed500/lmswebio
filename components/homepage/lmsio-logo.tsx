@@ -53,7 +53,7 @@ export function LMSioLogo({
           </span>
           {showTagline && variant === "default" && (
             <span className="text-xs font-medium tracking-wide text-muted-foreground">
-              LEARN MORE
+              Learn more
             </span>
           )}
         </div>

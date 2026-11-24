@@ -29,6 +29,7 @@ function MaskedValue({ value }: { value: string }) {
         variant="ghost"
         size="icon"
         onClick={() => setRevealed(!revealed)}
+        aria-label="Toggle password visibility"
       >
         {revealed ? (
           <EyeOff className="h-3.5 w-3.5" />

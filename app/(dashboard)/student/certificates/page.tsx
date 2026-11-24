@@ -89,7 +89,7 @@ export default function StudentCertificatesPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-full bg-primary/10 p-3">
+            <div className="rounded-md bg-primary/10 p-2">
               <Award className="h-6 w-6 text-primary" />
             </div>
             <div>

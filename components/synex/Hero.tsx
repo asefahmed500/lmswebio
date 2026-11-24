@@ -25,7 +25,7 @@ export function SynexHero() {
       {bannerVisible && (
         <div className="border-b border-graphite/10 bg-canvas">
           <div className="mx-auto flex h-10 max-w-[1280px] items-center justify-center gap-3 px-5">
-            <span className="rounded bg-void-black px-2 py-0.5 font-visueltpro text-[10px] font-medium tracking-[0.06em] text-chalk uppercase">
+            <span className="rounded bg-void-black px-2 py-0.5 font-visueltpro text-[10px] font-medium text-chalk">
               New
             </span>
             <span className="font-visueltpro text-sm font-light text-graphite">

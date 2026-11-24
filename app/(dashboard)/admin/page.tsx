@@ -56,7 +56,7 @@ function KPICardComponent({ kpi }: { kpi: KPICard }) {
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {kpi.label}
         </CardTitle>
-        <div className="rounded-full bg-primary/10 p-2">
+        <div className="rounded-md bg-primary/10 p-2">
           <Activity className="size-4 text-primary" />
         </div>
       </CardHeader>

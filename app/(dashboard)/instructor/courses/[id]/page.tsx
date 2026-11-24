@@ -227,7 +227,7 @@ export default function InstructorCourseDetailPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Students
             </CardTitle>
-            <div className="rounded-full bg-primary/10 p-2">
+            <div className="rounded-md bg-primary/10 p-2">
               <Users className="size-4 text-primary" />
             </div>
           </CardHeader>
@@ -240,7 +240,7 @@ export default function InstructorCourseDetailPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Content
             </CardTitle>
-            <div className="rounded-full bg-primary/10 p-2">
+            <div className="rounded-md bg-primary/10 p-2">
               <Layers className="size-4 text-primary" />
             </div>
           </CardHeader>

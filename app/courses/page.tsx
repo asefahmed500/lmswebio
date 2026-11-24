@@ -7,6 +7,15 @@ import { CourseCard } from "@/features/courses/course-card"
 import { SynexNavbar } from "@/components/synex/Navbar"
 import { HomepageFooter } from "@/components/homepage/homepage-footer"
 import { useAuth } from "@/components/auth-provider"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface ApiCourse {
   id: number
@@ -116,52 +125,63 @@ export default function PublicCoursesPage() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-smoke" />
-                <input
-                  type="text"
+                <Input
+                  type="search"
+                  aria-label="Search courses"
                   placeholder="Search courses..."
                   value={searchDraft}
                   onChange={(e) => setSearchDraft(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleSearch(e)
                   }}
-                  className="h-9 w-full rounded-md border border-graphite/15 bg-chalk pr-3 pl-9 font-visueltpro text-sm text-void-black transition-colors outline-none placeholder:text-smoke focus:border-graphite/30"
+                  className="pl-9"
                 />
               </div>
-              <select
+              <Select
                 value={category}
-                onChange={(e) => {
-                  setCategory(e.target.value)
+                onValueChange={(v) => {
+                  setCategory(v)
                   setPage(1)
                 }}
-                className="h-9 rounded-md border border-graphite/15 bg-chalk px-4 font-visueltpro text-sm font-light text-graphite outline-none focus:border-graphite/30"
               >
-                <option value="all">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-              <select
+                <SelectTrigger
+                  aria-label="Filter by category"
+                  className="w-[180px]"
+                >
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
                 value={level}
-                onChange={(e) => {
-                  setLevel(e.target.value)
+                onValueChange={(v) => {
+                  setLevel(v)
                   setPage(1)
                 }}
-                className="h-9 rounded-md border border-graphite/15 bg-chalk px-4 font-visueltpro text-sm font-light text-graphite outline-none focus:border-graphite/30"
               >
-                <option value="all">All Levels</option>
-                <option value="BEGINNER">Beginner</option>
-                <option value="INTERMEDIATE">Intermediate</option>
-                <option value="ADVANCED">Advanced</option>
-              </select>
-              <button
-                type="button"
-                onClick={handleSearch}
-                className="h-9 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
-              >
+                <SelectTrigger
+                  aria-label="Filter by level"
+                  className="w-[160px]"
+                >
+                  <SelectValue placeholder="All Levels" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="BEGINNER">Beginner</SelectItem>
+                  <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+                  <SelectItem value="ADVANCED">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button type="button" onClick={handleSearch}>
                 Search
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -195,7 +215,9 @@ export default function PublicCoursesPage() {
                   : "Courses will appear once instructors publish them."}
               </p>
               {(search || category !== "all" || level !== "all") && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setSearchDraft("")
                     setSearch("")
@@ -206,7 +228,7 @@ export default function PublicCoursesPage() {
                   className="mt-4 rounded-md border border-graphite/20 px-3 py-1.5 font-visueltpro text-sm text-graphite transition-colors hover:border-graphite/40"
                 >
                   Clear Filters
-                </button>
+                </Button>
               )}
             </div>
           ) : (
@@ -247,13 +269,15 @@ export default function PublicCoursesPage() {
 
               {totalPages > 1 && (
                 <div className="mt-10 flex items-center justify-center gap-1">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
                     className="rounded-lg px-3 py-2 font-visueltpro text-sm text-smoke transition-colors hover:text-void-black disabled:opacity-30"
                   >
                     Previous
-                  </button>
+                  </Button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(
                       (p) =>
@@ -266,7 +290,9 @@ export default function PublicCoursesPage() {
                             ...
                           </span>
                         )}
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setPage(p)}
                           className={`rounded-lg px-3 py-2 font-visueltpro text-sm transition-colors ${
                             p === page
@@ -275,16 +301,18 @@ export default function PublicCoursesPage() {
                           }`}
                         >
                           {p}
-                        </button>
+                        </Button>
                       </React.Fragment>
                     ))}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
                     className="rounded-lg px-3 py-2 font-visueltpro text-sm text-smoke transition-colors hover:text-void-black disabled:opacity-30"
                   >
                     Next
-                  </button>
+                  </Button>
                 </div>
               )}
             </>

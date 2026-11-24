@@ -218,7 +218,7 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Enrolled Courses
             </CardTitle>
-            <div className="rounded-full bg-primary/10 p-2">
+            <div className="rounded-md bg-primary/10 p-2">
               <BookOpen className="size-4 text-primary" />
             </div>
           </CardHeader>
@@ -231,7 +231,7 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Completed Courses
             </CardTitle>
-            <div className="rounded-full bg-success/10 p-2">
+            <div className="rounded-md bg-success/10 p-2">
               <CheckCircle className="size-4 text-success" />
             </div>
           </CardHeader>
@@ -244,7 +244,7 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Average Progress
             </CardTitle>
-            <div className="rounded-full bg-warning/10 p-2">
+            <div className="rounded-md bg-warning/10 p-2">
               <TrendingUp className="size-4 text-warning" />
             </div>
           </CardHeader>
@@ -259,7 +259,7 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Badges Earned
             </CardTitle>
-            <div className="rounded-full bg-primary/10 p-2">
+            <div className="rounded-md bg-primary/10 p-2">
               <Award className="size-4 text-primary" />
             </div>
           </CardHeader>
@@ -272,7 +272,7 @@ export default function AchievementsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Points
             </CardTitle>
-            <div className="rounded-full bg-warning/10 p-2">
+            <div className="rounded-md bg-warning/10 p-2">
               <Trophy className="size-4 text-warning" />
             </div>
           </CardHeader>

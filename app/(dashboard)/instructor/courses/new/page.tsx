@@ -407,7 +407,8 @@ export default function NewCoursePage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveTag(tag)}
-                        className="size-5 rounded-full p-0.5 hover:bg-destructive/20"
+                        aria-label="Remove tag"
+                        className="size-5 rounded-md p-0.5 hover:bg-destructive/20"
                         disabled={isLoading}
                       >
                         ×
