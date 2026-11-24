@@ -335,15 +335,15 @@ export default function StudentDashboardPage() {
               <Skeleton key={i} className="h-28 rounded-xl" />
             ))}
           </div>
-          <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-            <div className="flex flex-col gap-5">
+          <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
+            <div className="flex min-w-0 flex-col gap-5">
               <Skeleton className="h-7 w-48" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Skeleton className="h-48 rounded-xl" />
                 <Skeleton className="h-48 rounded-xl" />
               </div>
             </div>
-            <div className="flex flex-col gap-7">
+            <div className="flex min-w-0 flex-col gap-7">
               <Skeleton className="h-40 rounded-xl" />
               <Skeleton className="h-40 rounded-xl" />
             </div>
@@ -399,9 +399,9 @@ export default function StudentDashboardPage() {
         </div>
 
         {/* Main content grid */}
-        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+        <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
           {/* Left column - Continue Learning */}
-          <div className="flex flex-col gap-5">
+          <div className="flex min-w-0 flex-col gap-5">
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-[22px] font-semibold tracking-tight text-foreground">
                 Continue Learning
@@ -470,7 +470,7 @@ export default function StudentDashboardPage() {
           </div>
 
           {/* Right column - Deadlines + Recommended */}
-          <div className="flex flex-col gap-7">
+          <div className="flex min-w-0 flex-col gap-7">
             {/* Upcoming Deadlines */}
             <div>
               <h2 className="font-heading mb-4 text-[22px] font-semibold tracking-tight text-foreground">

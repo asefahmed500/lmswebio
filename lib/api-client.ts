@@ -8,6 +8,24 @@ import type {
 
 let csrfTokenCache: string | null = null
 
+/**
+ * An aborted request is normal — the caller navigated away or a debounced
+ * search was superseded. Logging it as an error floods the console on every
+ * route change (notifications poll on every page) and hides real failures.
+ * Every helper shares this predicate so callers get a quiet, consistent result.
+ */
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  )
+}
+
+function reportError(method: string, endpoint: string, error: unknown): void {
+  if (isAbortError(error)) return
+  console.error(`API ${method} ${endpoint} error:`, error)
+}
+
 async function fetchCSRFToken(): Promise<string> {
   if (csrfTokenCache) return csrfTokenCache
 
@@ -18,7 +36,8 @@ async function fetchCSRFToken(): Promise<string> {
     csrfTokenCache = data.token as string
     return csrfTokenCache!
   } catch (err) {
-    console.error("CSRF token fetch failed:", err)
+    if (!(err instanceof Error && err.name === "AbortError"))
+      console.error("CSRF token fetch failed:", err)
     return ""
   }
 }
@@ -67,7 +86,7 @@ export async function apiGet<T>(
     })
     return handleResponse<T>(response)
   } catch (error) {
-    console.error(`API GET ${endpoint} error:`, error)
+    reportError("GET", endpoint, error)
     return { error: "Network error" }
   }
 }
@@ -93,7 +112,7 @@ export async function apiPost<T>(
     })
     return handleResponse<T>(response)
   } catch (error) {
-    console.error(`API POST ${endpoint} error:`, error)
+    reportError("POST", endpoint, error)
     return { error: "Network error" }
   }
 }
@@ -117,7 +136,7 @@ export async function apiPut<T>(
     })
     return handleResponse<T>(response)
   } catch (error) {
-    console.error(`API PUT ${endpoint} error:`, error)
+    reportError("PUT", endpoint, error)
     return { error: "Network error" }
   }
 }
@@ -141,7 +160,7 @@ export async function apiPatch<T>(
     })
     return handleResponse<T>(response)
   } catch (error) {
-    console.error(`API PATCH ${endpoint} error:`, error)
+    reportError("PATCH", endpoint, error)
     return { error: "Network error" }
   }
 }
@@ -163,7 +182,7 @@ export async function apiDelete<T>(
     })
     return handleResponse<T>(response)
   } catch (error) {
-    console.error(`API DELETE ${endpoint} error:`, error)
+    reportError("DELETE", endpoint, error)
     return { error: "Network error" }
   }
 }
@@ -197,7 +216,7 @@ export async function uploadFile(
 
     return { data: await response.json() }
   } catch (error) {
-    console.error("File upload error:", error)
+    reportError("UPLOAD", "/upload", error)
     return { error: "Upload failed" }
   }
 }
