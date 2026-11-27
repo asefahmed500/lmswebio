@@ -6,9 +6,8 @@ import {
   FileText,
   Calendar,
   Send,
-  HelpCircle,
+  CircleAlert,
   CheckCircle2,
-  AlertCircle,
 } from "lucide-react"
 import {
   Card,
@@ -21,6 +20,24 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
+import { Spinner } from "@/components/ui/spinner"
+import { LoadingCard } from "@/components/loading-skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPost } from "@/lib/api-client"
 
@@ -82,45 +99,36 @@ function SubmissionForm({
 
   if (success) {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
-        <CheckCircle2 className="h-4 w-4" />
-        Assignment submitted successfully!
-      </div>
+      <Alert className="border-success/30 text-success">
+        <CheckCircle2 />
+        <AlertDescription>Assignment submitted successfully!</AlertDescription>
+      </Alert>
     )
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <Textarea
-        placeholder="Type your answer here..."
-        value={textAnswer}
-        onChange={(e) => setTextAnswer(e.target.value)}
-        className="min-h-[120px]"
-        disabled={isSubmitting}
-      />
-      {error && (
-        <div className="flex items-center gap-2 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4" />
-          {error}
-        </div>
-      )}
+    <FieldGroup>
+      <Field data-invalid={!!error || undefined}>
+        <FieldLabel htmlFor={`answer-${assignment.id}`}>Your answer</FieldLabel>
+        <Textarea
+          id={`answer-${assignment.id}`}
+          placeholder="Type your answer here..."
+          value={textAnswer}
+          onChange={(e) => setTextAnswer(e.target.value)}
+          className="min-h-32"
+          disabled={isSubmitting}
+          aria-invalid={!!error}
+        />
+        <FieldError>{error}</FieldError>
+      </Field>
       <Button
         onClick={handleSubmit}
         disabled={isSubmitting || !textAnswer.trim()}
       >
-        {isSubmitting ? (
-          <>
-            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            Submitting...
-          </>
-        ) : (
-          <>
-            <Send data-icon="inline-start" />
-            Submit Assignment
-          </>
-        )}
+        {isSubmitting ? <Spinner /> : <Send data-icon="inline-start" />}
+        {isSubmitting ? "Submitting..." : "Submit Assignment"}
       </Button>
-    </div>
+    </FieldGroup>
   )
 }
 
@@ -212,12 +220,9 @@ export default function PendingAssignmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading assignments...
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          <LoadingCard count={3} />
         </div>
       </div>
     )
@@ -225,31 +230,29 @@ export default function PendingAssignmentsPage() {
 
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <HelpCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">
-            Error loading assignments
-          </h3>
-          <p className="mb-4 text-sm text-muted-foreground">{error}</p>
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Error loading assignments</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Try Again
           </Button>
-        </div>
-      </div>
+        </EmptyContent>
+      </Empty>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Pending Assignments
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Assignments that still need your submission
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Pending Assignments"
+        description="Assignments that still need your submission"
+      />
 
       {assignments.length > 0 ? (
         <div className="flex flex-col gap-4">
@@ -277,12 +280,12 @@ export default function PendingAssignmentsPage() {
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
+                    <FileText className="size-4" />
                     <span>{assignment.maxPoints} points</span>
                   </div>
                   {assignment.dueDate && (
                     <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
+                      <Calendar className="size-4" />
                       <span>
                         Due {new Date(assignment.dueDate).toLocaleDateString()}
                       </span>
@@ -310,22 +313,22 @@ export default function PendingAssignmentsPage() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No pending assignments
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                You&apos;ve submitted all assignments. Great work!
-              </p>
-              <Button asChild>
-                <Link href="/student/assignments">View All Assignments</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CheckCircle2 />
+            </EmptyMedia>
+            <EmptyTitle>No pending assignments</EmptyTitle>
+            <EmptyDescription>
+              You&apos;ve submitted all assignments. Great work!
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/assignments">View All Assignments</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

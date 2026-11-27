@@ -3,7 +3,12 @@
 import Image from "next/image"
 import Link from "next/link"
 import { BookOpen, Layers, Users, ArrowRight } from "lucide-react"
-import { cn } from "@/lib/utils"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
 
 interface CourseCardProps {
   course: {
@@ -30,111 +35,116 @@ const levelLabels: Record<string, string> = {
   ADVANCED: "Advanced",
 }
 
-export function CourseCard({ course, enrolled = false }: CourseCardProps) {
+export function CourseCard({
+  course,
+  enrolled = false,
+  progress,
+  showProgress = false,
+}: CourseCardProps) {
   const isFree = !course.price || course.price === 0
+  const href = enrolled
+    ? `/student/courses/${course.id}`
+    : `/courses/${course.slug}`
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-graphite/10 bg-chalk transition-shadow hover:shadow-md">
-      <Link
-        href={`/courses/${course.slug}`}
-        className="block overflow-hidden rounded-t-xl"
-      >
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-canvas">
+    <Card className="group/card flex h-full min-w-0 flex-col py-0 transition-colors hover:border-primary/30">
+      <Link href={href} className="block min-w-0 overflow-hidden rounded-t-lg">
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
           {course.thumbnail ? (
             <Image
               src={course.thumbnail}
               alt=""
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              className="object-cover"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
               loading="lazy"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-graphite/20">
+            <div className="flex size-full items-center justify-center text-muted-foreground/40">
               <BookOpen className="size-10" />
             </div>
           )}
           <div className="absolute top-3 right-3">
-            <span
-              className={cn(
-                "rounded-md px-2.5 py-0.5 font-visueltpro text-[10px] font-medium",
-                isFree
-                  ? "bg-void-black text-chalk"
-                  : enrolled
-                    ? "border border-graphite/15 bg-chalk text-graphite"
-                    : "bg-void-black text-chalk"
-              )}
+            <Badge
+              variant={enrolled ? "success" : isFree ? "secondary" : "default"}
             >
-              {isFree
-                ? "Free"
-                : enrolled
-                  ? "Enrolled"
+              {enrolled
+                ? "Enrolled"
+                : isFree
+                  ? "Free"
                   : `$${course.price!.toFixed(0)}`}
-            </span>
+            </Badge>
           </div>
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col gap-2.5 p-5">
-        <div className="flex items-center gap-2 font-visueltpro text-[10px] font-medium text-smoke">
-          <span className="rounded-md bg-canvas px-2 py-0.5">
-            {levelLabels[course.level]}
-          </span>
-          {course.category && (
-            <span className="rounded-md bg-canvas px-2 py-0.5 text-smoke">
+      <CardContent className="flex flex-1 flex-col gap-2 p-5">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <Badge variant="outline">{levelLabels[course.level]}</Badge>
+          {course.category ? (
+            <Badge variant="secondary" className="max-w-full truncate">
               {course.category}
-            </span>
-          )}
+            </Badge>
+          ) : null}
         </div>
 
-        <Link href={`/courses/${course.slug}`}>
-          <h3 className="font-visueltpro text-[15px] leading-snug font-medium text-void-black transition-colors group-hover:text-carbon">
+        <Link href={href} className="min-w-0">
+          <h3 className="line-clamp-2 text-[15px] leading-snug font-medium text-foreground transition-colors group-hover/card:text-primary">
             {course.title}
           </h3>
         </Link>
 
-        {course.description && (
-          <p className="line-clamp-2 font-visueltpro text-[13px] leading-relaxed font-light text-smoke">
+        {course.description ? (
+          <p className="line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
             {course.description}
           </p>
-        )}
+        ) : null}
 
-        <p className="font-visueltpro text-xs font-light text-smoke">
+        <p className="truncate text-xs text-muted-foreground">
           {course.instructor.fullName}
         </p>
 
-        <div className="flex-1" />
-
-        <div className="flex items-center justify-between border-t border-graphite/8 pt-3">
-          <div className="flex items-center gap-3 font-visueltpro text-xs font-light text-smoke">
-            {course._count?.modules !== undefined &&
-              course._count.modules > 0 && (
-                <span className="flex items-center gap-1">
-                  <Layers className="size-3" />
-                  {course._count.modules}
-                </span>
-              )}
-            {course._count?.enrolments !== undefined &&
-              course._count.enrolments > 0 && (
-                <span className="flex items-center gap-1">
-                  <Users className="size-3" />
-                  {course._count.enrolments}
-                </span>
-              )}
+        {(showProgress || enrolled) && progress !== undefined ? (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Progress</span>
+              <span className="tabular-nums">{Math.round(progress)}%</span>
+            </div>
+            <Progress
+              value={Math.min(100, Math.max(0, progress))}
+              className="h-1.5"
+            />
           </div>
-          <Link
-            href={
-              enrolled
-                ? `/student/courses/${course.id}`
-                : `/courses/${course.slug}`
-            }
-            className="rounded-md bg-void-black px-3 py-1 font-visueltpro text-[12px] font-medium text-chalk transition-opacity hover:opacity-80"
-          >
-            {enrolled ? "Continue" : "View"}{" "}
-            <ArrowRight className="inline size-3" />
-          </Link>
+        ) : null}
+
+        <div className="min-h-4 flex-1" />
+
+        <Separator />
+        <div className="flex min-w-0 items-center justify-between gap-3 pt-3">
+          <div className="flex min-w-0 items-center gap-3 text-xs text-muted-foreground">
+            {course._count?.modules !== undefined &&
+            course._count.modules > 0 ? (
+              <span className="flex shrink-0 items-center gap-1">
+                <Layers className="size-3" />
+                {course._count.modules}
+              </span>
+            ) : null}
+            {course._count?.enrolments !== undefined &&
+            course._count.enrolments > 0 ? (
+              <span className="flex shrink-0 items-center gap-1">
+                <Users className="size-3" />
+                {course._count.enrolments}
+              </span>
+            ) : null}
+          </div>
+          <Button asChild size="sm" variant={enrolled ? "default" : "outline"}>
+            <Link href={href}>
+              {enrolled ? "Continue" : "View"}
+              <ArrowRight data-icon="inline-end" />
+            </Link>
+          </Button>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

@@ -18,9 +18,14 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:enrich": "tsx prisma/seed-enrich.ts",
+    "db:seed:courses": "tsx prisma/seed-courses.ts",
+    "db:seed:promotions": "tsx prisma/seed-promotions.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
-    "audit": "npm run lint && npm run typecheck && npm run test -- --run"
+    "audit": "npm run lint && npm run typecheck && npm run test -- --run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -34,6 +39,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "cn": "^0.5.2",
     "cookie": "^1.1.1",
     "date-fns": "^4.3.0",
     "framer-motion": "^12.40.0",
@@ -59,6 +65,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.65.1",
     "@prisma/client": "6.19",
     "@tailwindcss/postcss": "^4.2.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -74,6 +81,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "16.1.7",
     "jsdom": "^29.1.1",
+    "mongodb": "^7.9.1",
     "postcss": "^8",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",

@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, ArrowLeft, Plus } from "lucide-react"
+import { ArrowLeft, Plus, CircleAlert } from "lucide-react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import { courseSchema, type CourseFormData } from "@/lib/validators"
@@ -19,10 +19,19 @@ import { Level } from "@/types"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Spinner } from "@/components/ui/spinner"
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -35,6 +44,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { cn } from "@/lib/utils"
 
 /**
@@ -113,7 +123,7 @@ function RichTextEditor({
         >
           Italic
         </Button>
-        <div className="mx-1 h-8 w-px bg-border" />
+        <Separator orientation="vertical" className="mx-1 h-8" />
         <Button
           type="button"
           variant="ghost"
@@ -156,7 +166,7 @@ function RichTextEditor({
         >
           H3
         </Button>
-        <div className="mx-1 h-8 w-px bg-border" />
+        <Separator orientation="vertical" className="mx-1 h-8" />
         <Button
           type="button"
           variant="ghost"
@@ -175,7 +185,7 @@ function RichTextEditor({
         >
           1. List
         </Button>
-        <div className="mx-1 h-8 w-px bg-border" />
+        <Separator orientation="vertical" className="mx-1 h-8" />
         <Button
           type="button"
           variant="ghost"
@@ -212,6 +222,7 @@ export default function NewCoursePage() {
       category: "",
       tags: [],
       thumbnail: "",
+      price: "0",
     },
   })
 
@@ -231,6 +242,7 @@ export default function NewCoursePage() {
         category: data.category || undefined,
         tags,
         thumbnail: data.thumbnail || undefined,
+        price: Number(data.price ?? 0),
       })
 
       if (result.error) {
@@ -265,22 +277,24 @@ export default function NewCoursePage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6">
+    <div className="mx-auto flex max-w-4xl min-w-0 flex-col gap-6">
       {/* Page header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
+      <div className="flex items-start gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          aria-label="Back to courses"
+        >
           <Link href="/instructor/courses">
             <ArrowLeft />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Create New Course
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Fill in the details to create a new course
-          </p>
-        </div>
+        <PageHeader
+          className="min-w-0 flex-1"
+          title="Create New Course"
+          description="Fill in the details to create a new course"
+        />
       </div>
 
       <form
@@ -290,6 +304,7 @@ export default function NewCoursePage() {
         {/* Error message */}
         {error && (
           <Alert variant="destructive">
+            <CircleAlert />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -302,146 +317,158 @@ export default function NewCoursePage() {
               General information about your course
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {/* Title */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="title">Course Title *</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Introduction to Web Development"
-                disabled={isLoading}
-                {...form.register("title")}
-              />
-              {form.formState.errors.title && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.title.message}
-                </p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="description">Description</Label>
-              <RichTextEditor
-                content={form.watch("description") || ""}
-                onChange={(content) => form.setValue("description", content)}
-                placeholder="Describe what students will learn in this course..."
-              />
-              {form.formState.errors.description && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.description.message}
-                </p>
-              )}
-            </div>
-
-            {/* Level and Category */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="level">Difficulty Level *</Label>
-                <Select
-                  value={form.watch("level")}
-                  onValueChange={(value) =>
-                    form.setValue("level", value as Level)
-                  }
-                  disabled={isLoading}
-                >
-                  <SelectTrigger id="level">
-                    <SelectValue placeholder="Select level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BEGINNER">Beginner</SelectItem>
-                    <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-                    <SelectItem value="ADVANCED">Advanced</SelectItem>
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.level && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.level.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="category">Category</Label>
+          <CardContent>
+            <FieldGroup>
+              {/* Title */}
+              <Field>
+                <FieldLabel htmlFor="title">Course Title *</FieldLabel>
                 <Input
-                  id="category"
-                  placeholder="e.g., Web Development"
+                  id="title"
+                  placeholder="e.g., Introduction to Web Development"
                   disabled={isLoading}
-                  {...form.register("category")}
+                  {...form.register("title")}
                 />
-              </div>
-            </div>
+                <FieldError errors={[form.formState.errors.title]} />
+              </Field>
 
-            {/* Tags */}
-            <div className="flex flex-col gap-2">
-              <Label>Tags (max 10)</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add a tag..."
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      handleAddTag()
+              {/* Description */}
+              <Field>
+                <FieldLabel htmlFor="description">Description</FieldLabel>
+                <RichTextEditor
+                  content={form.watch("description") || ""}
+                  onChange={(content) => form.setValue("description", content)}
+                  placeholder="Describe what students will learn in this course..."
+                />
+                <FieldError errors={[form.formState.errors.description]} />
+              </Field>
+
+              {/* Level and Category */}
+              <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="level">Difficulty Level *</FieldLabel>
+                  <Select
+                    value={form.watch("level")}
+                    onValueChange={(value) =>
+                      form.setValue("level", value as Level)
                     }
-                  }}
-                  disabled={isLoading || tags.length >= 10}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddTag}
-                  disabled={isLoading || tags.length >= 10 || !tagInput.trim()}
-                >
-                  <Plus />
-                </Button>
-              </div>
-              {tags.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="gap-1">
-                      {tag}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveTag(tag)}
-                        aria-label="Remove tag"
-                        className="size-5 rounded-md p-0.5 hover:bg-destructive/20"
-                        disabled={isLoading}
-                      >
-                        ×
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger id="level" className="w-full">
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="BEGINNER">Beginner</SelectItem>
+                        <SelectItem value="INTERMEDIATE">
+                          Intermediate
+                        </SelectItem>
+                        <SelectItem value="ADVANCED">Advanced</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldError errors={[form.formState.errors.level]} />
+                </Field>
 
-            {/* Thumbnail URL */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="thumbnail">Thumbnail URL</Label>
-              <Input
-                id="thumbnail"
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                disabled={isLoading}
-                {...form.register("thumbnail")}
-              />
-              {form.formState.errors.thumbnail && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.thumbnail.message}
-                </p>
-              )}
-            </div>
+                <Field>
+                  <FieldLabel htmlFor="category">Category</FieldLabel>
+                  <Input
+                    id="category"
+                    placeholder="e.g., Web Development"
+                    disabled={isLoading}
+                    {...form.register("category")}
+                  />
+                </Field>
+              </div>
+
+              {/* Tags */}
+              <Field>
+                <FieldLabel>Tags (max 10)</FieldLabel>
+                <div className="flex min-w-0 gap-2">
+                  <Input
+                    placeholder="Add a tag..."
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        handleAddTag()
+                      }
+                    }}
+                    disabled={isLoading || tags.length >= 10}
+                    className="min-w-0"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleAddTag}
+                    disabled={
+                      isLoading || tags.length >= 10 || !tagInput.trim()
+                    }
+                  >
+                    <Plus />
+                  </Button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="gap-1">
+                        {tag}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => handleRemoveTag(tag)}
+                          aria-label="Remove tag"
+                          disabled={isLoading}
+                        >
+                          ×
+                        </Button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </Field>
+
+              {/* Thumbnail URL */}
+              <Field>
+                <FieldLabel htmlFor="thumbnail">Thumbnail URL</FieldLabel>
+                <Input
+                  id="thumbnail"
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  disabled={isLoading}
+                  {...form.register("thumbnail")}
+                />
+                <FieldError errors={[form.formState.errors.thumbnail]} />
+              </Field>
+
+              {/* Price — 0 means free and enables self-enrolment */}
+              <Field>
+                <FieldLabel htmlFor="price">Price (USD)</FieldLabel>
+                <Input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  disabled={isLoading}
+                  {...form.register("price")}
+                />
+                <FieldError errors={[form.formState.errors.price]} />
+                <FieldDescription>
+                  Leave at 0 for a free course. Paid courses use Stripe
+                  Checkout.
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
           </CardContent>
         </Card>
 
         {/* Submit buttons */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {isLoading && <Spinner data-icon="inline-start" />}
             Create Course
           </Button>
           <Button

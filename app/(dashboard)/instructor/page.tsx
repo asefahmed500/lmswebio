@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   Clock,
   CheckCircle,
+  CircleAlert,
 } from "lucide-react"
 import {
   Card,
@@ -19,9 +20,19 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 import type { KPICard, CoursePerformance } from "@/types"
@@ -41,7 +52,7 @@ function KPICardComponent({ kpi }: { kpi: KPICard }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{kpi.value}</div>
+        <div className="text-2xl font-semibold">{kpi.value}</div>
         {kpi.change !== undefined && (
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             {isPositive && <ArrowUpRight className="size-3 text-success" />}
@@ -273,33 +284,37 @@ export default function InstructorDashboardPage() {
     loadData()
   }, [user])
 
+  const header = (
+    <PageHeader
+      title="Instructor Dashboard"
+      description="Welcome back! Here's what's happening with your courses."
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <LoadingCard count={4} />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={2} />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Instructor Dashboard
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Welcome back! Here&apos;s what&apos;s happening with your courses.
-        </p>
-      </div>
+      {error && (
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi, index) => (
@@ -341,9 +356,17 @@ export default function InstructorDashboardPage() {
                     />
                   ))
                 ) : (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    No pending submissions
-                  </p>
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <CheckCircle />
+                      </EmptyMedia>
+                      <EmptyTitle>No pending submissions</EmptyTitle>
+                      <EmptyDescription>
+                        You&apos;re all caught up on grading.
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
                 )}
               </div>
               {pendingCount > 3 && (

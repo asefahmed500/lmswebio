@@ -2,10 +2,21 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { BookOpen, Edit, Eye, Trash2, Plus } from "lucide-react"
+import { BookOpen, Edit, Eye, Trash2, Plus, CircleAlert } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CourseGridLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,38 +100,39 @@ export default function InstructorDraftsPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading drafts...</p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Drafts</h1>
-          <p className="mt-1 text-muted-foreground">
-            Unpublished courses ready to be finished and published
-          </p>
-        </div>
+  const header = (
+    <PageHeader
+      title="Drafts"
+      description="Unpublished courses ready to be finished and published"
+      action={
         <Button asChild>
           <Link href="/instructor/courses/new">
             <Plus data-icon="inline-start" />
             New Course
           </Link>
         </Button>
+      }
+    />
+  )
+
+  if (isLoading) {
+    return (
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <CourseGridLoading count={3} />
       </div>
+    )
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {drafts.length > 0 ? (
@@ -166,22 +178,22 @@ export default function InstructorDraftsPage() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        className="flex-1"
+                        className="min-w-0 flex-1"
                         onClick={() => handlePublish(course.id)}
                       >
-                        <Eye className="mr-1 size-4" />
+                        <Eye data-icon="inline-start" />
                         Publish
                       </Button>
                       <Button size="sm" variant="outline" asChild>
                         <Link href={`/instructor/courses/${course.id}/edit`}>
-                          <Edit className="mr-1 size-4" />
+                          <Edit data-icon="inline-start" />
                           Edit
                         </Link>
                       </Button>
                       <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive"
+                        size="icon-sm"
+                        variant="destructive"
+                        aria-label="Delete draft"
                         onClick={() => setDeleteId(course.id)}
                       >
                         <Trash2 />
@@ -194,24 +206,26 @@ export default function InstructorDraftsPage() {
           })}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No drafts</h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                You don&apos;t have any draft courses. Start creating a new
-                course or publish your existing drafts from the courses page.
-              </p>
-              <Button asChild>
-                <Link href="/instructor/courses/new">
-                  <Plus data-icon="inline-start" />
-                  Create Course
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen />
+            </EmptyMedia>
+            <EmptyTitle>No drafts</EmptyTitle>
+            <EmptyDescription>
+              You don&apos;t have any draft courses. Start creating a new course
+              or publish your existing drafts from the courses page.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/instructor/courses/new">
+                <Plus data-icon="inline-start" />
+                Create Course
+              </Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
 
       <AlertDialog
@@ -230,8 +244,8 @@ export default function InstructorDraftsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() => deleteId && handleDelete(deleteId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

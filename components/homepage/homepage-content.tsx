@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   ArrowRight,
@@ -11,25 +11,18 @@ import {
   BarChart3,
   Award,
   CheckCircle2,
-  Play,
-  LayoutDashboard,
-  Calendar,
-  Settings,
-  TrendingUp,
   Users,
   ClipboardCheck,
   MessageCircle,
-  Circle,
 } from "lucide-react"
-import {
-  motion,
-  useInView,
-  animate,
-  useMotionValue,
-  useTransform,
-} from "framer-motion"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { CourseCard } from "@/features/courses/course-card"
 import type { HomepageStats } from "@/types/homepage"
+import { cn } from "@/lib/utils"
 
 interface ApiCourse {
   id: number
@@ -44,31 +37,14 @@ interface ApiCourse {
   _count: { modules: number; enrolments: number }
 }
 
-function AnimatedCounter({
-  value,
-  label,
-}: {
-  value: number | string
-  label: string
-}) {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, amount: 0.5 })
-  const motionValue = useMotionValue(0)
-  const rounded = useTransform(motionValue, (v) => Math.round(v))
-  useEffect(() => {
-    if (isInView && typeof value === "number")
-      animate(motionValue, value, { duration: 2, ease: "easeOut" })
-  }, [isInView, value, motionValue])
+/** A quiet, real stat: no entrance animation, no motion values. */
+function Stat({ value, label }: { value: number | string; label: string }) {
   return (
-    <div ref={ref} className="text-center">
-      <div className="font-bradford text-[40px] font-medium tracking-[-0.02em] text-void-black">
-        {typeof value === "number" ? (
-          <motion.span>{rounded}</motion.span>
-        ) : (
-          value
-        )}
+    <div className="text-center">
+      <div className="text-[40px] leading-none font-medium tracking-tight text-foreground">
+        {value}
       </div>
-      <div className="mt-1 font-visueltpro text-xs text-smoke">{label}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
     </div>
   )
 }
@@ -160,7 +136,6 @@ const pricingTiers = [
   {
     name: "Free courses",
     price: "Free",
-    period: "",
     desc: "Any course an instructor publishes with no price set.",
     features: [
       "Full enrolment and progress tracking",
@@ -175,7 +150,6 @@ const pricingTiers = [
   {
     name: "Paid courses",
     price: "One-time",
-    period: "",
     desc: "A single payment per course, set by the instructor.",
     features: [
       "Everything in free courses",
@@ -190,7 +164,6 @@ const pricingTiers = [
   {
     name: "Sell your own",
     price: "Set by you",
-    period: "",
     desc: "Instructor accounts can create and publish courses.",
     features: [
       "Create courses, modules and lessons",
@@ -202,42 +175,6 @@ const pricingTiers = [
     href: "/register",
     featured: false,
   },
-]
-
-const sidebarNavItems = [
-  { icon: LayoutDashboard, label: "Dashboard", active: true },
-  { icon: BookOpen, label: "Courses", active: false },
-  { icon: BarChart3, label: "Progress", active: false },
-  { icon: Calendar, label: "Calendar", active: false },
-  { icon: Award, label: "Certificates", active: false },
-  { icon: Settings, label: "Settings", active: false },
-]
-
-const dashboardMetrics = [
-  { label: "Courses Completed", value: "12", icon: BookOpen },
-  { label: "Hours Learned", value: "148", icon: Clock },
-  { label: "Certificates", value: "8", icon: Award },
-  { label: "Day Streak", value: "14", icon: TrendingUp },
-]
-
-const activeCourses = [
-  { title: "Advanced React Patterns", progress: 78, lessons: "12/16" },
-  { title: "System Design Fundamentals", progress: 45, lessons: "7/15" },
-  { title: "Data Structures in Python", progress: 92, lessons: "23/25" },
-  { title: "Machine Learning Basics", progress: 23, lessons: "4/18" },
-]
-
-const recentActivity = [
-  { text: "Completed Module 12 in Advanced React Patterns", time: "2h ago" },
-  { text: "Earned certificate in Python Data Structures", time: "Yesterday" },
-  { text: "Started Machine Learning Basics", time: "2 days ago" },
-  { text: "Scored 95% on System Design Quiz #3", time: "3 days ago" },
-]
-
-const upcomingDeadlines = [
-  { title: "ML Basics Quiz #1", date: "Jun 15", type: "Quiz" },
-  { title: "React Final Project", date: "Jun 18", type: "Project" },
-  { title: "System Design Peer Review", date: "Jun 22", type: "Review" },
 ]
 
 const categories = [
@@ -301,38 +238,36 @@ export function HomepageContent() {
   }, [])
 
   return (
-    <div className="flex flex-col bg-canvas">
+    <div className="flex flex-col bg-background">
+      <Separator />
+
       {/* STATS */}
-      <section className="border-t border-graphite/10 py-20">
-        <div className="mx-auto max-w-[1280px] px-5">
-          <div className="grid grid-cols-2 gap-12 lg:grid-cols-4">
-            <AnimatedCounter value={stats.totalStudents} label="Students" />
-            <AnimatedCounter value={stats.totalCourses} label="Courses" />
-            <AnimatedCounter
-              value={stats.totalInstructors}
-              label="Instructors"
-            />
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-5">
+          <div className="grid grid-cols-2 gap-10 sm:gap-12 lg:grid-cols-3">
+            <Stat value={stats.totalStudents} label="Students" />
+            <Stat value={stats.totalCourses} label="Courses" />
+            <Stat value={stats.totalInstructors} label="Instructors" />
           </div>
         </div>
       </section>
 
+      <Separator />
+
       {/* TOP COURSES */}
-      <section className="py-20">
-        <div className="mx-auto max-w-[1280px] px-5">
-          <h2 className="mb-3 font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-5">
+          <h2 className="mb-3 text-[34px] leading-tight font-medium tracking-tight text-foreground sm:text-[40px]">
             Top Courses
           </h2>
-          <p className="mb-10 max-w-lg font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
+          <p className="mb-10 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
             Our most sought-after courses, curated for maximum impact.
           </p>
 
           {loading ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-[3/4] animate-pulse rounded-xl bg-chalk"
-                />
+                <Skeleton key={i} className="aspect-[3/4] w-full rounded-lg" />
               ))}
             </div>
           ) : (
@@ -366,354 +301,148 @@ export function HomepageContent() {
             </div>
           )}
 
-          <div className="mt-10 text-center">
-            <Link
-              href="/courses"
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-graphite/15 bg-chalk px-5 py-2.5 font-visueltpro text-sm font-medium text-void-black transition-colors hover:border-graphite/30"
-            >
-              View all courses <ArrowRight className="size-3.5" />
-            </Link>
+          <div className="mt-10 flex justify-center">
+            <Button asChild variant="outline">
+              <Link href="/courses">
+                View all courses
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
+      <Separator />
+
       {/* CATEGORIES */}
-      <section className="py-20">
-        <div className="mx-auto max-w-[1280px] px-5 text-center">
-          <h2 className="mb-3 font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-5 text-center">
+          <h2 className="mb-3 text-[34px] leading-tight font-medium tracking-tight text-foreground sm:text-[40px]">
             Browse by category
           </h2>
-          <p className="mx-auto mb-10 max-w-md font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
+          <p className="mx-auto mb-10 max-w-md text-[15px] leading-relaxed text-muted-foreground">
             Find exactly what you need across every discipline.
           </p>
-          <div className="flex flex-wrap justify-center gap-2.5">
+          <div className="flex flex-wrap justify-center gap-2">
             {categories.map((cat) => (
-              <Link
+              <Button
                 key={cat}
-                href={`/courses?category=${cat.toLowerCase()}`}
-                className="rounded-md border border-graphite/10 bg-chalk px-3 font-visueltpro text-sm font-light text-graphite transition-all hover:border-graphite/25 hover:bg-void-black hover:text-chalk"
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 font-normal"
               >
-                {cat}
-              </Link>
+                <Link href={`/courses?category=${cat.toLowerCase()}`}>
+                  {cat}
+                </Link>
+              </Button>
             ))}
           </div>
         </div>
       </section>
 
+      <Separator />
+
       {/* FEATURES */}
-      <section className="py-20">
-        <div className="mx-auto max-w-[1280px] px-5">
-          <div className="mb-12 text-center">
-            <h2 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
-              Why LMSio
-            </h2>
-          </div>
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-5">
+          <h2 className="mb-10 text-center text-[34px] leading-tight font-medium tracking-tight text-foreground sm:text-[40px]">
+            Why LMSio
+          </h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {features.map((item) => {
               const Icon = item.icon
               return (
-                <div
-                  key={item.title}
-                  className="rounded-xl border border-graphite/10 bg-chalk p-7"
-                >
-                  <div className="mb-5 flex size-8 items-center justify-center rounded-md bg-void-black">
-                    <Icon className="size-4 text-chalk" />
-                  </div>
-                  <h3 className="mb-2 font-visueltpro text-[18px] font-medium tracking-[-0.01em] text-void-black">
-                    {item.title}
-                  </h3>
-                  <p className="font-visueltpro text-sm leading-[1.6] font-light text-smoke">
-                    {item.desc}
-                  </p>
-                </div>
+                <Card key={item.title} className="py-0">
+                  <CardContent className="flex flex-col gap-4 p-6">
+                    <div className="flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="mb-1.5 text-[18px] font-medium tracking-tight text-foreground">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               )
             })}
           </div>
         </div>
       </section>
 
-      {/* DEMO DASHBOARD */}
-      <section className="py-20">
-        <div className="mx-auto max-w-[1280px] px-5">
-          <div className="mb-14 text-center">
-            <h2 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
-              Your learning dashboard
-            </h2>
-            <p className="mx-auto mt-3 max-w-lg font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
-              Track progress, manage courses, and celebrate milestones — all
-              from one intuitive interface.
-            </p>
-          </div>
-
-          {/* Dashboard mock */}
-          <div
-            className="overflow-hidden rounded-xl border border-graphite/10 bg-chalk"
-            style={{ boxShadow: "var(--shadow-sq-hero)" }}
-          >
-            <div className="flex min-h-[480px]">
-              {/* Sidebar */}
-              <div className="hidden w-[210px] shrink-0 flex-col border-r border-graphite/8 bg-canvas md:flex">
-                <div className="flex items-center gap-2 border-b border-graphite/8 px-4 py-3.5">
-                  <div className="flex size-6 items-center justify-center rounded-sm bg-void-black">
-                    <span className="font-visueltpro text-[9px] font-bold text-chalk">
-                      L
-                    </span>
-                  </div>
-                  <span className="font-visueltpro text-sm font-normal tracking-[-0.02em] text-void-black">
-                    LMSio
-                  </span>
-                </div>
-
-                <div className="flex flex-1 flex-col gap-0.5 p-2.5">
-                  {sidebarNavItems.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <div
-                        key={item.label}
-                        className={`flex items-center gap-2.5 rounded-lg px-3 py-2 ${
-                          item.active
-                            ? "bg-chalk font-medium text-void-black"
-                            : "text-smoke transition-colors hover:text-graphite"
-                        }`}
-                      >
-                        <Icon className="size-3.5" />
-                        <span className="font-visueltpro text-[13px] font-light">
-                          {item.label}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <div className="border-t border-graphite/8 p-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex size-7 items-center justify-center rounded-md bg-graphite/10">
-                      <span className="font-visueltpro text-[10px] font-medium text-graphite">
-                        JD
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-visueltpro text-xs font-medium text-void-black">
-                        John Doe
-                      </div>
-                      <div className="font-visueltpro text-[10px] font-light text-smoke">
-                        Enrolled course
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Main content */}
-              <div className="flex-1 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-graphite/8 px-5 py-3">
-                  <div>
-                    <div className="font-visueltpro text-sm font-medium tracking-[-0.01em] text-void-black">
-                      Welcome back, John
-                    </div>
-                    <div className="font-visueltpro text-[11px] font-light text-smoke">
-                      Continue where you left off
-                    </div>
-                  </div>
-                  <div className="rounded bg-canvas px-2 py-0.5 font-visueltpro text-[10px] font-medium text-graphite">
-                    This week
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <div className="mb-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-                    {dashboardMetrics.map((m) => {
-                      const Icon = m.icon
-                      return (
-                        <div
-                          key={m.label}
-                          className="rounded-lg border border-graphite/6 bg-canvas p-3"
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <Icon className="size-3 text-smoke" />
-                            <span className="font-visueltpro text-[9px] font-medium text-smoke">
-                              {m.label}
-                            </span>
-                          </div>
-                          <div className="mt-1.5 font-visueltpro text-xl font-medium tracking-[-0.02em] text-void-black">
-                            {m.value}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    {/* Continue learning */}
-                    <div className="rounded-lg border border-graphite/6 bg-canvas p-4 lg:col-span-2">
-                      <h3 className="mb-3 font-visueltpro text-xs font-medium tracking-[-0.01em] text-void-black">
-                        Continue Learning
-                      </h3>
-                      <div className="flex flex-col gap-3">
-                        {activeCourses.map((c) => (
-                          <div
-                            key={c.title}
-                            className="flex items-center gap-3 rounded-lg border border-graphite/6 bg-chalk p-2.5"
-                          >
-                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-canvas">
-                              <Play className="size-3 text-graphite" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate font-visueltpro text-xs font-light text-void-black">
-                                {c.title}
-                              </div>
-                              <div className="mt-1.5 flex items-center gap-2">
-                                <div className="h-1 flex-1 overflow-hidden rounded-full bg-graphite/10">
-                                  <div
-                                    className="h-full rounded-full bg-void-black transition-all"
-                                    style={{ width: `${c.progress}%` }}
-                                  />
-                                </div>
-                                <span className="shrink-0 font-visueltpro text-[10px] font-light text-smoke">
-                                  {c.progress}%
-                                </span>
-                              </div>
-                            </div>
-                            <span className="shrink-0 font-visueltpro text-[10px] font-light text-smoke">
-                              {c.lessons}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Right column */}
-                    <div className="flex flex-col gap-4">
-                      {/* Upcoming */}
-                      <div className="rounded-lg border border-graphite/6 bg-canvas p-4">
-                        <h3 className="mb-3 font-visueltpro text-xs font-medium tracking-[-0.01em] text-void-black">
-                          Upcoming
-                        </h3>
-                        <div className="flex flex-col gap-2.5">
-                          {upcomingDeadlines.map((d) => (
-                            <div
-                              key={d.title}
-                              className="flex items-center justify-between"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="truncate font-visueltpro text-xs font-light text-graphite">
-                                  {d.title}
-                                </div>
-                                <div className="font-visueltpro text-[10px] font-light text-smoke">
-                                  {d.type}
-                                </div>
-                              </div>
-                              <span className="shrink-0 rounded bg-chalk px-2 py-0.5 font-visueltpro text-[10px] font-medium text-graphite">
-                                {d.date}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Recent activity */}
-                      <div className="rounded-lg border border-graphite/6 bg-canvas p-4">
-                        <h3 className="mb-3 font-visueltpro text-xs font-medium tracking-[-0.01em] text-void-black">
-                          Recent Activity
-                        </h3>
-                        <div className="flex flex-col gap-2.5">
-                          {recentActivity.map((a, i) => (
-                            <div key={i} className="flex items-start gap-2">
-                              <Circle className="mt-1 size-1.5 shrink-0 fill-smoke text-smoke" />
-                              <div className="min-w-0 flex-1">
-                                <div className="truncate font-visueltpro text-xs font-light text-graphite">
-                                  {a.text}
-                                </div>
-                                <div className="font-visueltpro text-[10px] font-light text-smoke">
-                                  {a.time}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 text-center">
-            <Link
-              href="/register"
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
-            >
-              Try it yourself <ArrowRight className="size-3.5" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <Separator />
 
       {/* TRY IT — real seeded accounts, replacing invented testimonials */}
-      <section id="try-it" className="py-20">
-        <div className="mx-auto max-w-[1280px] px-5">
-          <div className="mb-12 max-w-2xl">
-            <h2 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
+      <section id="try-it" className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-5">
+          <div className="mb-10 max-w-2xl">
+            <h2 className="text-[34px] leading-tight font-medium tracking-tight text-foreground sm:text-[40px]">
               Log in and try it
             </h2>
-            <p className="mt-3 font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
               The seed script creates one account per role. Sign in as any of
               them to see the workspace that role actually gets.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {demoAccounts.map((account) => (
-              <div
-                key={account.role}
-                className="flex flex-col rounded-xl border border-graphite/10 bg-chalk p-6"
-              >
-                <h3 className="mb-4 font-visueltpro text-[11px] font-medium text-smoke">
-                  {account.role}
-                </h3>
-                <dl className="mb-4 flex flex-col gap-1 font-mono text-[13px]">
-                  <div className="flex items-baseline gap-2">
-                    <dt className="w-14 shrink-0 text-smoke">email</dt>
-                    <dd className="text-graphite select-all">
-                      {account.email}
-                    </dd>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <dt className="w-14 shrink-0 text-smoke">password</dt>
-                    <dd className="text-graphite select-all">
-                      {account.password}
-                    </dd>
-                  </div>
-                </dl>
-                <p className="mt-auto font-visueltpro text-sm leading-[1.6] font-light text-graphite">
-                  {account.blurb}
-                </p>
-              </div>
+              <Card key={account.role} className="py-0">
+                <CardContent className="flex h-full flex-col p-6">
+                  <Badge variant="secondary" className="mb-4 w-fit">
+                    {account.role}
+                  </Badge>
+                  <dl className="mb-4 flex flex-col gap-1 font-mono text-[13px]">
+                    <div className="flex items-baseline gap-2">
+                      <dt className="w-14 shrink-0 text-muted-foreground">
+                        email
+                      </dt>
+                      <dd className="min-w-0 truncate text-foreground select-all">
+                        {account.email}
+                      </dd>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <dt className="w-14 shrink-0 text-muted-foreground">
+                        password
+                      </dt>
+                      <dd className="min-w-0 truncate text-foreground select-all">
+                        {account.password}
+                      </dd>
+                    </div>
+                  </dl>
+                  <p className="mt-auto text-sm leading-relaxed text-muted-foreground">
+                    {account.blurb}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
           <div className="mt-8">
-            <Link
-              href="/login"
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
-            >
-              Go to sign in <ArrowRight className="size-3.5" />
-            </Link>
+            <Button asChild>
+              <Link href="/login">
+                Go to sign in
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
+      <Separator />
+
       {/* WHAT'S BUILT */}
-      <section id="enterprise" className="py-20">
-        <div className="mx-auto max-w-[1280px] px-5">
-          <div className="mb-6">
-            <span className="inline-flex rounded border border-graphite/15 px-2.5 py-0.5 font-visueltpro text-[10px] font-medium text-smoke">
-              Built in
-            </span>
-          </div>
-          <h2 className="mb-3 font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
+      <section id="enterprise" className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-5">
+          <Badge variant="outline" className="mb-4">
+            Built in
+          </Badge>
+          <h2 className="text-[34px] leading-tight font-medium tracking-tight text-foreground sm:text-[40px]">
             What you actually get
           </h2>
-          <p className="mb-14 max-w-lg font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
+          <p className="mt-3 mb-10 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
             Every feature below is implemented in this codebase and reachable
             from the three demo accounts.
           </p>
@@ -721,147 +450,116 @@ export function HomepageContent() {
             {platformCapabilities.map((item) => {
               const Icon = item.icon
               return (
-                <div
-                  key={item.title}
-                  className="rounded-xl border border-graphite/10 bg-chalk p-6"
-                >
-                  <div className="mb-4 flex size-8 items-center justify-center rounded-md bg-void-black">
-                    <Icon className="size-3.5 text-chalk" />
-                  </div>
-                  <h3 className="mb-1.5 font-visueltpro text-[16px] font-medium tracking-[-0.01em] text-void-black">
-                    {item.title}
-                  </h3>
-                  <p className="font-visueltpro text-sm leading-[1.6] font-light text-graphite">
-                    {item.desc}
-                  </p>
-                </div>
+                <Card key={item.title} className="py-0">
+                  <CardContent className="flex h-full flex-col p-6">
+                    <div className="mb-4 flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <Icon className="size-4" />
+                    </div>
+                    <h3 className="mb-1.5 text-base font-medium tracking-tight text-foreground">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {item.desc}
+                    </p>
+                  </CardContent>
+                </Card>
               )
             })}
           </div>
           <div className="mt-10">
-            <Link
-              href="/register"
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
-            >
-              Create an account <ArrowRight className="size-3.5" />
-            </Link>
+            <Button asChild>
+              <Link href="/register">
+                Create an account
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
 
+      <Separator />
+
       {/* PRICING */}
-      <section id="pricing-info" className="py-20">
-        <div className="mx-auto max-w-[1280px] px-5">
-          <div className="mb-14 text-center">
-            <h2 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
+      <section id="pricing-info" className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-5">
+          <div className="mb-10 text-center">
+            <h2 className="text-[34px] leading-tight font-medium tracking-tight text-foreground sm:text-[40px]">
               Course pricing
             </h2>
-            <p className="mx-auto mt-3 max-w-md font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
+            <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-muted-foreground">
               Free or paid, per course. Instructors set the price; there is no
               subscription.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {pricingTiers.map((tier) => (
-              <div
+              <Card
                 key={tier.name}
-                className={`flex h-full flex-col rounded-xl border p-6 ${
-                  tier.featured
-                    ? "border-void-black bg-void-black"
-                    : "border-graphite/10 bg-chalk"
-                }`}
+                className={cn("h-full py-0", tier.featured && "border-primary")}
               >
-                <h3
-                  className={`font-visueltpro text-[10px] font-medium ${
-                    tier.featured ? "text-chalk/60" : "text-smoke"
-                  }`}
-                >
-                  {tier.name}
-                </h3>
-                <div className="mt-3 flex items-baseline gap-1">
-                  <span
-                    className={`font-bradford text-[36px] font-medium tracking-[-0.02em] ${
-                      tier.featured ? "text-chalk" : "text-void-black"
-                    }`}
-                  >
-                    {tier.price}
-                  </span>
-                  {tier.period && (
-                    <span className="font-visueltpro text-sm font-light text-smoke">
-                      {tier.period}
+                <CardContent className="flex h-full flex-col p-6">
+                  <h3 className="text-xs font-medium text-muted-foreground">
+                    {tier.name}
+                  </h3>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className="text-[36px] leading-none font-medium tracking-tight text-foreground">
+                      {tier.price}
                     </span>
-                  )}
-                </div>
-                <p
-                  className={`mt-1 font-visueltpro text-sm font-light ${
-                    tier.featured ? "text-chalk/50" : "text-smoke"
-                  }`}
-                >
-                  {tier.desc}
-                </p>
-                <ul className="mt-5 flex flex-col gap-2.5">
-                  {tier.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-start gap-2 font-visueltpro text-sm"
-                    >
-                      <CheckCircle2
-                        className={`mt-0.5 size-3.5 shrink-0 ${
-                          tier.featured ? "text-chalk/40" : "text-smoke/60"
-                        }`}
-                      />
-                      <span
-                        className={
-                          tier.featured
-                            ? "font-light text-chalk/80"
-                            : "font-light text-graphite"
-                        }
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {tier.desc}
+                  </p>
+                  <ul className="mt-5 flex flex-col gap-2.5">
+                    {tier.features.map((f) => (
+                      <li
+                        key={f}
+                        className="flex items-start gap-2 text-sm text-foreground"
                       >
-                        {f}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={tier.href}
-                  className={`mt-auto flex h-9 w-full items-center justify-center rounded-md px-3 font-visueltpro text-sm font-medium transition-opacity hover:opacity-90 ${
-                    tier.featured
-                      ? "bg-chalk text-void-black"
-                      : "bg-void-black text-chalk"
-                  }`}
-                >
-                  {tier.cta}
-                </Link>
-              </div>
+                        <CheckCircle2
+                          className="mt-0.5 size-3.5 shrink-0 text-success"
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0 font-normal">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    asChild
+                    variant={tier.featured ? "default" : "outline"}
+                    className="mt-auto w-full"
+                  >
+                    <Link href={tier.href}>{tier.cta}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
+      <Separator />
+
       {/* CTA */}
-      <section className="py-24">
-        <div className="mx-auto max-w-[1280px] px-5 text-center">
-          <h2 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-5 text-center">
+          <h2 className="text-[34px] leading-tight font-medium tracking-tight text-foreground sm:text-[40px]">
             Ready to start learning?
           </h2>
-          <p className="mx-auto mt-3 mb-10 max-w-md font-visueltpro text-[15px] leading-[1.6] font-light text-smoke">
+          <p className="mx-auto mt-3 mb-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
             {stats.totalCourses > 0
               ? `${stats.totalCourses} courses, taught and tracked end to end.`
               : "Create an account and start publishing or learning."}
           </p>
-          <div className="flex items-center justify-center gap-3">
-            <Link
-              href="/register"
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90"
-            >
-              Create free account <ArrowRight className="size-3.5" />
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-graphite/15 px-3 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/30"
-            >
-              Sign in
-            </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button asChild>
+              <Link href="/register">
+                Create free account
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/login">Sign in</Link>
+            </Button>
           </div>
         </div>
       </section>

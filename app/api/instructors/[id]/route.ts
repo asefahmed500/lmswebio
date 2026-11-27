@@ -32,34 +32,26 @@ export async function GET(
   try {
     const { id: instructorId } = await params
 
+    // Email addresses are private — never expose them on a public profile.
+    const publicUserSelect = {
+      id: true,
+      fullName: true,
+      avatarUrl: true,
+      role: true,
+      createdAt: true,
+    } as const
+
     const profile = await prisma.instructorProfile.findUnique({
       where: { userId: instructorId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            avatarUrl: true,
-            role: true,
-            createdAt: true,
-          },
-        },
-      },
+      include: { user: { select: publicUserSelect } },
     })
 
     if (!profile) {
-      // Return basic user info if profile doesn't exist
+      // A GET must never write to the database. Return basic public info when
+      // the instructor has not completed their profile yet.
       const user = await prisma.user.findUnique({
         where: { id: instructorId },
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-          avatarUrl: true,
-          role: true,
-          createdAt: true,
-        },
+        select: publicUserSelect,
       })
 
       if (!user || user.role !== "INSTRUCTOR") {
@@ -69,26 +61,9 @@ export async function GET(
         )
       }
 
-      // Create basic profile
-      const newProfile = await prisma.instructorProfile.create({
-        data: {
-          userId: instructorId,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-              avatarUrl: true,
-              role: true,
-              createdAt: true,
-            },
-          },
-        },
+      return NextResponse.json({
+        profile: { userId: instructorId, user },
       })
-
-      return NextResponse.json({ profile: newProfile })
     }
 
     // Get instructor's courses
@@ -178,14 +153,26 @@ export async function PATCH(
     const body = await req.json()
     const validatedData = updateProfileSchema.parse(body)
 
-    // Check if user is the instructor or admin
-    const isInstructor = session.user.id === instructorId
+    // Only the instructor themselves or an admin may edit an instructor
+    // profile. A student must never be able to create one for themselves.
+    const isOwner = session.user.id === instructorId
     const isAdmin = session.user.role === "ADMIN"
 
-    if (!isInstructor && !isAdmin) {
+    if (!isAdmin && !(isOwner && session.user.role === "INSTRUCTOR")) {
       return NextResponse.json(
         { error: "You don't have permission to update this profile" },
         { status: 403 }
+      )
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: instructorId },
+      select: { role: true },
+    })
+    if (!targetUser || targetUser.role !== "INSTRUCTOR") {
+      return NextResponse.json(
+        { error: "Instructor not found" },
+        { status: 404 }
       )
     }
 
@@ -205,7 +192,6 @@ export async function PATCH(
             select: {
               id: true,
               fullName: true,
-              email: true,
               avatarUrl: true,
             },
           },
@@ -220,7 +206,6 @@ export async function PATCH(
             select: {
               id: true,
               fullName: true,
-              email: true,
               avatarUrl: true,
             },
           },

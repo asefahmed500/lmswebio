@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
             thumbnail: true,
           },
         },
+        user: { select: { fullName: true, email: true } },
       },
       orderBy: { issuedAt: "desc" },
     })
@@ -124,8 +125,8 @@ export async function POST(req: NextRequest) {
     // Generate unique verification ID
     const verificationId = `${course.slug}-${session.user.id}-${Date.now()}`
 
-    // Generate certificate URL (this would normally be a PDF generation service)
-    const certificateUrl = `/certificates/${verificationId}.pdf`
+    // A real, publicly verifiable certificate page (printable to PDF).
+    const certificateUrl = `/certificates/${verificationId}`
 
     // Create certificate record
     const certificate = await prisma.certificate.create({
@@ -141,8 +142,10 @@ export async function POST(req: NextRequest) {
             id: true,
             title: true,
             slug: true,
+            thumbnail: true,
           },
         },
+        user: { select: { fullName: true, email: true } },
       },
     })
 

@@ -19,6 +19,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { DashboardLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
+import { apiGet } from "@/lib/api-client"
 import { useAuth } from "@/components/auth-provider"
 import type { Enrollment, Course } from "@/types"
 
@@ -108,10 +119,10 @@ export default function ProgressPage() {
       if (!user) return
       setIsLoading(true)
       try {
-        const res = await fetch("/api/enrolments/my")
-        if (!res.ok) throw new Error("Failed to fetch enrollments")
-        const data: ApiEnrollment[] = await res.json()
-        setEnrollments(data.map(mapEnrollment))
+        const res = await apiGet<ApiEnrollment[]>("/enrolments/my")
+        if (res.error || !res.data)
+          throw new Error(res.error ?? "Failed to load enrollments")
+        setEnrollments(res.data.map(mapEnrollment))
       } catch (error) {
         console.error("Failed to load progress data:", error)
       } finally {
@@ -156,35 +167,26 @@ export default function ProgressPage() {
     return [...enrollments].sort((a, b) => b.progress - a.progress)
   }, [enrollments])
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading progress data...
-          </p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <DashboardLoading />
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          aria-label="Back to achievements"
+        >
           <Link href="/student/achievements">
             <ArrowLeft />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Learning Progress
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Track your progress across all enrolled courses
-          </p>
-        </div>
+        <PageHeader
+          className="flex-1"
+          title="Learning Progress"
+          description="Track your progress across all enrolled courses"
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -197,7 +199,7 @@ export default function ProgressPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <BookOpen className="size-5 text-primary" />
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-2xl font-semibold">{stats.total}</div>
             </div>
           </CardContent>
         </Card>
@@ -210,7 +212,7 @@ export default function ProgressPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <TrendingUp className="size-5 text-info" />
-              <div className="text-2xl font-bold">{stats.inProgress}</div>
+              <div className="text-2xl font-semibold">{stats.inProgress}</div>
             </div>
           </CardContent>
         </Card>
@@ -223,7 +225,7 @@ export default function ProgressPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <CheckCircle className="size-5 text-success" />
-              <div className="text-2xl font-bold">{stats.completed}</div>
+              <div className="text-2xl font-semibold">{stats.completed}</div>
             </div>
           </CardContent>
         </Card>
@@ -236,7 +238,7 @@ export default function ProgressPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <TrendingUp className="size-5 text-warning" />
-              <div className="text-2xl font-bold">{stats.avgProgress}%</div>
+              <div className="text-2xl font-semibold">{stats.avgProgress}%</div>
             </div>
           </CardContent>
         </Card>
@@ -291,8 +293,11 @@ export default function ProgressPage() {
                     {course.level}
                   </Badge>
                   {isCompleted && (
-                    <Badge className="absolute top-2 left-2 gap-1 bg-success hover:bg-success/90">
-                      <CheckCircle className="size-3" />
+                    <Badge
+                      className="absolute top-2 left-2 gap-1"
+                      variant="success"
+                    >
+                      <CheckCircle />
                       Completed
                     </Badge>
                   )}
@@ -337,22 +342,22 @@ export default function ProgressPage() {
           })}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No courses enrolled
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Enroll in a course to start tracking your learning progress.
-              </p>
-              <Button asChild>
-                <Link href="/student/courses/catalogue">Browse Courses</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen />
+            </EmptyMedia>
+            <EmptyTitle>No courses enrolled</EmptyTitle>
+            <EmptyDescription>
+              Enroll in a course to start tracking your learning progress.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/courses/catalogue">Browse Courses</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

@@ -76,13 +76,32 @@ export async function GET(request: NextRequest) {
           select: { id: true, title: true },
         },
         _count: {
-          select: { questions: true },
+          select: { questions: true, attempts: true },
         },
+        attempts: { select: { score: true } },
       },
       orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json({ quizzes })
+    const enriched = quizzes.map(({ attempts, ...quiz }) => {
+      const scores = attempts
+        .map((attempt) => attempt.score)
+        .filter((score): score is number => score != null)
+      return {
+        ...quiz,
+        questionsCount: quiz._count.questions,
+        attemptsCount: quiz._count.attempts,
+        courseTitle: quiz.course.title,
+        averageScore:
+          scores.length > 0
+            ? Math.round(
+                scores.reduce((sum, score) => sum + score, 0) / scores.length
+              )
+            : 0,
+      }
+    })
+
+    return NextResponse.json({ quizzes: enriched })
   } catch (error) {
     console.error("Get quizzes error:", error)
     return NextResponse.json(

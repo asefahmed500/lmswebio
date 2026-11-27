@@ -23,8 +23,7 @@ const nextConfig = {
       form-action 'self';
       frame-ancestors 'self';
       frame-src 'self' https:;
-      upgrade-insecure-requests;
-      connect-src 'self' https: wss:;
+            connect-src 'self' https: wss:;
       media-src 'self' https: blob:;
       worker-src 'self' blob:;
       manifest-src 'self';

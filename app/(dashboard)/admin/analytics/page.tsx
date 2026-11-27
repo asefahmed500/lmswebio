@@ -9,7 +9,6 @@ import {
   Activity,
   TrendingUp,
   BarChart3,
-  Loader2,
 } from "lucide-react"
 import {
   Card,
@@ -31,6 +30,14 @@ import {
   Filler,
 } from "chart.js"
 import { Line, Bar } from "react-chartjs-2"
+import { DashboardLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet } from "@/lib/api-client"
 
 ChartJS.register(
@@ -160,16 +167,7 @@ export default function AdminAnalyticsPage() {
     },
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading analytics...</p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <DashboardLoading />
 
   const kpis = [
     { label: "Total Users", value: data?.totalUsers ?? 0, icon: Users },
@@ -198,12 +196,10 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-        <p className="mt-1 text-muted-foreground">
-          Platform-wide metrics and performance data
-        </p>
-      </div>
+      <PageHeader
+        title="Analytics"
+        description="Platform-wide metrics and performance data"
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {kpis.map((kpi) => (
@@ -215,7 +211,9 @@ export default function AdminAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{kpi.value}</div>
+              <div className="text-2xl font-semibold text-foreground">
+                {kpi.value}
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -238,9 +236,16 @@ export default function AdminAnalyticsPage() {
                 <Line data={weeklyChartData} options={chartOptions} />
               </div>
             ) : (
-              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-                No enrollment data available
-              </div>
+              <Empty className="h-[300px] p-6">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Activity />
+                  </EmptyMedia>
+                  <EmptyDescription>
+                    No enrollment data available
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </CardContent>
         </Card>
@@ -261,9 +266,14 @@ export default function AdminAnalyticsPage() {
                 <Bar data={levelChartData} options={barOptions} />
               </div>
             ) : (
-              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-                No course data available
-              </div>
+              <Empty className="h-[300px] p-6">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <BarChart3 />
+                  </EmptyMedia>
+                  <EmptyDescription>No course data available</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </CardContent>
         </Card>
@@ -281,7 +291,7 @@ export default function AdminAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-2xl font-semibold text-foreground">
               {Math.round(data?.averageProgress ?? 0)}%
             </div>
           </CardContent>
@@ -297,7 +307,9 @@ export default function AdminAnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{data?.completions ?? 0}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {data?.completions ?? 0}
+            </div>
           </CardContent>
         </Card>
       </div>

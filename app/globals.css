@@ -1,163 +1,183 @@
 @import "tailwindcss";
-/* Provides the `animate-in` / `fade-in-0` / `slide-in-from-*` / `zoom-in-95`
-   utilities that the shadcn dialog, alert-dialog, sheet, select, tooltip and
-   navigation-menu primitives depend on for their enter and exit transitions.
-   Without this import every one of those overlays pops in with no animation. */
+/* Required by shadcn overlay primitives (dialog, sheet, select, tooltip,
+   navigation-menu) for their enter/exit states. */
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* ====== Sequel × Warm Canvas ====== */
-  --color-canvas: #f9f8f6;
-  --color-void-black: #000000;
-  --color-carbon: #202020;
-  --color-graphite: #333333;
-  --color-bone: #c0c0c0;
-  --color-smoke: #999999;
-  --color-ash: #b3b3b3;
-  --color-fog: #cccccc;
-  --color-chalk: #ffffff;
-  --color-linen: #f5f5f0;
+  /* ----------------------------------------------------------------------
+     Legacy aliases.
 
+     These class names (font-visueltpro, text-void-black, bg-chalk,
+     shadow-sq-card, ...) are still used across the marketing pages, auth
+     screens and course views. They are intentionally mapped to the same
+     neutral shadcn scale below so the whole product reads as one clean
+     interface instead of two disconnected visual languages.
+     ---------------------------------------------------------------------- */
+  --color-canvas: #ffffff;
+  --color-void-black: #18181b;
+  --color-carbon: #3f3f46;
+  --color-graphite: #52525b;
+  --color-bone: #a1a1aa;
+  --color-smoke: #71717a;
+  --color-ash: #a1a1aa;
+  --color-fog: #d4d4d8;
+  --color-chalk: #ffffff;
+  --color-linen: #f4f4f5;
+
+  /* One typographic system. Inter for interface copy and display. */
   --font-visueltpro:
     "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
   --font-bradford:
     "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
-
-  --shadow-sq-card: rgba(0, 0, 0, 0.08) 0px 2px 16px 0px;
-  --shadow-sq-button: rgba(0, 0, 0, 0.1) 0px 2px 8px 0px;
-  --shadow-sq-hero: rgba(0, 0, 0, 0.12) 0px 8px 40px 0px;
-
-  /* ====== Legacy Palette (Dashboard) ====== */
-  --color-brand-teal: #019d91;
-  --color-midnight-ink: #09090b;
-  --color-zinc-500: #71717b;
-  --color-fog-gray: #9f9fa9;
-  --color-mist: #e4e4e7;
-  --color-pearl: #f4f4f5;
-  --color-snow: #fafafa;
-  --color-white: #ffffff;
-  --color-cream-paper: #fff8e5;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-info: #0ea5e9;
-
-  --font-dm-sans:
+  --font-geist:
     "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
+
+  --shadow-sq-card: 0 1px 2px 0 rgb(24 24 27 / 0.04);
+  --shadow-sq-button: 0 1px 2px 0 rgb(24 24 27 / 0.06);
+  --shadow-sq-hero: 0 4px 12px -2px rgb(24 24 27 / 0.08);
+
+  /* State colours. Reserved for status only — never for decoration. */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-info: #0284c7;
+
   --font-inter:
     "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
+  --font-dm-sans: var(--font-inter);
 
-  /* shadcn mapping
-     Off-white application background with near-white surfaces, a hairline
-     neutral border and one restrained accent. Restrained on purpose: this is a
-     dense work UI, so colour is reserved for state and the primary action. */
-  --background: #faf9f7;
-  --foreground: #1c1b19;
-  --card: #fffdfc;
-  --card-foreground: #1c1b19;
-  --popover: #fffdfc;
-  --popover-foreground: #1c1b19;
+  /* ----------------------------------------------------------------------
+     shadcn tokens — neutral zinc base, one restrained teal accent.
+
+     Colour is reserved for state and the primary action. Everything else is
+     neutral so dense dashboards stay readable and nothing shouts.
+     ---------------------------------------------------------------------- */
+  --background: #ffffff;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
   --primary: #0f766e;
   --primary-foreground: #ffffff;
-  --secondary: #f4f3f1;
-  --secondary-foreground: #1c1b19;
-  --muted: #f4f3f1;
-  --muted-foreground: #6b6862;
-  --accent: #eeece8;
-  --accent-foreground: #1c1b19;
-  --destructive: oklch(0.577 0.245 27.325);
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #e3e1dc;
-  --input: #e3e1dc;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
   --ring: #0f766e;
+
   --chart-1: #0f766e;
-  --chart-2: oklch(0.7 0.15 180);
-  --chart-3: oklch(0.6 0.15 250);
-  --chart-4: oklch(0.75 0.12 100);
-  --chart-5: oklch(0.65 0.15 30);
-  --sidebar: #fffdfc;
-  --sidebar-foreground: #1c1b19;
+  --chart-2: #0ea5e9;
+  --chart-3: #6366f1;
+  --chart-4: #d97706;
+  --chart-5: #e11d48;
+
+  --sidebar: #fafafa;
+  --sidebar-foreground: #18181b;
   --sidebar-primary: #0f766e;
   --sidebar-primary-foreground: #ffffff;
-  /* Active navigation uses a neutral tint, not the brand colour, so the current
-     section is readable at a glance without shouting. */
-  --sidebar-accent: #f1efeb;
-  --sidebar-accent-foreground: #1c1b19;
-  --sidebar-border: #e3e1dc;
+  /* Active navigation uses a neutral tint, not the brand colour, so the
+     current section is readable at a glance without shouting. */
+  --sidebar-accent: #f0f0f0;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #e4e4e7;
   --sidebar-ring: #0f766e;
 
   --font-sans: var(--font-inter);
-  --font-serif: var(--font-dm-sans);
-  --font-mono: Geist Mono, ui-monospace, monospace;
+  --font-serif: var(--font-inter);
+  --font-heading: var(--font-inter);
+  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas,
+    monospace;
 
   /* Small, controlled radii. */
   --radius: 6px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
-  --radius-xl: 8px;
+  --radius-xl: 10px;
 
-  /* ====== Motion scale ======
-     Durations and easings are tokens, not literals. Anything animated in the
-     shell should reference these so timing stays consistent app-wide. */
-  --motion-duration-instant: 80ms;
-  --motion-duration-fast: 140ms;
-  --motion-duration-base: 200ms;
-  --motion-duration-slow: 320ms;
+  /* ----------------------------------------------------------------------
+     Motion scale.
 
-  /* Asymmetric overlay timing: enter reads as "arriving", exit as "leaving". */
-  --motion-duration-enter: var(--motion-duration-fast);
-  --motion-duration-exit: var(--motion-duration-instant);
-
+     One short, standard curve for everything. No staggered or springy page
+     entrances — surfaces change state immediately and predictably.
+     ---------------------------------------------------------------------- */
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 180ms;
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --motion-ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
-  --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
-  /* Minimal elevation. Previously every step from `sm` to `2xl` resolved to the
-     same value, so cards and overlays had no discernible depth. Kept
-     deliberately shallow — separation comes from the 1px border, and shadow is
-     reserved for things that float. */
+  /* Minimal elevation: separation comes from the 1px border. Shadow is
+     reserved for things that actually float (popovers, dialogs, menus). */
   --shadow-2xs: none;
-  --shadow-xs: 0 1px 2px 0 rgb(28 27 25 / 0.04);
-  --shadow-sm: 0 1px 2px 0 rgb(28 27 25 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(28 27 25 / 0.06), 0 1px 2px -1px rgb(28 27 25 / 0.05);
-  --shadow-md: 0 2px 4px -1px rgb(28 27 25 / 0.06), 0 1px 2px -1px rgb(28 27 25 / 0.05);
-  --shadow-lg: 0 4px 8px -2px rgb(28 27 25 / 0.08), 0 2px 4px -2px rgb(28 27 25 / 0.05);
-  --shadow-xl: 0 8px 16px -4px rgb(28 27 25 / 0.1), 0 4px 6px -2px rgb(28 27 25 / 0.05);
-  --shadow-2xl: 0 12px 24px -6px rgb(28 27 25 / 0.12);
+  --shadow-xs: 0 1px 2px 0 rgb(24 24 27 / 0.04);
+  --shadow-sm: 0 1px 2px 0 rgb(24 24 27 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(24 24 27 / 0.06), 0 1px 2px -1px rgb(24 24 27 / 0.05);
+  --shadow-md: 0 2px 4px -1px rgb(24 24 27 / 0.06), 0 1px 2px -1px rgb(24 24 27 / 0.05);
+  --shadow-lg: 0 4px 8px -2px rgb(24 24 27 / 0.08), 0 2px 4px -2px rgb(24 24 27 / 0.05);
+  --shadow-xl: 0 8px 16px -4px rgb(24 24 27 / 0.1), 0 4px 6px -2px rgb(24 24 27 / 0.05);
+  --shadow-2xl: 0 12px 24px -6px rgb(24 24 27 / 0.12);
+
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
 }
 
 .dark {
-  --background: var(--color-midnight-ink);
-  --foreground: var(--color-snow);
-  --card: oklch(0.17 0 0);
-  --card-foreground: var(--color-snow);
-  --popover: oklch(0.17 0 0);
-  --popover-foreground: var(--color-snow);
-  --primary: var(--color-brand-teal);
-  --primary-foreground: var(--color-white);
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: var(--color-snow);
-  --muted: oklch(0.22 0 0);
-  --muted-foreground: var(--color-fog-gray);
-  --border: oklch(0.25 0 0);
-  --input: oklch(0.22 0 0);
-  --ring: var(--color-brand-teal);
-  --sidebar: oklch(0.17 0 0);
-  --sidebar-foreground: var(--color-snow);
-  --sidebar-primary: var(--color-brand-teal);
-  --sidebar-primary-foreground: var(--color-white);
-  --sidebar-accent: oklch(0.22 0 0);
-  --sidebar-accent-foreground: var(--color-snow);
-  --sidebar-border: oklch(0.25 0 0);
-  --sidebar-ring: var(--color-brand-teal);
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #111113;
+  --card-foreground: #fafafa;
+  --popover: #111113;
+  --popover-foreground: #fafafa;
+  --primary: #2dd4bf;
+  --primary-foreground: #052e2b;
+  --secondary: #1f1f22;
+  --secondary-foreground: #fafafa;
+  --muted: #1f1f22;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #2dd4bf;
+
+  --chart-1: #2dd4bf;
+  --chart-2: #38bdf8;
+  --chart-3: #818cf8;
+  --chart-4: #fbbf24;
+  --chart-5: #fb7185;
+
+  --sidebar: #0f0f11;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #052e2b;
+  --sidebar-accent: #1f1f22;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #27272a;
+  --sidebar-ring: #2dd4bf;
+
+  --color-canvas: #09090b;
+  --color-void-black: #fafafa;
+  --color-carbon: #e4e4e7;
+  --color-graphite: #a1a1aa;
+  --color-bone: #71717a;
+  --color-smoke: #a1a1aa;
+  --color-ash: #71717a;
+  --color-fog: #3f3f46;
+  --color-chalk: #18181b;
+  --color-linen: #18181b;
 }
 
 @theme inline {
@@ -174,15 +194,6 @@
   --font-visueltpro: var(--font-visueltpro);
   --font-bradford: var(--font-bradford);
 
-  --color-brand-teal: var(--color-brand-teal);
-  --color-midnight-ink: var(--color-midnight-ink);
-  --color-zinc-500: var(--color-zinc-500);
-  --color-fog-gray: var(--color-fog-gray);
-  --color-mist: var(--color-mist);
-  --color-pearl: var(--color-pearl);
-  --color-snow: var(--color-snow);
-  --color-white: var(--color-white);
-  --color-cream-paper: var(--color-cream-paper);
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-info: var(--color-info);
@@ -225,6 +236,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
+  --font-heading: var(--font-heading);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -240,59 +252,58 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  /* Sequel x Warm Canvas elevation — previously declared in :root but never
-     mapped here, so no utility was generated for them. */
   --shadow-sq-card: var(--shadow-sq-card);
   --shadow-sq-button: var(--shadow-sq-button);
   --shadow-sq-hero: var(--shadow-sq-hero);
 
-  --motion-duration-instant: var(--motion-duration-instant);
   --motion-duration-fast: var(--motion-duration-fast);
   --motion-duration-base: var(--motion-duration-base);
-  --motion-duration-slow: var(--motion-duration-slow);
-  --motion-duration-enter: var(--motion-duration-enter);
-  --motion-duration-exit: var(--motion-duration-exit);
   --motion-ease-standard: var(--motion-ease-standard);
-  --motion-ease-emphasized: var(--motion-ease-emphasized);
-  --motion-ease-exit: var(--motion-ease-exit);
 }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background font-sans text-sm text-foreground antialiased;
-    letter-spacing: -0.011em;
-    /* 14px body copy on a 400 weight, tightened for UI density. */
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Only three weights are used in the product: 400 body, 500 labels and
-     controls, 600 headings. Default heading weights are pinned here so a bare
-     <h1> in a page can never render heavier than the scale allows. */
+  /* One restrained type scale: 400 body / 500 headings and labels.
+     Nothing is bold — dense work UI reads calmer at a medium weight. */
   h1 {
-    @apply text-2xl leading-tight font-semibold tracking-[-0.02em];
+    @apply text-2xl leading-tight font-medium tracking-[-0.02em];
   }
   h2 {
-    @apply text-lg leading-snug font-semibold tracking-[-0.01em];
+    @apply text-lg leading-snug font-medium tracking-[-0.01em];
   }
   h3 {
-    @apply text-[15px] leading-snug font-semibold tracking-[-0.01em];
+    @apply text-[15px] leading-snug font-medium tracking-[-0.01em];
   }
   h4,
   h5,
   h6 {
-    @apply text-sm leading-snug font-semibold;
+    @apply text-sm leading-snug font-medium;
+  }
+
+  .font-bold,
+  .font-extrabold,
+  .font-black,
+  .font-semibold,
+  strong,
+  b {
+    font-weight: 500 !important;
   }
 }
-/* Single card surface. Replaces the per-file repetition of
-   border + rounded-card + shadow that had drifted across ~95 call sites. */
+
+/* Single card surface. Replaces the per-file repetition of border +
+   radius + background + shadow that drifted across call sites. */
 @utility surface-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background-color: var(--card);
   color: var(--card-foreground);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 .scrollbar-none {

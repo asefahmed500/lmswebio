@@ -8,6 +8,10 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
+    // Playwright owns test/e2e/**/*.spec.ts. Vitest must only collect unit and
+    // component tests, otherwise Playwright's test() runs outside its runner.
+    include: ["test/**/*.test.{ts,tsx}"],
+    exclude: ["test/e2e/**", "node_modules/**"],
     pool: "threads",
     maxWorkers: 1,
     isolate: false,

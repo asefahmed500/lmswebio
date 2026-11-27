@@ -19,6 +19,15 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 import {
@@ -35,7 +44,7 @@ import { Bar } from "react-chartjs-2"
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 interface CourseWithStats {
-  id: number
+  id: string
   title: string
   level: string
   isPublished: boolean
@@ -64,7 +73,7 @@ function KPICard({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-semibold">{value}</div>
       </CardContent>
     </Card>
   )
@@ -81,26 +90,41 @@ export default function InstructorAnalyticsPage() {
 
       setIsLoading(true)
       try {
-        const analyticsResult = await apiGet<{
-          coursePerformance: {
-            courseId: number
-            courseTitle: string
-            enrolled: number
-            completed: number
-            avgProgress: number
-          }[]
-          completionRates: {
-            courseId: number
-            courseTitle: string
-            completionRate: number
-          }[]
-        }>("/instructors/analytics")
+        const [analyticsResult, coursesResult] = await Promise.all([
+          apiGet<{
+            coursePerformance: {
+              courseId: string
+              courseTitle: string
+              enrolled: number
+              completed: number
+              avgProgress: number
+            }[]
+            completionRates: {
+              courseId: string
+              courseTitle: string
+              completionRate: number
+            }[]
+          }>("/instructors/analytics"),
+          apiGet<{
+            courses: {
+              id: string
+              level: string
+              isPublished: boolean
+            }[]
+          }>("/courses?limit=100"),
+        ])
 
         if (analyticsResult.error || !analyticsResult.data) {
           console.error("Failed to load analytics:", analyticsResult.error)
           return
         }
 
+        const metadata = new Map(
+          (coursesResult.data?.courses ?? []).map((course) => [
+            course.id,
+            course,
+          ])
+        )
         const data = analyticsResult.data
         const performance = data.coursePerformance || []
         const rates = data.completionRates || []
@@ -111,8 +135,8 @@ export default function InstructorAnalyticsPage() {
         const enriched: CourseWithStats[] = performance.map((p) => ({
           id: p.courseId,
           title: p.courseTitle,
-          level: "INTERMEDIATE",
-          isPublished: true,
+          level: metadata.get(p.courseId)?.level ?? "BEGINNER",
+          isPublished: metadata.get(p.courseId)?.isPublished ?? false,
           studentCount: p.enrolled,
           avgProgress: p.avgProgress,
           completionRate: rateMap.get(p.courseId) ?? 0,
@@ -184,25 +208,30 @@ export default function InstructorAnalyticsPage() {
     },
   }
 
+  const header = (
+    <PageHeader
+      title="Analytics"
+      description="Course performance and student engagement metrics"
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading analytics...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <LoadingCard count={4} />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <LoadingCard count={2} />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-        <p className="mt-1 text-muted-foreground">
-          Course performance and student engagement metrics
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KPICard label="Total Courses" value={courses.length} icon={BookOpen} />
@@ -229,10 +258,17 @@ export default function InstructorAnalyticsPage() {
                 <Bar data={chartData} options={chartOptions} />
               </div>
             ) : (
-              <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-                <BarChart3 className="mr-2 size-5" />
-                No course data available
-              </div>
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <BarChart3 />
+                  </EmptyMedia>
+                  <EmptyTitle>No course data available</EmptyTitle>
+                  <EmptyDescription>
+                    Create a course to see enrollment metrics here.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </CardContent>
         </Card>
@@ -285,9 +321,17 @@ export default function InstructorAnalyticsPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                No courses yet. Create your first course to see metrics.
-              </div>
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <BookOpen />
+                  </EmptyMedia>
+                  <EmptyTitle>No courses yet</EmptyTitle>
+                  <EmptyDescription>
+                    Create your first course to see metrics.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </CardContent>
         </Card>

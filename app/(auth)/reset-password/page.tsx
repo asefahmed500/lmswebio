@@ -5,16 +5,31 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import {
-  Loader2,
-  CheckCircle2,
-  XCircle,
   ArrowLeft,
+  CircleCheck,
+  CircleX,
   KeyRound,
+  TriangleAlert,
 } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { apiPost } from "@/lib/api-client"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Spinner } from "@/components/ui/spinner"
 import { LMSioLogo } from "@/components/homepage/lmsio-logo"
 
 const PASSWORD_REQUIREMENTS = [
@@ -39,6 +54,7 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <Alert variant="destructive">
+        <TriangleAlert />
         <AlertDescription>
           Invalid reset link. This link is missing the required token.
         </AlertDescription>
@@ -50,19 +66,11 @@ function ResetPasswordForm() {
     return (
       <div className="flex flex-col gap-5">
         <Alert>
-          <CheckCircle2 className="size-4 text-emerald-500" />
-          <AlertDescription>
-            <p className="font-medium text-void-black">
-              Password reset successful
-            </p>
-            <p className="mt-1 text-sm text-smoke">{success}</p>
-          </AlertDescription>
+          <CircleCheck />
+          <AlertTitle>Password reset successful</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
         </Alert>
-        <Button
-          size="lg"
-          className="h-10 w-full rounded-lg tracking-wide"
-          asChild
-        >
+        <Button className="w-full" asChild>
           <Link href="/login">Sign in with new password</Link>
         </Button>
       </div>
@@ -80,17 +88,15 @@ function ResetPasswordForm() {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword: data.newPassword }),
-      })
-      const json = await res.json()
-      if (!res.ok) {
-        setError(json.error || "Failed to reset password.")
+      const result = await apiPost<{ message?: string }>(
+        "/auth/reset-password",
+        { token, newPassword: data.newPassword }
+      )
+      if (result.error) {
+        setError(result.error || "Failed to reset password.")
         return
       }
-      setSuccess(json.message || "Password reset successfully.")
+      setSuccess(result.data?.message || "Password reset successfully.")
     } catch {
       setError("Network error. Please check your connection and try again.")
     } finally {
@@ -104,109 +110,83 @@ function ResetPasswordForm() {
       className="flex flex-col gap-5"
     >
       {error && (
-        <Alert
-          variant="destructive"
-          className="animate-in fade-in-0 slide-in-from-top-2"
-        >
+        <Alert variant="destructive">
+          <TriangleAlert />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="flex flex-col gap-2">
-        <Label
-          htmlFor="newPassword"
-          className="text-xs font-medium tracking-normal text-graphite normal-case"
-        >
-          New Password
-        </Label>
-        <Input
-          id="newPassword"
-          type="password"
-          variant="filled"
-          placeholder="Enter new password"
-          disabled={isLoading}
-          {...form.register("newPassword", {
-            required: "Password is required",
-            validate: (value) => {
-              if (value.length < 8)
-                return "Password must be at least 8 characters"
-              if (!/[A-Z]/.test(value))
-                return "Password must contain an uppercase letter"
-              if (!/[a-z]/.test(value))
-                return "Password must contain a lowercase letter"
-              if (!/[0-9]/.test(value)) return "Password must contain a number"
-              return true
-            },
-            onChange: (e) => setPasswordValue(e.target.value),
-          })}
-        />
-        {form.formState.errors.newPassword && (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.newPassword.message}
-          </p>
-        )}
-      </div>
+      <FieldGroup className="gap-4">
+        <Field>
+          <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
+          <Input
+            id="newPassword"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Enter new password"
+            disabled={isLoading}
+            {...form.register("newPassword", {
+              required: "Password is required",
+              validate: (value) => {
+                if (value.length < 8)
+                  return "Password must be at least 8 characters"
+                if (!/[A-Z]/.test(value))
+                  return "Password must contain an uppercase letter"
+                if (!/[a-z]/.test(value))
+                  return "Password must contain a lowercase letter"
+                if (!/[0-9]/.test(value))
+                  return "Password must contain a number"
+                return true
+              },
+              onChange: (e) => setPasswordValue(e.target.value),
+            })}
+          />
+          <FieldError errors={[form.formState.errors.newPassword]} />
 
-      <div className="space-y-2 rounded-lg border border-graphite/10 bg-linen p-4">
-        {PASSWORD_REQUIREMENTS.map((req) => {
-          const met = req.test(passwordValue)
-          return (
-            <div
-              key={req.label}
-              className={`flex items-center gap-2.5 text-xs ${met ? "text-emerald-600" : "text-smoke"}`}
-            >
-              {met ? (
-                <CheckCircle2 className="size-3.5 shrink-0" />
-              ) : (
-                <XCircle className="size-3.5 shrink-0" />
-              )}
-              {req.label}
-            </div>
-          )
-        })}
-      </div>
+          <ul className="mt-1 flex flex-col gap-2 rounded-md border border-border bg-muted p-4">
+            {PASSWORD_REQUIREMENTS.map((req) => {
+              const met = req.test(passwordValue)
+              return (
+                <li
+                  key={req.label}
+                  className={`flex min-w-0 items-center gap-2.5 text-xs ${met ? "text-primary" : "text-muted-foreground"}`}
+                >
+                  {met ? <CircleCheck /> : <CircleX />}
+                  <span className="truncate">{req.label}</span>
+                </li>
+              )
+            })}
+          </ul>
+        </Field>
 
-      <div className="flex flex-col gap-2">
-        <Label
-          htmlFor="confirmPassword"
-          className="text-xs font-medium tracking-normal text-graphite normal-case"
-        >
-          Confirm Password
-        </Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          variant="filled"
-          placeholder="Repeat your password"
-          disabled={isLoading}
-          {...form.register("confirmPassword", {
-            required: "Please confirm your password",
-            validate: (value) =>
-              value === form.watch("newPassword") || "Passwords do not match",
-          })}
-        />
-        {form.formState.errors.confirmPassword && (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.confirmPassword.message}
-          </p>
-        )}
-      </div>
+        <Field>
+          <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+          <Input
+            id="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Repeat your password"
+            disabled={isLoading}
+            {...form.register("confirmPassword", {
+              required: "Please confirm your password",
+              validate: (value) =>
+                value === form.watch("newPassword") || "Passwords do not match",
+            })}
+          />
+          <FieldError errors={[form.formState.errors.confirmPassword]} />
+        </Field>
+      </FieldGroup>
 
-      <Button
-        type="submit"
-        size="lg"
-        className="mt-1 h-10 w-full rounded-lg tracking-wide"
-        disabled={isLoading}
-      >
-        {isLoading ? <Loader2 className="animate-spin" /> : "Reset password"}
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? <Spinner /> : "Reset password"}
       </Button>
 
-      <div className="pt-2 text-center">
+      <div className="text-center">
         <Link
           href="/login"
-          className="inline-flex items-center gap-1.5 text-sm text-smoke transition-colors hover:text-void-black"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="size-3.5" />
+          <ArrowLeft />
           Back to sign in
         </Link>
       </div>
@@ -215,35 +195,27 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
-  const [visible, setVisible] = React.useState(false)
-  React.useEffect(() => {
-    requestAnimationFrame(() => setVisible(true))
-  }, [])
-
   return (
-    <div className="relative flex min-h-svh flex-col items-center justify-center bg-canvas px-4 py-12">
-      <div
-        className={`w-full max-w-[420px] transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
-      >
-        <LMSioLogo className="mx-auto mb-12 justify-center" variant="icon" />
+    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-12">
+      <div className="w-full max-w-[420px]">
+        <LMSioLogo className="mb-8 justify-center" variant="icon" />
 
-        <div className="rounded-2xl border border-graphite/10 bg-chalk p-8 shadow-sq-card">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl bg-linen">
-              <KeyRound className="size-6 text-graphite" />
+        <Card>
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <KeyRound />
             </div>
-            <h1 className="font-visueltpro text-2xl font-semibold tracking-tight text-void-black">
-              Set new password
-            </h1>
-            <p className="mt-2 text-sm text-smoke">
-              Enter your new password below
-            </p>
-          </div>
-
-          <React.Suspense fallback={<div className="h-8" />}>
-            <ResetPasswordForm />
-          </React.Suspense>
-        </div>
+            <CardTitle className="font-heading text-xl">
+              <h1>Set new password</h1>
+            </CardTitle>
+            <CardDescription>Enter your new password below</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <React.Suspense fallback={<Skeleton className="h-64 w-full" />}>
+              <ResetPasswordForm />
+            </React.Suspense>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

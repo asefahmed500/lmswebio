@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Mail, Eye, EyeOff, Send, Loader2, Info } from "lucide-react"
+import { Mail, Send, Info } from "lucide-react"
 import { toast } from "sonner"
 import {
   Card,
@@ -12,34 +12,13 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { apiGet, apiPost } from "@/lib/api-client"
-
-function MaskedValue({ value }: { value: string }) {
-  const [revealed, setRevealed] = React.useState(false)
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="font-mono text-sm">
-        {revealed ? value : "•".repeat(Math.min(value.length, 20))}
-      </span>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setRevealed(!revealed)}
-        aria-label="Toggle password visibility"
-      >
-        {revealed ? (
-          <EyeOff className="h-3.5 w-3.5" />
-        ) : (
-          <Eye className="h-3.5 w-3.5" />
-        )}
-      </Button>
-    </div>
-  )
-}
+import { Spinner } from "@/components/ui/spinner"
+import { PageLoading } from "@/components/loading-skeleton"
+import { PageHeader } from "@/features/dashboard/components/page-header"
+import { apiGet, apiPost, apiPut } from "@/lib/api-client"
 
 interface SmtpConfig {
   host: string
@@ -66,30 +45,41 @@ export default function AdminEmailSettingsPage() {
           const s = res.data.settings
           if (s) {
             setConfig({
-              host: (s.smtpHost as string) || "smtp.gmail.com",
+              host: (s.smtpHost as string) || "",
               port: (s.smtpPort as number) || 587,
-              user: (s.smtpUser as string) || "not-configured",
+              user: (s.smtpUser as string) || "",
               pass: (s.smtpPass as string) || "",
-              from: (s.smtpFrom as string) || "noreply@lmsplatform.com",
+              from: (s.smtpFrom as string) || "",
               secure: (s.smtpSecure as boolean) ?? false,
             })
           }
         }
       } catch {
-        setConfig({
-          host: "smtp.gmail.com",
-          port: 587,
-          user: "not-configured",
-          pass: "",
-          from: "noreply@lmsplatform.com",
-          secure: false,
-        })
+        toast.error("Could not load email settings")
       } finally {
         setIsLoading(false)
       }
     }
     loadConfig()
   }, [])
+
+  function updateField(field: keyof SmtpConfig, value: string | boolean) {
+    setConfig((current) => (current ? { ...current, [field]: value } : current))
+  }
+
+  async function handleSave() {
+    if (!config) return
+    const res = await apiPut("/settings", {
+      smtpHost: config.host,
+      smtpPort: Number(config.port),
+      smtpUser: config.user,
+      smtpPass: config.pass,
+      smtpFrom: config.from,
+      smtpSecure: config.secure,
+    })
+    if (res.error) toast.error(res.error)
+    else toast.success("Email settings saved")
+  }
 
   async function handleTestEmail() {
     if (!testEmail.trim()) {
@@ -99,7 +89,7 @@ export default function AdminEmailSettingsPage() {
     setIsTesting(true)
     try {
       const res = await apiPost("/settings/test-email", {
-        email: testEmail.trim(),
+        to: testEmail.trim(),
       })
       if (!res.error) {
         toast.success("Test email sent successfully")
@@ -113,33 +103,21 @@ export default function AdminEmailSettingsPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="mx-auto size-8 animate-spin rounded-full border-b-2 border-primary" />
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading settings…" />
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Email Settings
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Configure SMTP and email notification settings
-        </p>
-      </div>
+      <PageHeader
+        title="Email Settings"
+        description="Configure SMTP and email notification settings"
+      />
 
       <Alert>
         <Info className="size-4" />
-        <AlertTitle>Environment Variables</AlertTitle>
+        <AlertTitle>SMTP is stored on the server</AlertTitle>
         <AlertDescription>
-          Email configuration is primarily managed through environment variables
-          (<code>SMTP_HOST</code>, <code>SMTP_PORT</code>,{" "}
-          <code>SMTP_USER</code>, <code>SMTP_PASS</code>). Changes should be
-          made in your <code>.env</code> file and the server restarted.
+          Save your SMTP credentials below, then use “Send Test” to verify the
+          connection. Password reset and verification emails use these values.
         </AlertDescription>
       </Alert>
 
@@ -150,32 +128,63 @@ export default function AdminEmailSettingsPage() {
             SMTP Configuration
           </CardTitle>
           <CardDescription>
-            Current email server settings (read-only, configured via
-            environment)
+            Stored securely on the server and used for all outgoing email.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label>SMTP Host</Label>
-              <Input value={config?.host ?? ""} readOnly />
+        <CardContent>
+          <FieldGroup className="gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="smtpHost">SMTP Host</FieldLabel>
+                <Input
+                  id="smtpHost"
+                  value={config?.host ?? ""}
+                  placeholder="smtp.example.com"
+                  onChange={(e) => updateField("host", e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="smtpPort">SMTP Port</FieldLabel>
+                <Input
+                  id="smtpPort"
+                  type="number"
+                  value={config?.port?.toString() ?? ""}
+                  onChange={(e) => updateField("port", e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="smtpUser">SMTP Username</FieldLabel>
+                <Input
+                  id="smtpUser"
+                  value={config?.user ?? ""}
+                  onChange={(e) => updateField("user", e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="smtpPass">SMTP Password</FieldLabel>
+                <Input
+                  id="smtpPass"
+                  type="password"
+                  value={config?.pass ?? ""}
+                  onChange={(e) => updateField("pass", e.target.value)}
+                />
+              </Field>
+              <Field className="sm:col-span-2">
+                <FieldLabel htmlFor="smtpFrom">From Address</FieldLabel>
+                <Input
+                  id="smtpFrom"
+                  type="email"
+                  value={config?.from ?? ""}
+                  placeholder="noreply@example.com"
+                  onChange={(e) => updateField("from", e.target.value)}
+                />
+              </Field>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label>SMTP Port</Label>
-              <Input value={config?.port?.toString() ?? ""} readOnly />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>SMTP Username</Label>
-              <Input value={config?.user ?? ""} readOnly />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>SMTP Password</Label>
-              <MaskedValue value={config?.pass ?? "••••••••"} />
-            </div>
-            <div className="flex flex-col gap-2 sm:col-span-2">
-              <Label>From Address</Label>
-              <Input value={config?.from ?? ""} readOnly />
-            </div>
+          </FieldGroup>
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={!config}>
+              Save settings
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -191,10 +200,10 @@ export default function AdminEmailSettingsPage() {
             correctly
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex items-end gap-4">
-            <div className="flex flex-1 flex-col gap-2">
-              <Label htmlFor="testEmail">Recipient Email</Label>
+        <CardContent>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <Field className="flex-1">
+              <FieldLabel htmlFor="testEmail">Recipient Email</FieldLabel>
               <Input
                 id="testEmail"
                 type="email"
@@ -202,13 +211,13 @@ export default function AdminEmailSettingsPage() {
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
               />
-            </div>
+            </Field>
             <Button
               onClick={handleTestEmail}
               disabled={isTesting || !testEmail.trim()}
             >
               {isTesting ? (
-                <Loader2 data-icon="inline-start" className="animate-spin" />
+                <Spinner data-icon="inline-start" />
               ) : (
                 <Send data-icon="inline-start" />
               )}

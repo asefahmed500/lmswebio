@@ -1,8 +1,16 @@
 "use client"
 
 import { useEffect } from "react"
-import { AlertTriangle, RefreshCw } from "lucide-react"
+import { RefreshCw, TriangleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 
 export default function AuthError({
   error,
@@ -16,18 +24,24 @@ export default function AuthError({
   }, [error])
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="text-center">
-        <AlertTriangle className="mx-auto mb-4 size-12 text-destructive" />
-        <h2 className="mb-2 text-lg font-semibold">Authentication Error</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          {error.message || "Something went wrong. Please try again."}
-        </p>
-        <Button onClick={reset} variant="outline">
-          <RefreshCw data-icon="inline-start" />
-          Try Again
-        </Button>
-      </div>
+    <div className="flex min-h-svh items-center justify-center bg-background p-6">
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon" className="text-destructive">
+            <TriangleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Authentication Error</EmptyTitle>
+          <EmptyDescription>
+            {error.message || "Something went wrong. Please try again."}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button onClick={reset} variant="outline">
+            <RefreshCw data-icon="inline-start" />
+            Try Again
+          </Button>
+        </EmptyContent>
+      </Empty>
     </div>
   )
 }

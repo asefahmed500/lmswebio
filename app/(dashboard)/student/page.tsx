@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import {
   BookOpen,
+  CircleAlert,
   Clock,
   TrendingUp,
   Calendar,
@@ -13,12 +14,22 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
 import { CourseCard } from "@/features/courses/course-card"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet } from "@/lib/api-client"
 import type { KPICard, Enrollment, Course, Assignment } from "@/types"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
+import { DashboardLoading } from "@/components/loading-skeleton"
+import { Separator } from "@/components/ui/separator"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 
 import { cn } from "@/lib/utils"
 
@@ -99,19 +110,14 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon: Icon, accent }: StatCardProps) {
   return (
-    <Card className={cn("p-5", accent && "bg-primary/5 ring-primary/20")}>
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {label}
-          </p>
-          <p className="font-heading text-[32px] leading-none font-semibold tracking-tight text-foreground">
-            {value}
-          </p>
-        </div>
+    <Card className={cn("gap-0", accent && "bg-primary/5 ring-primary/20")}>
+      <CardHeader className="flex flex-row items-start justify-between gap-2 px-4 py-4">
+        <CardTitle className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {label}
+        </CardTitle>
         <div
           className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-lg",
+            "flex size-9 shrink-0 items-center justify-center rounded-md",
             accent ? "bg-primary/10" : "bg-muted"
           )}
         >
@@ -122,7 +128,12 @@ function StatCard({ label, value, icon: Icon, accent }: StatCardProps) {
             )}
           />
         </div>
-      </div>
+      </CardHeader>
+      <CardContent className="px-4 pt-0 pb-4">
+        <p className="text-2xl font-semibold tracking-tight text-foreground">
+          {value}
+        </p>
+      </CardContent>
     </Card>
   )
 }
@@ -138,10 +149,10 @@ function DeadlineItem({
 }) {
   const isUrgent = daysUntilDue <= 2
   return (
-    <div className="flex items-start gap-3 border-b border-border px-1 py-3.5 transition-colors last:border-b-0 hover:bg-muted/50">
+    <div className="flex items-start gap-3 px-1 py-3 transition-colors hover:bg-muted/50">
       <div
         className={cn(
-          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
+          "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md",
           isUrgent ? "bg-primary/10" : "bg-muted"
         )}
       >
@@ -164,7 +175,7 @@ function DeadlineItem({
           />
           <span
             className={cn(
-              "text-[11px] font-medium",
+              "text-xs font-medium",
               isUrgent ? "text-primary" : "text-muted-foreground"
             )}
           >
@@ -172,12 +183,7 @@ function DeadlineItem({
           </span>
         </div>
       </div>
-      <Button
-        asChild
-        variant="link"
-        size="sm"
-        className="mt-0.5 h-auto shrink-0 p-0"
-      >
+      <Button asChild variant="link" size="sm" className="shrink-0">
         <Link href="/student/assignments/pending">View</Link>
       </Button>
     </div>
@@ -322,55 +328,22 @@ export default function StudentDashboardPage() {
     loadData()
   }, [user])
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-10 w-80" />
-            <Skeleton className="h-5 w-64" />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-xl" />
-            ))}
-          </div>
-          <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
-            <div className="flex min-w-0 flex-col gap-5">
-              <Skeleton className="h-7 w-48" />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Skeleton className="h-48 rounded-xl" />
-                <Skeleton className="h-48 rounded-xl" />
-              </div>
-            </div>
-            <div className="flex min-w-0 flex-col gap-7">
-              <Skeleton className="h-40 rounded-xl" />
-              <Skeleton className="h-40 rounded-xl" />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <DashboardLoading />
 
   return (
     <div className="mx-auto max-w-6xl">
       <div className="flex flex-col gap-8">
         {error && (
           <Alert variant="destructive">
+            <CircleAlert />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
-        {/* Header */}
-        <div>
-          <h1 className="font-heading text-[36px] leading-tight font-semibold tracking-tight text-foreground sm:text-[42px]">
-            Welcome back, {user?.fullName?.split(" ")[0]}
-          </h1>
-          <p className="mt-2 text-base text-muted-foreground">
-            Continue your learning journey
-          </p>
-        </div>
+        <PageHeader
+          title={`Welcome back, ${user?.fullName?.split(" ")[0] ?? ""}`}
+          description="Continue your learning journey"
+        />
 
         {/* Stats grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -388,13 +361,15 @@ export default function StudentDashboardPage() {
             label="Avg Progress"
             value={String(kpis[2]?.value || "0%")}
             icon={TrendingUp}
-            accent={parseInt(String(kpis[2]?.value || "0")) >= 50}
+            accent={
+              Number(String(kpis[2]?.value ?? "0").replace("%", "")) >= 50
+            }
           />
           <StatCard
             label="Upcoming Deadlines"
             value={String(kpis[3]?.value || "0")}
             icon={Clock}
-            accent={parseInt(String(kpis[3]?.value || "0")) > 0}
+            accent={Number(kpis[3]?.value ?? 0) > 0}
           />
         </div>
 
@@ -402,13 +377,13 @@ export default function StudentDashboardPage() {
         <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[1fr_380px]">
           {/* Left column - Continue Learning */}
           <div className="flex min-w-0 flex-col gap-5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading text-[22px] font-semibold tracking-tight text-foreground">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
                 Continue Learning
               </h2>
-              <Button asChild variant="link" size="sm" className="h-auto p-0">
+              <Button asChild variant="link" size="sm">
                 <Link href="/student/my-learning/enrolled">
-                  View all <ChevronRight className="size-3.5" />
+                  View all <ChevronRight data-icon="inline-end" />
                 </Link>
               </Button>
             </div>
@@ -450,60 +425,67 @@ export default function StudentDashboardPage() {
                 })}
               </div>
             ) : (
-              <Card className="flex flex-col items-center justify-center py-14 text-center">
-                <CardContent className="flex flex-col items-center">
-                  <BookOpen className="mb-4 size-10 text-muted-foreground/50" />
-                  <h3 className="font-heading text-lg font-semibold text-foreground">
-                    No courses yet
-                  </h3>
-                  <p className="mt-1.5 mb-5 text-sm text-muted-foreground">
+              <Empty className="rounded-lg border border-dashed">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <BookOpen />
+                  </EmptyMedia>
+                  <EmptyTitle>No courses yet</EmptyTitle>
+                  <EmptyDescription>
                     Start your learning journey
-                  </p>
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
                   <Button asChild>
                     <Link href="/student/courses/catalogue">
-                      Browse Courses <ArrowRight className="size-3.5" />
+                      Browse Courses <ArrowRight data-icon="inline-end" />
                     </Link>
                   </Button>
-                </CardContent>
-              </Card>
+                </EmptyContent>
+              </Empty>
             )}
           </div>
 
           {/* Right column - Deadlines + Recommended */}
           <div className="flex min-w-0 flex-col gap-7">
             {/* Upcoming Deadlines */}
-            <div>
-              <h2 className="font-heading mb-4 text-[22px] font-semibold tracking-tight text-foreground">
+            <div className="min-w-0">
+              <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">
                 Upcoming Deadlines
               </h2>
-              <Card className="px-4">
-                <CardContent className="flex flex-col p-0">
-                  {upcomingDeadlines.length > 0 ? (
-                    upcomingDeadlines.map((d, i) => (
-                      <DeadlineItem
-                        key={i}
-                        title={d.title}
-                        courseTitle={d.courseTitle}
-                        daysUntilDue={d.daysUntilDue}
-                      />
-                    ))
-                  ) : (
-                    <div className="py-8 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        No upcoming deadlines
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        You&apos;re all caught up!
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {upcomingDeadlines.length > 0 ? (
+                <Card className="px-4">
+                  <CardContent className="flex flex-col p-0">
+                    {upcomingDeadlines.map((d, i) => (
+                      <React.Fragment key={i}>
+                        {i > 0 ? <Separator /> : null}
+                        <DeadlineItem
+                          title={d.title}
+                          courseTitle={d.courseTitle}
+                          daysUntilDue={d.daysUntilDue}
+                        />
+                      </React.Fragment>
+                    ))}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Empty className="rounded-lg border border-dashed">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Calendar />
+                    </EmptyMedia>
+                    <EmptyTitle>No upcoming deadlines</EmptyTitle>
+                    <EmptyDescription>
+                      You&apos;re all caught up!
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
             </div>
 
             {/* Recommended */}
-            <div>
-              <h2 className="font-heading mb-4 text-[22px] font-semibold tracking-tight text-foreground">
+            <div className="min-w-0">
+              <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">
                 Recommended for You
               </h2>
               <div className="flex flex-col gap-4">

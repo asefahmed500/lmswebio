@@ -21,6 +21,7 @@ export const courseSchema = z.object({
   category: z.string().min(1, "Category is required").optional(),
   tags: z.array(z.string()).max(10, "Maximum 10 tags allowed").optional(),
   thumbnail: z.string().url("Invalid URL").optional().or(z.literal("")),
+  price: z.string().optional(),
 })
 
 export type CourseFormData = z.infer<typeof courseSchema>

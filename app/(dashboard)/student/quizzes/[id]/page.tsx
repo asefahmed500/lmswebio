@@ -11,10 +11,10 @@ import Link from "next/link"
 import {
   Clock,
   ArrowLeft,
-  AlertCircle,
+  TriangleAlert,
   CheckCircle2,
   XCircle,
-  HelpCircle,
+  CircleAlert,
   Send,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,6 +25,17 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import { LoadingCard } from "@/components/loading-skeleton"
+import { Spinner } from "@/components/ui/spinner"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 import { apiPost } from "@/lib/api-client"
@@ -104,7 +115,7 @@ function CountdownTimer({
           : "bg-muted text-muted-foreground"
       )}
     >
-      <Clock className="h-4 w-4" />
+      <Clock className="size-4" />
       <span>
         {String(minutes).padStart(2, "0")}:{String(secs).padStart(2, "0")}
       </span>
@@ -149,16 +160,14 @@ function SingleChoiceQuestion({
               <RadioGroupItem value={key} id={`${question.id}_${key}`} />
               <Label
                 htmlFor={`${question.id}_${key}`}
-                className="flex-1 cursor-pointer"
+                className="min-w-0 flex-1 cursor-pointer"
               >
                 {label}
               </Label>
               {isCorrectOption && (
-                <CheckCircle2 className="h-4 w-4 text-success" />
+                <CheckCircle2 className="size-4 text-success" />
               )}
-              {isWrongOption && (
-                <XCircle className="h-4 w-4 text-destructive" />
-              )}
+              {isWrongOption && <XCircle className="size-4 text-destructive" />}
             </div>
           )
         })}
@@ -222,15 +231,15 @@ function MultiChoiceQuestion({
             />
             <Label
               htmlFor={`${question.id}_${key}`}
-              className="flex-1 cursor-pointer"
+              className="min-w-0 flex-1 cursor-pointer"
             >
               {label}
             </Label>
             {isCorrectOption && (
-              <CheckCircle2 className="h-4 w-4 text-success" />
+              <CheckCircle2 className="size-4 text-success" />
             )}
-            {isWrongOption && <XCircle className="h-4 w-4 text-destructive" />}
-            {isMissing && <AlertCircle className="h-4 w-4 text-warning" />}
+            {isWrongOption && <XCircle className="size-4 text-destructive" />}
+            {isMissing && <TriangleAlert className="size-4 text-warning" />}
           </div>
         )
       })}
@@ -258,7 +267,7 @@ function TextQuestion({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={showResult}
-      className="min-h-[120px]"
+      className="min-h-32"
     />
   )
 }
@@ -294,7 +303,7 @@ function TrueFalseQuestion({
             disabled={showResult}
             variant="ghost"
             className={cn(
-              "h-auto flex-1 rounded-lg border-2 p-4 text-center font-medium transition-colors",
+              "min-h-14 flex-1 border p-3 text-center font-medium transition-colors",
               isSelected && !showResult && "border-primary bg-primary/10",
               isCorrectOption && "border-success bg-success/10 text-success",
               isWrongOption &&
@@ -306,9 +315,9 @@ function TrueFalseQuestion({
           >
             {opt === "true" ? "True" : "False"}
             {isCorrectOption && (
-              <CheckCircle2 className="mx-auto mt-1 h-4 w-4" />
+              <CheckCircle2 className="mx-auto mt-1 size-4" />
             )}
-            {isWrongOption && <XCircle className="mx-auto mt-1 h-4 w-4" />}
+            {isWrongOption && <XCircle className="mx-auto mt-1 size-4" />}
           </Button>
         )
       })}
@@ -401,7 +410,7 @@ function QuizResults({
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">{quiz.title} - Results</h2>
+        <h2 className="text-2xl font-semibold">{quiz.title} - Results</h2>
         <p className="mt-1 text-muted-foreground">{quiz.course.title}</p>
       </div>
 
@@ -415,7 +424,7 @@ function QuizResults({
           <CardContent className="pb-4 text-center">
             <div
               className={cn(
-                "text-3xl font-bold",
+                "text-3xl font-semibold",
                 latestScore >= 70
                   ? "text-success"
                   : latestScore >= 40
@@ -436,7 +445,7 @@ function QuizResults({
           <CardContent className="pb-4 text-center">
             <div
               className={cn(
-                "text-3xl font-bold",
+                "text-3xl font-semibold",
                 bestScore >= 70
                   ? "text-success"
                   : bestScore >= 40
@@ -455,7 +464,7 @@ function QuizResults({
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4 text-center">
-            <div className="text-3xl font-bold">
+            <div className="text-3xl font-semibold">
               {attempts.length}
               <span className="text-lg text-muted-foreground">
                 /{quiz.attemptsAllowed}
@@ -642,7 +651,13 @@ export default function QuizTakingPage() {
         setSubmitted(true)
       }
 
-      const updatedRes = await fetch(`/api/quizzes/${quizId}/attempt`)
+      // Reload the quiz too: answers are only released server-side once an
+      // attempt exists, so the review view needs the fresh response.
+      const [updatedQuizRes, updatedRes] = await Promise.all([
+        fetch(`/api/quizzes/${quizId}`),
+        fetch(`/api/quizzes/${quizId}/attempt`),
+      ])
+      if (updatedQuizRes.ok) setQuiz(await updatedQuizRes.json())
       if (updatedRes.ok) {
         const updatedAttempts: AttemptResult[] = await updatedRes.json()
         setAttempts(updatedAttempts)
@@ -664,29 +679,30 @@ export default function QuizTakingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading quiz...</p>
-        </div>
+      <div className="mx-auto flex max-w-3xl min-w-0 flex-col gap-6 p-6">
+        <LoadingCard count={3} />
       </div>
     )
   }
 
   if (!quiz) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <HelpCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-semibold">Quiz not found</h3>
-          <p className="mb-4 text-sm text-muted-foreground">
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Quiz not found</EmptyTitle>
+          <EmptyDescription>
             The quiz you&apos;re looking for doesn&apos;t exist.
-          </p>
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
           <Button asChild>
             <Link href="/student/quizzes">Back to Quizzes</Link>
           </Button>
-        </div>
-      </div>
+        </EmptyContent>
+      </Empty>
     )
   }
 
@@ -704,7 +720,7 @@ export default function QuizTakingPage() {
     attempts.length > 0
   ) {
     return (
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <div className="mx-auto flex max-w-3xl min-w-0 flex-col gap-6 p-6">
         <QuizResults quiz={quiz} attempts={attempts} />
       </div>
     )
@@ -713,46 +729,46 @@ export default function QuizTakingPage() {
   if (submitted && submissionResult) {
     const allAttempts = attempts.length > 0 ? attempts : [submissionResult]
     return (
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <div className="mx-auto flex max-w-3xl min-w-0 flex-col gap-6 p-6">
         <QuizResults quiz={quiz} attempts={allAttempts} />
       </div>
     )
   }
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex max-w-3xl min-w-0 flex-col gap-6 p-6">
       {/* Quiz header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mb-2"
-            onClick={() => router.push("/student/quizzes")}
-          >
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-bold">{quiz.title}</h1>
-          <p className="mt-1 text-muted-foreground">{quiz.course.title}</p>
-          {quiz.description && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              {quiz.description}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          {quiz.timeLimit && !timeExpired && (
-            <CountdownTimer
-              seconds={quiz.timeLimit * 60}
-              onExpire={handleTimeExpire}
-            />
-          )}
-          <Badge variant="secondary" className="text-sm">
-            {answeredCount}/{quiz.questions.length} answered
-          </Badge>
-        </div>
-      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="self-start"
+        onClick={() => router.push("/student/quizzes")}
+      >
+        <ArrowLeft data-icon="inline-start" />
+        Back
+      </Button>
+      <PageHeader
+        title={quiz.title}
+        description={quiz.course.title}
+        action={
+          <>
+            {quiz.timeLimit && !timeExpired && (
+              <CountdownTimer
+                seconds={quiz.timeLimit * 60}
+                onExpire={handleTimeExpire}
+              />
+            )}
+            <Badge variant="secondary">
+              {answeredCount}/{quiz.questions.length} answered
+            </Badge>
+          </>
+        }
+      />
+      {quiz.description && (
+        <p className="-mt-2 text-sm text-muted-foreground">
+          {quiz.description}
+        </p>
+      )}
 
       {/* Progress */}
       <Progress
@@ -765,7 +781,7 @@ export default function QuizTakingPage() {
         {quiz.questions.map((question, index) => (
           <div key={question.id}>
             <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                 {index + 1}
               </span>
               <span className="text-xs text-muted-foreground">
@@ -799,17 +815,8 @@ export default function QuizTakingPage() {
           )}
         </div>
         <Button onClick={handleSubmit} disabled={isSubmitting} size="lg">
-          {isSubmitting ? (
-            <>
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Submitting...
-            </>
-          ) : (
-            <>
-              <Send data-icon="inline-start" />
-              Submit Quiz
-            </>
-          )}
+          {isSubmitting ? <Spinner /> : <Send data-icon="inline-start" />}
+          {isSubmitting ? "Submitting..." : "Submit Quiz"}
         </Button>
       </div>
     </div>

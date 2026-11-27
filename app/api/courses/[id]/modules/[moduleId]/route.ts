@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/auth/jwt"
+
+const updateModuleSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  order: z.number().int().nonnegative().optional(),
+  lessons: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        title: z.string().min(1).max(200),
+        content: z.string().optional(),
+        contentType: z.string().max(50).optional(),
+        order: z.number().int().nonnegative().optional(),
+        duration: z.number().int().nonnegative().nullable().optional(),
+      })
+    )
+    .max(200)
+    .optional(),
+})
 
 export async function PUT(
   request: NextRequest,
@@ -32,34 +51,50 @@ export async function PUT(
       return NextResponse.json({ error: "Not authorized" }, { status: 403 })
     }
 
-    const body = await request.json()
-    const data: Record<string, unknown> = {}
-    if (body.title !== undefined) data.title = body.title
-    if (body.order !== undefined) data.order = body.order
-    if (body.lessons !== undefined) {
-      await prisma.$transaction(async (tx) => {
-        await tx.lesson.deleteMany({ where: { moduleId: modId } })
-        const lessons = body.lessons as Array<{
-          title: string
-          content?: string
-          contentType?: string
-          order: number
-          duration?: number
-        }>
-        await tx.lesson.createMany({
-          data: lessons.map((l, i) => ({
-            title: l.title,
-            content: l.content ?? "",
-            contentType: l.contentType ?? "text",
-            order: l.order ?? i,
-            duration: l.duration ?? null,
-            moduleId: modId,
-          })),
-        })
-      })
-    } else {
-      await prisma.module.update({ where: { id: modId }, data })
+    const parsed = updateModuleSchema.safeParse(await request.json())
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.issues },
+        { status: 400 }
+      )
     }
+    const { lessons, ...moduleData } = parsed.data
+
+    await prisma.$transaction(async (tx) => {
+      if (Object.keys(moduleData).length > 0) {
+        await tx.module.update({ where: { id: modId }, data: moduleData })
+      }
+
+      if (lessons) {
+        // Upsert lessons instead of delete-and-recreate: recreating them
+        // breaks LessonCompletion foreign keys and destroys student progress.
+        for (const [index, lesson] of lessons.entries()) {
+          const values = {
+            title: lesson.title,
+            content: lesson.content ?? "",
+            contentType: lesson.contentType ?? "text",
+            order: lesson.order ?? index,
+            duration: lesson.duration ?? null,
+          }
+
+          if (lesson.id) {
+            const existing = await tx.lesson.findFirst({
+              where: { id: lesson.id, moduleId: modId },
+              select: { id: true },
+            })
+            if (existing) {
+              await tx.lesson.update({
+                where: { id: existing.id },
+                data: values,
+              })
+              continue
+            }
+          }
+
+          await tx.lesson.create({ data: { ...values, moduleId: modId } })
+        }
+      }
+    })
 
     const updated = await prisma.module.findUnique({
       where: { id: modId },

@@ -7,13 +7,14 @@ import { LogOut, Monitor, Moon, Settings, Sun, User } from "lucide-react"
 
 import type { User as UserType } from "@/types"
 import { useAuth } from "@/components/auth-provider"
+import { LogoMark } from "@/components/homepage/lmsio-logo"
 import { useHydrated } from "@/hooks/use-media-query"
-import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -30,17 +31,10 @@ export function getInitials(fullName: string): string {
     .slice(0, 2)
 }
 
-const THEME_LABEL: Record<string, string> = {
-  light: "Light",
-  dark: "Dark",
-  system: "System",
-}
-
 function ThemeMenuItems() {
   const { theme, setTheme } = useTheme()
-  // The server has no theme value. Showing the current-theme indicator before
-  // hydration would produce a markup mismatch, so it stays hidden until the
-  // client render, which is what `useHydrated` reports.
+  // The server has no theme value. Deferring the current-theme indicator until
+  // hydration avoids a server/client markup mismatch.
   const hydrated = useHydrated()
 
   const options = [
@@ -50,16 +44,12 @@ function ThemeMenuItems() {
   ] as const
 
   return (
-    <>
+    <DropdownMenuGroup>
       {options.map(({ value, label, icon: Icon }) => {
         const selected = hydrated && theme === value
         return (
-          <DropdownMenuItem
-            key={value}
-            onSelect={() => setTheme(value)}
-            className="gap-2"
-          >
-            <Icon className="size-4 text-muted-foreground" />
+          <DropdownMenuItem key={value} onSelect={() => setTheme(value)}>
+            <Icon className="text-muted-foreground" />
             <span className="flex-1">{label}</span>
             {selected ? (
               <>
@@ -73,25 +63,13 @@ function ThemeMenuItems() {
           </DropdownMenuItem>
         )
       })}
-    </>
+    </DropdownMenuGroup>
   )
 }
 
-/**
- * Account menu for the app shell.
- *
- * Replaces a menu that used `forceMount` on `DropdownMenuContent`, which pins
- * the content in the tree after close and suppresses the exit animation, and
- * that split a five-item menu with three stray separators. This version uses
- * one separator, groups the theme choices under a labelled heading, and gives
- * logout its own destructive treatment.
- */
+/** Account menu for the app shell: one separator per group, no stray items. */
 export function UserMenu({ user }: { user: UserType }) {
   const { logout } = useAuth()
-  const initials = React.useMemo(
-    () => getInitials(user.fullName),
-    [user.fullName]
-  )
   const rolePath = `/${user.role.toLowerCase()}`
 
   const handleLogout = React.useCallback(async () => {
@@ -104,12 +82,14 @@ export function UserMenu({ user }: { user: UserType }) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative size-9 rounded-full p-0"
+          className="size-9 rounded-full p-0"
           aria-label={`Account menu for ${user.fullName}`}
         >
           <Avatar className="size-9">
             <AvatarImage src={user.avatarUrl} alt="" />
-            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            <AvatarFallback className="p-0">
+              <LogoMark className="size-full rounded-full" />
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -119,7 +99,9 @@ export function UserMenu({ user }: { user: UserType }) {
           <div className="flex items-center gap-3">
             <Avatar className="size-9 shrink-0">
               <AvatarImage src={user.avatarUrl} alt="" />
-              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+              <AvatarFallback className="p-0">
+                <LogoMark className="size-full rounded-full" />
+              </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <p className="truncate text-sm leading-tight font-medium">
@@ -134,19 +116,22 @@ export function UserMenu({ user }: { user: UserType }) {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild className="gap-2">
-          <Link href={`${rolePath}/profile`}>
-            <User className="size-4 text-muted-foreground" />
-            Profile
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild className="gap-2">
-          <Link href={`${rolePath}/profile`}>
-            <Settings className="size-4 text-muted-foreground" />
-            Account settings
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <Link href={`${rolePath}/profile`}>
+              <User className="text-muted-foreground" />
+              Profile
+            </Link>
+          </DropdownMenuItem>
+          {user.role === "ADMIN" ? (
+            <DropdownMenuItem asChild>
+              <Link href="/admin/settings">
+                <Settings className="text-muted-foreground" />
+                Account settings
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
+        </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 
@@ -157,23 +142,13 @@ export function UserMenu({ user }: { user: UserType }) {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem
-          onSelect={handleLogout}
-          className={cn(
-            "gap-2 text-destructive",
-            "focus:bg-destructive/10 focus:text-destructive"
-          )}
-        >
-          <LogOut className="size-4" />
-          Log out
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem variant="destructive" onSelect={handleLogout}>
+            <LogOut />
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )
-}
-
-/** Read-only label for the current theme, for use outside the menu. */
-export function useThemeLabel(): string {
-  const { theme } = useTheme()
-  return THEME_LABEL[theme ?? "system"] ?? "System"
 }

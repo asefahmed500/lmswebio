@@ -1409,7 +1409,7 @@ async function main() {
   console.log(`Creating ${coursesData.length} courses...`)
   const createdCourses = []
 
-  for (const courseData of coursesData) {
+  for (const [courseIndex, courseData] of coursesData.entries()) {
     try {
       const course = await prisma.course.create({
         data: {
@@ -1422,6 +1422,7 @@ async function main() {
           category: courseData.category,
           tags: courseData.tags,
           price: courseData.price,
+          thumbnail: `/courses/cover-${(courseIndex % 6) + 1}.svg`,
           modules: {
             create: courseData.modules.map((mod, mi) => ({
               title: mod.title,
@@ -1491,56 +1492,56 @@ async function main() {
               text: "Which of the following best describes the main topic covered in this course?",
               type: "MC_SINGLE",
               points: 10,
-              options: [
-                "Option A - Core concept",
-                "Option B - Related concept",
-                "Option C - Unrelated",
-                "Option D - Opposite",
-              ],
-              correctAnswer: { correct: 0 },
+              options: {
+                A: "Option A - Core concept",
+                B: "Option B - Related concept",
+                C: "Option C - Unrelated",
+                D: "Option D - Opposite",
+              },
+              correctAnswer: "A",
             },
             {
               text: "What is the recommended approach for implementing the techniques learned?",
               type: "MC_SINGLE",
               points: 10,
-              options: [
-                "Hands-on practice",
-                "Reading only",
-                "Watching videos only",
-                "Memorization",
-              ],
-              correctAnswer: { correct: 0 },
+              options: {
+                A: "Hands-on practice",
+                B: "Reading only",
+                C: "Watching videos only",
+                D: "Memorization",
+              },
+              correctAnswer: "A",
             },
             {
               text: "Which best practice should be followed when applying these concepts?",
               type: "MC_SINGLE",
               points: 10,
-              options: [
-                "Start with simple examples",
-                "Jump to complex projects",
-                "Skip fundamentals",
-                "Copy without understanding",
-              ],
-              correctAnswer: { correct: 0 },
+              options: {
+                A: "Start with simple examples",
+                B: "Jump to complex projects",
+                C: "Skip fundamentals",
+                D: "Copy without understanding",
+              },
+              correctAnswer: "A",
             },
             {
               text: "What are the key benefits of mastering this subject?",
               type: "MC_MULTI",
               points: 15,
-              options: [
-                "Career advancement",
-                "Problem-solving skills",
-                "Unnecessary complexity",
-                "Industry recognition",
-              ],
-              correctAnswer: { correct: [0, 1, 3] },
+              options: {
+                A: "Career advancement",
+                B: "Problem-solving skills",
+                C: "Unnecessary complexity",
+                D: "Industry recognition",
+              },
+              correctAnswer: ["A", "B", "D"],
             },
             {
               text: "Explain in your own words the most important concept from this course.",
               type: "TEXT",
               points: 20,
-              options: [],
-              correctAnswer: {},
+              options: null,
+              correctAnswer: null,
             },
           ],
         },

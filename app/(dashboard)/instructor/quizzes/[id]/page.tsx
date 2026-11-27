@@ -11,13 +11,14 @@ import { useParams, useRouter } from "next/navigation"
 import {
   FileText,
   ArrowLeft,
-  HelpCircle,
+  ListChecks,
   Users,
   Edit,
   Save,
   X,
-  Loader2,
-  AlertCircle,
+  CircleAlert,
+  TriangleAlert,
+  BarChart3,
   CheckCircle,
   XCircle,
 } from "lucide-react"
@@ -32,8 +33,18 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Separator } from "@/components/ui/separator"
+import { LoadingCard } from "@/components/loading-skeleton"
+import { Spinner } from "@/components/ui/spinner"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPut } from "@/lib/api-client"
 import { QuestionType } from "@/types"
@@ -153,26 +164,54 @@ export default function QuizDetailPage() {
     }
   }
 
+  const backButton = (
+    <Button variant="ghost" size="icon" asChild aria-label="Back to quizzes">
+      <Link href="/instructor/quizzes">
+        <ArrowLeft />
+      </Link>
+    </Button>
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading quiz...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          <PageHeader
+            className="min-w-0 flex-1"
+            title="Quiz"
+            description="Quiz overview and questions"
+          />
         </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <LoadingCard count={3} />
+        </div>
+        <LoadingCard />
       </div>
     )
   }
 
   if (error || !quiz) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="mx-auto mb-4 size-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">Error loading quiz</h3>
-          <p className="mb-4 text-sm text-muted-foreground">
-            {error || "Quiz not found"}
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          <PageHeader
+            className="min-w-0 flex-1"
+            title="Error loading quiz"
+            description={error || "Quiz not found"}
+          />
+        </div>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>Error loading quiz</EmptyTitle>
+            <EmptyDescription>{error || "Quiz not found"}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+        <div>
           <Button variant="outline" onClick={() => router.back()}>
             Go Back
           </Button>
@@ -192,32 +231,34 @@ export default function QuizDetailPage() {
       : 0
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
-          <Link href="/instructor/quizzes">
-            <ArrowLeft />
-          </Link>
-        </Button>
+    <div className="flex min-w-0 flex-col gap-6">
+      <div className="flex items-start gap-4">
+        {backButton}
         <div className="min-w-0 flex-1">
           {isEditing ? (
-            <div className="flex flex-col gap-3">
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="text-2xl font-bold"
-                disabled={isSaving}
-              />
-              <Textarea
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Quiz description"
-                className="min-h-[60px]"
-                disabled={isSaving}
-              />
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col gap-1">
-                  <Label className="text-xs">Time Limit (min)</Label>
+            <FieldGroup className="gap-3">
+              <Field>
+                <FieldLabel className="sr-only">Quiz title</FieldLabel>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="text-2xl font-semibold"
+                  disabled={isSaving}
+                />
+              </Field>
+              <Field>
+                <FieldLabel className="sr-only">Quiz description</FieldLabel>
+                <Textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Quiz description"
+                  className="min-h-[60px]"
+                  disabled={isSaving}
+                />
+              </Field>
+              <div className="flex flex-wrap items-end gap-4">
+                <Field>
+                  <FieldLabel>Time Limit (min)</FieldLabel>
                   <Input
                     type="number"
                     min={0}
@@ -230,9 +271,9 @@ export default function QuizDetailPage() {
                     className="w-32"
                     disabled={isSaving}
                   />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Label className="text-xs">Attempts Allowed</Label>
+                </Field>
+                <Field>
+                  <FieldLabel>Attempts Allowed</FieldLabel>
                   <Input
                     type="number"
                     min={1}
@@ -242,17 +283,15 @@ export default function QuizDetailPage() {
                     className="w-32"
                     disabled={isSaving}
                   />
-                </div>
+                </Field>
               </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" onClick={saveEdit} disabled={isSaving}>
-                  {isSaving && (
-                    <Loader2
-                      data-icon="inline-start"
-                      className="animate-spin"
-                    />
+                  {isSaving ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <Save data-icon="inline-start" />
                   )}
-                  <Save data-icon="inline-start" />
                   Save
                 </Button>
                 <Button
@@ -265,27 +304,28 @@ export default function QuizDetailPage() {
                   Cancel
                 </Button>
               </div>
-            </div>
+            </FieldGroup>
           ) : (
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="truncate text-2xl font-bold tracking-tight">
-                  {quiz.title}
-                </h1>
-                <p className="text-sm text-muted-foreground">
+            <PageHeader
+              className="min-w-0 flex-1"
+              title={quiz.title}
+              description={
+                <>
                   {quiz.course?.title || `Course #${quiz.courseId}`} &middot;{" "}
                   {quiz.timeLimit
                     ? `${quiz.timeLimit} min time limit`
                     : "No time limit"}{" "}
                   &middot; {quiz.attemptsAllowed} attempt
                   {quiz.attemptsAllowed !== 1 ? "s" : ""} allowed
-                </p>
-              </div>
-              <Button variant="outline" size="sm" onClick={startEditing}>
-                <Edit data-icon="inline-start" />
-                Edit
-              </Button>
-            </div>
+                </>
+              }
+              action={
+                <Button variant="outline" size="sm" onClick={startEditing}>
+                  <Edit data-icon="inline-start" />
+                  Edit
+                </Button>
+              }
+            />
           )}
         </div>
       </div>
@@ -312,8 +352,10 @@ export default function QuizDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <HelpCircle className="size-5 text-primary" />
-              <div className="text-2xl font-bold">{quiz.questions.length}</div>
+              <ListChecks className="size-5 text-primary" />
+              <div className="text-2xl font-semibold">
+                {quiz.questions.length}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -326,7 +368,7 @@ export default function QuizDetailPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileText className="size-5 text-info" />
-              <div className="text-2xl font-bold">{totalPoints}</div>
+              <div className="text-2xl font-semibold">{totalPoints}</div>
             </div>
           </CardContent>
         </Card>
@@ -339,7 +381,7 @@ export default function QuizDetailPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Users className="size-5 text-warning" />
-              <div className="text-2xl font-bold">{totalAttempts}</div>
+              <div className="text-2xl font-semibold">{totalAttempts}</div>
             </div>
           </CardContent>
         </Card>
@@ -356,13 +398,17 @@ export default function QuizDetailPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {quiz.questions.length === 0 ? (
-            <div className="py-8 text-center">
-              <HelpCircle className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No questions yet</h3>
-              <p className="text-sm text-muted-foreground">
-                This quiz has no questions. Edit the quiz to add some.
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <TriangleAlert />
+                </EmptyMedia>
+                <EmptyTitle>No questions yet</EmptyTitle>
+                <EmptyDescription>
+                  This quiz has no questions. Edit the quiz to add some.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             quiz.questions.map((question, index) => (
               <React.Fragment key={question.id}>
@@ -427,16 +473,9 @@ export default function QuizDetailPage() {
                         return (
                           <Badge
                             key={val}
-                            variant={isCorrect ? "default" : "outline"}
-                            className={
-                              isCorrect
-                                ? "bg-success/10 text-success hover:bg-success/10"
-                                : ""
-                            }
+                            variant={isCorrect ? "success" : "outline"}
                           >
-                            {isCorrect && (
-                              <CheckCircle className="mr-1 size-3" />
-                            )}
+                            {isCorrect && <CheckCircle />}
                             {val}
                           </Badge>
                         )
@@ -446,7 +485,7 @@ export default function QuizDetailPage() {
 
                   {question.type === QuestionType.TEXT && (
                     <div className="ml-4">
-                      <Badge variant="outline" className="bg-info/10 text-info">
+                      <Badge variant="info">
                         Answer: {question.correctAnswer as string}
                       </Badge>
                     </div>
@@ -473,13 +512,17 @@ export default function QuizDetailPage() {
         </CardHeader>
         <CardContent>
           {totalAttempts === 0 ? (
-            <div className="py-8 text-center">
-              <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No attempts yet</h3>
-              <p className="text-sm text-muted-foreground">
-                Students haven&apos;t taken this quiz yet
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <BarChart3 />
+                </EmptyMedia>
+                <EmptyTitle>No attempts yet</EmptyTitle>
+                <EmptyDescription>
+                  Students haven&apos;t taken this quiz yet
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="flex flex-col gap-3">
               {(quiz.attempts || []).map((attempt) => (

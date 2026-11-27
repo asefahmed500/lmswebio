@@ -1,12 +1,39 @@
 /**
- * LMSio Logo Component
+ * LMSio brand mark.
  *
- * Unique branded logo with uniform text sizing.
- * Modern gradient design with platform initials.
+ * A single reusable, dependency-free SVG: an open book whose pages form a
+ * quiet "L". No gradients, no bold text — it inherits semantic colours so it
+ * works on light/dark surfaces and at any size.
  */
 
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+
+export function LogoMark({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground",
+        className
+      )}
+    >
+      <svg
+        viewBox="0 0 32 32"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="size-5"
+        aria-hidden="true"
+      >
+        <path d="M4 8.5c4-1.6 8-1.6 12 0v14c-4-1.6-8-1.6-12 0z" />
+        <path d="M28 8.5c-4-1.6-8-1.6-12 0v14c4-1.6 8-1.6 12 0z" />
+        <path d="M10 5.5v17" />
+      </svg>
+    </span>
+  )
+}
 
 interface LogoProps {
   className?: string
@@ -23,125 +50,35 @@ export function LMSioLogo({
     <Link
       href="/"
       className={cn(
-        "flex items-center gap-2 transition-opacity hover:opacity-80",
+        "flex items-center gap-2.5 rounded-md outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring",
         className
       )}
     >
-      {/* Logo Icon */}
-      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-xl font-bold text-primary-foreground shadow-lg">
-        <div className="relative flex h-10 w-10 items-center justify-center">
-          {/* Outer Shape */}
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-green-500 shadow-lg" />
-
-          {/* Inner Layer */}
-          <div className="absolute inset-[2px] rounded-[10px] bg-background/10 backdrop-blur-sm" />
-
-          {/* LMS Symbol */}
-          <div className="relative flex items-end gap-0.5">
-            <div className="h-3 w-1 rounded-full bg-white" />
-            <div className="h-5 w-1 rounded-full bg-white" />
-            <div className="h-7 w-1 rounded-full bg-white" />
-          </div>
-        </div>
-      </div>
-
-      {/* Text - All Same Size */}
+      <LogoMark />
       {variant !== "icon" && (
-        <div className="flex flex-col">
-          <span className="text-xl font-bold tracking-tight text-primary">
+        <span className="flex flex-col leading-none">
+          <span className="text-lg font-medium tracking-tight text-foreground">
             lmsio
           </span>
           {showTagline && variant === "default" && (
-            <span className="text-xs font-medium tracking-wide text-muted-foreground">
-              Learn more
+            <span className="mt-1 text-[11px] font-normal tracking-wide text-muted-foreground">
+              Learn without limits
             </span>
           )}
-        </div>
+        </span>
       )}
     </Link>
   )
 }
 
-/**
- * Compact Logo for Small Spaces
- */
 export function LMSioLogoCompact({ className }: { className?: string }) {
-  return (
-    <Link
-      href="/"
-      className={cn(
-        "flex items-center gap-2 transition-opacity hover:opacity-80",
-        className
-      )}
-    >
-      {/* Compact Icon */}
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-        L
-      </div>
-
-      {/* Compact Text */}
-      <span className="text-lg font-bold tracking-tight text-primary">
-        LMSio
-      </span>
-    </Link>
-  )
+  return <LMSioLogo className={className} variant="compact" />
 }
 
-/**
- * Icon-Only Logo for Very Small Spaces
- */
 export function LMSioLogoIcon({ className }: { className?: string }) {
-  return (
-    <Link
-      href="/"
-      className={cn("flex transition-opacity hover:opacity-80", className)}
-    >
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow-lg">
-        L
-      </div>
-    </Link>
-  )
+  return <LMSioLogo className={className} variant="icon" />
 }
 
-/**
- * Horizontal Logo for Footer
- */
 export function LMSioLogoHorizontal({ className }: { className?: string }) {
-  return (
-    <Link
-      href="/"
-      className={cn(
-        "flex items-center gap-3 transition-opacity hover:opacity-80",
-        className
-      )}
-    >
-      {/* Logo Icon */}
-      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-xl font-bold text-primary-foreground shadow-lg">
-        <div className="relative flex h-10 w-10 items-center justify-center">
-          {/* Outer Shape */}
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-green-500 shadow-lg" />
-
-          {/* Inner Layer */}
-          <div className="absolute inset-[2px] rounded-[10px] bg-background/10 backdrop-blur-sm" />
-
-          {/* LMS Symbol */}
-          <div className="relative flex items-end gap-0.5">
-            <div className="h-3 w-1 rounded-full bg-white" />
-            <div className="h-5 w-1 rounded-full bg-white" />
-            <div className="h-7 w-1 rounded-full bg-white" />
-          </div>
-        </div>
-      </div>
-
-      {/* Text with Tagline */}
-      <div className="flex flex-col">
-        <span className="text-2xl font-bold tracking-tight text-primary">
-          LMSio
-        </span>
-        <span className="text-xs font-medium tracking-wide text-muted-foreground">
-          Modern Learning Platform
-        </span>
-      </div>
-    </Link>
-  )
+  return <LMSioLogo className={className} showTagline />
 }

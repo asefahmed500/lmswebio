@@ -3,9 +3,22 @@
 import * as React from "react"
 import Link from "next/link"
 import { BookOpen, Search } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { CourseGridLoading } from "@/components/loading-skeleton"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { CourseCard } from "@/features/courses/course-card"
 import { useEnrollments } from "@/lib/hooks/use-enrollments"
@@ -27,38 +40,34 @@ export default function EnrolledCoursesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading enrolled courses...
-          </p>
-        </div>
+      <div className="flex min-w-0 flex-col gap-6">
+        <PageHeader
+          title="My Enrolled Courses"
+          description="All courses you have enrolled in"
+        />
+        <CourseGridLoading count={3} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          My Enrolled Courses
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          All courses you have enrolled in
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="My Enrolled Courses"
+        description="All courses you have enrolled in"
+      />
 
-      <div className="relative max-w-sm">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
+      <InputGroup className="max-w-sm">
+        <InputGroupInput
           type="search"
           placeholder="Search enrolled courses..."
-          className="pl-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-      </div>
+        <InputGroupAddon>
+          <Search />
+        </InputGroupAddon>
+      </InputGroup>
 
       {filteredEnrollments.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -96,26 +105,26 @@ export default function EnrolledCoursesPage() {
           })}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                {searchQuery
-                  ? "No matching courses"
-                  : "No enrolled courses yet"}
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {searchQuery
-                  ? "Try a different search term"
-                  : "Browse the catalogue to find courses to enroll in"}
-              </p>
-              <Button asChild>
-                <Link href="/student/courses/catalogue">Browse Courses</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen />
+            </EmptyMedia>
+            <EmptyTitle>
+              {searchQuery ? "No matching courses" : "No enrolled courses yet"}
+            </EmptyTitle>
+            <EmptyDescription>
+              {searchQuery
+                ? "Try a different search term"
+                : "Browse the catalogue to find courses to enroll in"}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/courses/catalogue">Browse Courses</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

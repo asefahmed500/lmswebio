@@ -7,14 +7,17 @@ import {
   CheckCircle,
   Circle,
   Lock,
-  Clock,
   ChevronRight,
   ChevronLeft,
   Menu,
   X,
-  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
+import { DetailLoading } from "@/components/loading-skeleton"
+import { Spinner } from "@/components/ui/spinner"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Sheet,
@@ -23,6 +26,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import {
+  Empty,
+  EmptyContent,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { sanitizeHtml } from "@/lib/sanitize"
@@ -71,34 +81,27 @@ function LessonItem({
       onClick={isLocked ? undefined : onClick}
       disabled={isLocked}
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
-        isActive && "bg-[var(--foreground)] text-[var(--color-canvas)]",
-        !isActive && "hover:bg-[var(--muted)]",
-        isLocked && "cursor-not-allowed opacity-30"
+        "flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors",
+        isActive && "bg-primary text-primary-foreground",
+        !isActive && "hover:bg-muted",
+        isLocked && "cursor-not-allowed opacity-50"
       )}
     >
       <div className="shrink-0">
         {isLocked ? (
           <Lock className="size-4" />
         ) : isCompleted ? (
-          <CheckCircle
-            className={cn(
-              "size-4",
-              isActive
-                ? "text-[var(--color-success)]"
-                : "text-[var(--color-success)]"
-            )}
-          />
+          <CheckCircle className="size-4 text-success" />
         ) : (
           <Circle className="size-4 opacity-40" />
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-1 text-[14px] font-medium">{lesson.title}</p>
+        <p className="line-clamp-1 text-sm font-medium">{lesson.title}</p>
         <div
           className={cn(
-            "mt-0.5 flex items-center gap-2 text-[12px]",
-            isActive ? "text-white/60" : "text-[var(--muted-foreground)]"
+            "mt-0.5 flex items-center gap-2 text-xs",
+            isActive ? "text-primary-foreground/70" : "text-muted-foreground"
           )}
         >
           <span>{lesson.contentType}</span>
@@ -234,61 +237,69 @@ export default function CoursePlayerPage() {
 
   if (isLoading)
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="size-8 animate-spin rounded-full border-2 border-[var(--foreground)]/20 border-t-[var(--foreground)]" />
+      <div className="mx-auto flex max-w-4xl min-w-0 flex-col gap-6 p-6">
+        <DetailLoading />
       </div>
     )
   if (!course || !activeLesson)
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <h3 className="mb-2 text-[24px] font-medium">Not found</h3>
-          <Button asChild className="rounded-md bg-[var(--foreground)]">
-            <Link href="/student/courses/catalogue">Browse</Link>
-          </Button>
-        </div>
+      <div className="mx-auto max-w-3xl p-6">
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyTitle>Course not found</EmptyTitle>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/courses/catalogue">Browse courses</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       </div>
     )
 
   if (!isEnrolled) {
     const tl = course.modules.reduce((s, m) => s + m.lessons.length, 0)
     return (
-      <div className="mx-auto max-w-3xl p-6">
-        <Button variant="ghost" asChild className="mb-6 rounded-md">
+      <div className="mx-auto flex max-w-3xl min-w-0 flex-col gap-6 p-6">
+        <Button variant="ghost" asChild className="self-start">
           <Link href="/student/courses/catalogue">
-            <ChevronLeft /> Catalogue
+            <ChevronLeft data-icon="inline-start" /> Catalogue
           </Link>
         </Button>
-        <div className="text-center">
-          <h1 className="mb-3 text-[32px] font-medium">{course.title}</h1>
-          <p className="mb-8 text-[var(--muted-foreground)]">
-            {course.description}
-          </p>
-          <div className="mx-auto mb-8 grid max-w-sm grid-cols-2 gap-4">
-            <div>
-              <p className="text-[32px] font-medium">{course.modules.length}</p>
-              <p className="text-[14px] text-[var(--muted-foreground)]">
+        <PageHeader
+          title={course.title}
+          description={course.description ?? undefined}
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card className="gap-0">
+            <CardHeader className="px-4 pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase">
                 Modules
-              </p>
-            </div>
-            <div>
-              <p className="text-[32px] font-medium">{tl}</p>
-              <p className="text-[14px] text-[var(--muted-foreground)]">
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pt-0 pb-4">
+              <p className="text-2xl font-semibold">{course.modules.length}</p>
+            </CardContent>
+          </Card>
+          <Card className="gap-0">
+            <CardHeader className="px-4 pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase">
                 Lessons
-              </p>
-            </div>
-          </div>
-          <Button
-            onClick={handleEnrol}
-            disabled={isEnrolling}
-            className="min-w-[200px] rounded-md bg-[var(--foreground)] text-[var(--color-canvas)]"
-          >
-            {isEnrolling ? (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            ) : null}
-            {isEnrolling ? "Enrolling..." : "Enrol Now"}
-          </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pt-0 pb-4">
+              <p className="text-2xl font-semibold">{tl}</p>
+            </CardContent>
+          </Card>
         </div>
+        <Button
+          onClick={handleEnrol}
+          disabled={isEnrolling}
+          className="w-full sm:w-auto"
+        >
+          {isEnrolling ? <Spinner /> : null}
+          {isEnrolling ? "Enrolling..." : "Enrol Now"}
+        </Button>
       </div>
     )
   }
@@ -296,30 +307,26 @@ export default function CoursePlayerPage() {
   const isCompleted = completedLessons.has(activeLesson.id)
 
   const sidebarContent = (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-[var(--border)] p-5">
-        <h3 className="text-[16px] font-medium">{course.title}</h3>
-        <p className="mt-1 text-[14px] text-[var(--muted-foreground)]">
+    <div className="flex min-h-0 flex-col">
+      <div className="p-5">
+        <h3 className="text-base font-medium">{course.title}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
           {course.modules.length} modules · {totalLessons} lessons
         </p>
         <div className="mt-4">
-          <div className="mb-1.5 flex justify-between text-[14px]">
-            <span className="text-[var(--muted-foreground)]">Progress</span>
+          <div className="mb-1.5 flex justify-between text-sm">
+            <span className="text-muted-foreground">Progress</span>
             <span className="font-medium">{Math.round(progress)}%</span>
           </div>
-          <div className="h-[3px] bg-[var(--muted)]">
-            <div
-              className="h-full bg-[var(--foreground)]"
-              style={{ width: `${Math.round(progress)}%` }}
-            />
-          </div>
+          <Progress value={progress} className="h-1.5" />
         </div>
+        <Separator className="mt-5" />
       </div>
       <ScrollArea className="flex-1">
         <div className="flex flex-col">
           {course.modules.map((mod, mi) => (
             <div key={mod.id}>
-              <div className="px-5 pt-5 pb-2 text-xs font-medium text-[var(--muted-foreground)]">
+              <div className="px-5 pt-5 pb-2 text-xs font-medium text-muted-foreground">
                 {String(mi + 1).padStart(2, "0")} — {mod.title}
               </div>
               {mod.lessons.map((l) => (
@@ -340,10 +347,10 @@ export default function CoursePlayerPage() {
   )
 
   return (
-    <div className="h-[calc(100vh-8rem)]">
-      <div className="flex h-full">
+    <div className="min-h-[calc(100vh-8rem)]">
+      <div className="flex flex-col lg:flex-row">
         {!isMobile && (
-          <aside className="w-80 shrink-0 border-r border-[var(--border)]">
+          <aside className="w-full shrink-0 overflow-hidden border-b border-border lg:max-h-[calc(100vh-8rem)] lg:w-80 lg:border-r lg:border-b-0">
             {sidebarContent}
           </aside>
         )}
@@ -352,7 +359,7 @@ export default function CoursePlayerPage() {
             <SheetTrigger asChild>
               <Button
                 size="icon"
-                className="fixed right-4 bottom-4 z-50 size-12 rounded-full border-0 bg-[var(--foreground)] text-[var(--color-canvas)] shadow-none"
+                className="fixed right-4 bottom-4 z-50 rounded-full"
                 aria-label="Open menu"
               >
                 {sidebarOpen ? <X /> : <Menu />}
@@ -362,29 +369,23 @@ export default function CoursePlayerPage() {
               <SheetHeader className="sr-only">
                 <SheetTitle>Sidebar</SheetTitle>
               </SheetHeader>
-              {sidebarContent}
+              <ScrollArea className="h-full">{sidebarContent}</ScrollArea>
             </SheetContent>
           </Sheet>
         )}
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto flex max-w-4xl flex-col gap-8 p-6 sm:p-8">
-            <div>
-              <span className="text-[14px] font-medium text-[var(--muted-foreground)]">
-                {activeLesson.contentType}
-              </span>
-              <h1 className="mt-2 text-[32px] leading-tight font-medium text-[var(--foreground)]">
-                {activeLesson.title}
-              </h1>
-              {activeLesson.duration && (
-                <p className="mt-2 flex items-center gap-1 text-[14px] text-[var(--muted-foreground)]">
-                  <Clock className="size-3" />
-                  {activeLesson.duration} minutes
-                </p>
-              )}
-            </div>
+        <main className="min-w-0 flex-1">
+          <div className="mx-auto flex max-w-4xl min-w-0 flex-col gap-8 p-6 sm:p-8">
+            <PageHeader
+              title={activeLesson.title}
+              description={
+                activeLesson.duration
+                  ? `${activeLesson.contentType} · ${activeLesson.duration} minutes`
+                  : activeLesson.contentType
+              }
+            />
 
             {activeLesson.contentType === "video" && activeLesson.content ? (
-              <div className="aspect-video overflow-hidden bg-[var(--foreground)]">
+              <div className="aspect-video overflow-hidden rounded-lg bg-muted">
                 <iframe
                   src={activeLesson.content}
                   className="h-full w-full"
@@ -394,51 +395,40 @@ export default function CoursePlayerPage() {
               </div>
             ) : activeLesson.contentType === "text" && activeLesson.content ? (
               <div
-                className="prose prose-sm prose-headings:font-medium prose-a:underline prose-a:text-[var(--foreground)] max-w-none"
+                className="prose prose-sm prose-headings:font-medium prose-a:underline prose-a:text-foreground max-w-none"
                 dangerouslySetInnerHTML={{
                   __html: sanitizeHtml(activeLesson.content),
                 }}
               />
             ) : (
-              <div className="py-12 text-center text-[var(--muted-foreground)]">
-                <p className="text-[16px]">
-                  No content available for this lesson.
-                </p>
-              </div>
+              <Empty className="rounded-lg border border-dashed">
+                <EmptyHeader>
+                  <EmptyTitle>No content available</EmptyTitle>
+                </EmptyHeader>
+              </Empty>
             )}
 
-            <div className="flex items-center justify-between border-t border-[var(--border)] pt-4">
-              <Button
-                variant="outline"
-                onClick={() => navigate("prev")}
-                className="rounded-md border-[var(--border)]"
-              >
-                <ChevronLeft /> Previous
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Separator className="w-full" />
+              <Button variant="outline" onClick={() => navigate("prev")}>
+                <ChevronLeft data-icon="inline-start" /> Previous
               </Button>
               <Button
+                variant={isCompleted ? "secondary" : "default"}
                 onClick={() => handleComplete(activeLesson.id)}
-                className={cn(
-                  "rounded-md",
-                  isCompleted
-                    ? "border border-[var(--border)] bg-transparent text-[var(--foreground)]"
-                    : "bg-[var(--foreground)] text-[var(--color-canvas)]"
-                )}
               >
                 {isCompleted ? (
                   <>
-                    <CheckCircle /> Completed
+                    <CheckCircle data-icon="inline-start" /> Completed
                   </>
                 ) : (
                   <>
-                    <Circle /> Mark Complete
+                    <Circle data-icon="inline-start" /> Mark Complete
                   </>
                 )}
               </Button>
-              <Button
-                onClick={() => navigate("next")}
-                className="rounded-md bg-[var(--foreground)] text-[var(--color-canvas)]"
-              >
-                Next <ChevronRight />
+              <Button onClick={() => navigate("next")}>
+                Next <ChevronRight data-icon="inline-end" />
               </Button>
             </div>
           </div>

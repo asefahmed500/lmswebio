@@ -6,13 +6,20 @@
 "use client"
 
 import * as React from "react"
-import { Plus, Search } from "lucide-react"
+import { CircleAlert, Plus, Search } from "lucide-react"
 import { DiscussionList } from "@/features/community/discussion-list"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { LoadingCard } from "@/components/loading-skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Dialog,
   DialogContent,
@@ -25,11 +32,11 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { LoadingCard } from "@/components/loading-skeleton"
 import { useDebounced } from "@/hooks/use-media-query"
 import { apiGet, apiPost } from "@/lib/api-client"
 
@@ -157,7 +164,7 @@ export default function StudentDiscussionsPage() {
     async function loadDiscussions() {
       try {
         const params = new URLSearchParams()
-        if (searchQuery) params.append("search", debouncedQuery)
+        if (debouncedQuery) params.append("search", debouncedQuery)
         if (selectedCourse !== "all") params.append("courseId", selectedCourse)
 
         const result = await apiGet<Record<string, Discussion[]>>(
@@ -178,155 +185,164 @@ export default function StudentDiscussionsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Discussions</h1>
-          <p className="mt-1 text-muted-foreground">
-            Participate in course discussions
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <PageHeader
+          title="Discussions"
+          description="Participate in course discussions"
+        />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
-        <LoadingCard count={3} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Discussions</h1>
-          <p className="mt-1 text-muted-foreground">
-            Participate in course discussions
-          </p>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openDialog} disabled={courses.length === 0}>
-              <Plus data-icon="inline-start" />
-              New Discussion
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <form onSubmit={handleCreate} className="flex flex-col gap-4">
-              <DialogHeader>
-                <DialogTitle>Start a discussion</DialogTitle>
-                <DialogDescription>
-                  Post a question in one of your enrolled courses.
-                </DialogDescription>
-              </DialogHeader>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Discussions"
+        description="Participate in course discussions"
+        action={
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openDialog} disabled={courses.length === 0}>
+                <Plus data-icon="inline-start" />
+                New Discussion
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <form onSubmit={handleCreate}>
+                <FieldGroup>
+                  <DialogHeader>
+                    <DialogTitle>Start a discussion</DialogTitle>
+                    <DialogDescription>
+                      Post a question in one of your enrolled courses.
+                    </DialogDescription>
+                  </DialogHeader>
 
-              {createError ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{createError}</AlertDescription>
-                </Alert>
-              ) : null}
+                  {createError ? (
+                    <Alert variant="destructive">
+                      <CircleAlert />
+                      <AlertDescription>{createError}</AlertDescription>
+                    </Alert>
+                  ) : null}
 
-              {courses.length === 0 ? (
-                <Alert>
-                  <AlertDescription>
-                    Enrol in a course before starting a discussion.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="discussion-course">Course</Label>
-                    <Select
-                      value={draftCourseId}
-                      onValueChange={setDraftCourseId}
-                    >
-                      <SelectTrigger id="discussion-course">
-                        <SelectValue placeholder="Select a course" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {courses.map((c) => (
-                          <SelectItem
-                            key={c.courseId}
-                            value={String(c.courseId)}
-                          >
-                            {c.course.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {courses.length === 0 ? (
+                    <Alert>
+                      <AlertDescription>
+                        Enrol in a course before starting a discussion.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <>
+                      <Field>
+                        <FieldLabel htmlFor="discussion-course">
+                          Course
+                        </FieldLabel>
+                        <Select
+                          value={draftCourseId}
+                          onValueChange={setDraftCourseId}
+                        >
+                          <SelectTrigger id="discussion-course">
+                            <SelectValue placeholder="Select a course" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {courses.map((c) => (
+                                <SelectItem
+                                  key={c.courseId}
+                                  value={String(c.courseId)}
+                                >
+                                  {c.course.title}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </Field>
 
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="discussion-title">Title</Label>
-                    <Input
-                      id="discussion-title"
-                      value={draftTitle}
-                      onChange={(e) => setDraftTitle(e.target.value)}
-                      placeholder="What do you want to ask?"
-                      required
-                      maxLength={200}
-                    />
-                  </div>
+                      <Field>
+                        <FieldLabel htmlFor="discussion-title">
+                          Title
+                        </FieldLabel>
+                        <Input
+                          id="discussion-title"
+                          value={draftTitle}
+                          onChange={(e) => setDraftTitle(e.target.value)}
+                          placeholder="What do you want to ask?"
+                          required
+                          maxLength={200}
+                        />
+                      </Field>
 
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="discussion-content">Details</Label>
-                    <Textarea
-                      id="discussion-content"
-                      value={draftContent}
-                      onChange={(e) => setDraftContent(e.target.value)}
-                      placeholder="Add context, what you have tried, and where you are stuck."
-                      rows={5}
-                      required
-                    />
-                  </div>
-                </>
-              )}
+                      <Field>
+                        <FieldLabel htmlFor="discussion-content">
+                          Details
+                        </FieldLabel>
+                        <Textarea
+                          id="discussion-content"
+                          value={draftContent}
+                          onChange={(e) => setDraftContent(e.target.value)}
+                          placeholder="Add context, what you have tried, and where you are stuck."
+                          rows={5}
+                          required
+                        />
+                      </Field>
+                    </>
+                  )}
+                </FieldGroup>
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={
-                    isCreating ||
-                    courses.length === 0 ||
-                    !draftTitle.trim() ||
-                    !draftContent.trim()
-                  }
-                >
-                  {isCreating ? "Posting…" : "Post discussion"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={
+                      isCreating ||
+                      courses.length === 0 ||
+                      !draftTitle.trim() ||
+                      !draftContent.trim()
+                    }
+                  >
+                    {isCreating ? "Posting…" : "Post discussion"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       {/* Filters */}
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search discussions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row">
+        <InputGroup className="min-w-0 flex-1">
+          <InputGroupInput
+            placeholder="Search discussions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
         <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Filter by course" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Courses</SelectItem>
-            {courses.map((e) => (
-              <SelectItem key={e.courseId} value={String(e.courseId)}>
-                {e.course.title}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              <SelectItem value="all">All Courses</SelectItem>
+              {courses.map((e) => (
+                <SelectItem key={e.courseId} value={String(e.courseId)}>
+                  {e.course.title}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>

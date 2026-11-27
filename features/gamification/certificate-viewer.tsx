@@ -1,11 +1,10 @@
 "use client"
 
-import * as React from "react"
 import { Download, Share2, Award, CheckCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
 
 interface Certificate {
   id: string
@@ -64,10 +63,10 @@ export function CertificateViewer({
   }
 
   return (
-    <Card className="overflow-hidden border-2">
+    <Card className="min-w-0 overflow-hidden">
       <CardContent className="p-0">
         {/* Certificate Header */}
-        <div className="border-b bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 p-8">
+        <div className="border-b border-border bg-muted/40 p-6 sm:p-8">
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-primary/20">
               <Award className="size-8 text-primary" />
@@ -77,7 +76,7 @@ export function CertificateViewer({
             </h2>
             <p className="text-muted-foreground">This certifies that</p>
             <h3 className="mt-2 text-xl font-semibold">
-              {certificate.user.fullName}
+              {certificate.user?.fullName ?? "Learner"}
             </h3>
             <p className="mt-2 text-muted-foreground">
               has successfully completed
@@ -90,7 +89,7 @@ export function CertificateViewer({
           <div className="mx-auto max-w-2xl">
             <div className="mb-6 flex items-center gap-4">
               {certificate.course.thumbnail && (
-                <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg">
+                <div className="relative size-20 shrink-0 overflow-hidden rounded-lg">
                   <img
                     src={certificate.course.thumbnail}
                     alt={certificate.course.title}
@@ -99,11 +98,11 @@ export function CertificateViewer({
                 </div>
               )}
               <div>
-                <h4 className="text-xl font-bold">
-                  {certificate.course.title}
+                <h4 className="text-xl font-medium">
+                  {certificate.course?.title ?? "Course"}
                 </h4>
-                <Badge variant="outline" className="mt-2">
-                  <CheckCircle className="mr-1 size-3" />
+                <Badge variant="success" className="mt-2">
+                  <CheckCircle data-icon="inline-start" />
                   Completed
                 </Badge>
               </div>
@@ -137,18 +136,21 @@ export function CertificateViewer({
 
         {/* Actions */}
         {showActions && (
-          <div className="border-t bg-muted/30 p-4">
-            <div className="mx-auto flex max-w-2xl items-center justify-center gap-3">
-              <Button onClick={handleDownload} className="gap-2">
-                <Download data-icon="inline-start" />
-                Download PDF
-              </Button>
-              <Button variant="outline" onClick={handleShare} className="gap-2">
-                <Share2 data-icon="inline-start" />
-                Share
-              </Button>
+          <>
+            <Separator />
+            <div className="bg-muted/30 p-4">
+              <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-center gap-3">
+                <Button onClick={handleDownload}>
+                  <Download data-icon="inline-start" />
+                  Open certificate
+                </Button>
+                <Button variant="outline" onClick={handleShare}>
+                  <Share2 data-icon="inline-start" />
+                  Share
+                </Button>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </CardContent>
     </Card>

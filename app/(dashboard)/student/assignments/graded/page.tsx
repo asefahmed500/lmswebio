@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Calendar, HelpCircle, Trophy, MessageSquareText } from "lucide-react"
+import { Calendar, CircleAlert, Trophy, MessageSquareText } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -22,6 +22,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 import { apiGet } from "@/lib/api-client"
@@ -73,7 +83,7 @@ function FeedbackDialog({ submission }: { submission: GradedSubmission }) {
             <div className="rounded-lg bg-muted p-4">
               <div className="mb-1 text-sm text-muted-foreground">Score</div>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold">
+                <span className="text-3xl font-semibold">
                   {submission.grade?.toFixed(0) ?? "—"}
                 </span>
                 <span className="text-lg text-muted-foreground">
@@ -170,12 +180,9 @@ export default function GradedAssignmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading graded assignments...
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
       </div>
     )
@@ -183,31 +190,29 @@ export default function GradedAssignmentsPage() {
 
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <HelpCircle className="mx-auto mb-4 size-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">
-            Error loading submissions
-          </h3>
-          <p className="mb-4 text-sm text-muted-foreground">{error}</p>
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Error loading submissions</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Try Again
           </Button>
-        </div>
-      </div>
+        </EmptyContent>
+      </Empty>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Graded Assignments
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Assignments with grades and feedback
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Graded Assignments"
+        description="Assignments with grades and feedback"
+      />
 
       {submissions.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -220,7 +225,7 @@ export default function GradedAssignmentsPage() {
               <Card key={sub.id} className="overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <CardTitle className="line-clamp-1 text-base">
                         {sub.assignment.title}
                       </CardTitle>
@@ -231,7 +236,7 @@ export default function GradedAssignmentsPage() {
                     <div className="shrink-0 text-right">
                       <div
                         className={cn(
-                          "text-xl font-bold",
+                          "text-xl font-semibold",
                           percentage >= 70
                             ? "text-success"
                             : percentage >= 40
@@ -283,22 +288,22 @@ export default function GradedAssignmentsPage() {
           })}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <Trophy className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No graded assignments
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Grades will appear here once your submissions are marked
-              </p>
-              <Button asChild>
-                <Link href="/student/assignments">View All Assignments</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Trophy />
+            </EmptyMedia>
+            <EmptyTitle>No graded assignments</EmptyTitle>
+            <EmptyDescription>
+              Grades will appear here once your submissions are marked
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/assignments">View All Assignments</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

@@ -14,8 +14,21 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { LoadingCard } from "@/components/loading-skeleton"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 import type { AssignmentSubmission, Assignment } from "@/types"
@@ -82,27 +95,28 @@ export default function GradingPage() {
     )
   }, [submissions, searchQuery])
 
+  const header = (
+    <PageHeader
+      title="To Grade"
+      description="Review and grade student submissions that need your attention"
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading submissions to grade...
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
+        <LoadingCard />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">To Grade</h1>
-        <p className="mt-1 text-muted-foreground">
-          Review and grade student submissions that need your attention
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -114,7 +128,7 @@ export default function GradingPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="size-5 text-warning" />
-              <div className="text-2xl font-bold">{submissions.length}</div>
+              <div className="text-2xl font-semibold">{submissions.length}</div>
             </div>
           </CardContent>
         </Card>
@@ -127,7 +141,7 @@ export default function GradingPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <GraduationCap className="size-5 text-info" />
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-semibold">
                 {new Set(submissions.map((s) => s.userId)).size}
               </div>
             </div>
@@ -142,7 +156,7 @@ export default function GradingPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileText className="size-5 text-primary" />
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-semibold">
                 {new Set(submissions.map((s) => s.assignmentId)).size}
               </div>
             </div>
@@ -152,18 +166,17 @@ export default function GradingPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative max-w-sm flex-1">
-              <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search by student or assignment..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
+          <InputGroup className="h-9 max-w-sm min-w-0 flex-1">
+            <InputGroupInput
+              type="search"
+              placeholder="Search by student or assignment..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+          </InputGroup>
         </CardHeader>
         <CardContent>
           {filteredSubmissions.length > 0 ? (
@@ -228,15 +241,19 @@ export default function GradingPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-12 text-center">
-              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">Nothing to grade</h3>
-              <p className="text-sm text-muted-foreground">
-                {searchQuery
-                  ? "Try adjusting your search query"
-                  : "All submissions have been graded. Great work!"}
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>Nothing to grade</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery
+                    ? "Try adjusting your search query"
+                    : "All submissions have been graded. Great work!"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>

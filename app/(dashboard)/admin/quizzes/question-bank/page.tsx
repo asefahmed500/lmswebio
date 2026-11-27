@@ -2,15 +2,29 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Search, Filter, FileText, Loader2 } from "lucide-react"
+import { Search, Filter, FileText } from "lucide-react"
 import { apiGet } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import { PageLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -70,24 +84,14 @@ export default function QuestionBankPage() {
     0
   )
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading question bank…" />
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Question Bank</h1>
-          <p className="text-muted-foreground">
-            Browse all quiz questions across courses
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Question Bank"
+        description="Browse all quiz questions across courses"
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card size="sm">
@@ -97,7 +101,9 @@ export default function QuestionBankPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{quizzes.length}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {quizzes.length}
+            </div>
           </CardContent>
         </Card>
         <Card size="sm">
@@ -107,7 +113,9 @@ export default function QuestionBankPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalQuestions}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {totalQuestions}
+            </div>
           </CardContent>
         </Card>
         <Card size="sm">
@@ -117,33 +125,38 @@ export default function QuestionBankPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{courses.length}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {courses.length}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <InputGroup className="h-9 max-w-sm flex-1">
+          <InputGroupInput
             placeholder="Search quizzes or courses..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
           />
-        </div>
+          <InputGroupAddon align="inline-start">
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
         <Select value={courseFilter} onValueChange={setCourseFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-48">
             <Filter className="mr-2 size-4" />
             <SelectValue placeholder="Filter by course" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Courses</SelectItem>
-            {courses.map(([id, title]) => (
-              <SelectItem key={id} value={id}>
-                {title}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              <SelectItem value="all">All Courses</SelectItem>
+              {courses.map(([id, title]) => (
+                <SelectItem key={id} value={id}>
+                  {title}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
@@ -157,37 +170,45 @@ export default function QuestionBankPage() {
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              {quizzes.length === 0
-                ? "No quizzes found. Create quizzes from the Quizzes page."
-                : "No questions match your search."}
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>No questions found</EmptyTitle>
+                <EmptyDescription>
+                  {quizzes.length === 0
+                    ? "No quizzes found. Create quizzes from the Quizzes page."
+                    : "No questions match your search."}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="flex flex-col gap-4">
               {filtered.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                  className="flex flex-col gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <FileText className="size-5 text-primary" />
                     </div>
-                    <div>
-                      <p className="font-medium">{quiz.title}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{quiz.title}</p>
+                      <p className="truncate text-sm text-muted-foreground">
                         {quiz.course.title}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                     <Badge variant="outline">
                       {quiz._count.questions} question
                       {quiz._count.questions !== 1 ? "s" : ""}
                     </Badge>
                     <div className="text-center">
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-semibold text-foreground">
                         {quiz._count.questions}
                       </p>
                       <p className="text-xs text-muted-foreground">Questions</p>

@@ -62,6 +62,23 @@ export async function POST(
       },
     })
 
+    // Persist a single confirmation notification. The UI shows the matching
+    // toast; the database copy makes it visible in the notification centre
+    // after navigation and survives a reload.
+    try {
+      await prisma.notification.create({
+        data: {
+          userId,
+          title: "You're enrolled",
+          message: `You're now learning ${course.title}.`,
+          type: "success",
+          link: `/student/courses/${course.id}`,
+        },
+      })
+    } catch (error) {
+      console.error("Failed to create enrolment notification:", error)
+    }
+
     return NextResponse.json(enrolment, { status: 201 })
   } catch (error) {
     console.error("POST /api/courses/[id]/enrol error:", error)

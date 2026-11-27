@@ -3,8 +3,25 @@
 import * as React from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
-import { Loader2, ArrowLeft, Lock, ShieldCheck, CreditCard } from "lucide-react"
+import {
+  ArrowLeft,
+  CircleAlert,
+  Lock,
+  ShieldCheck,
+  CreditCard,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { LoadingCourseCard } from "@/components/loading-skeleton"
+import { Spinner } from "@/components/ui/spinner"
+import { Separator } from "@/components/ui/separator"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import {
   Card,
   CardContent,
@@ -115,57 +132,66 @@ export default function CheckoutPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      <div className="mx-auto flex max-w-2xl min-w-0 flex-col gap-6 p-6">
+        <LoadingCourseCard />
       </div>
     )
   }
 
   if (isAlreadyEnrolled) {
     return (
-      <div className="mx-auto max-w-2xl p-6 text-center">
-        <ShieldCheck className="mx-auto mb-4 size-16 text-success" />
-        <h2 className="text-2xl font-bold">Already Enrolled</h2>
-        <p className="mt-2 text-muted-foreground">
-          You&apos;re already enrolled in this course.
-        </p>
-        <Button className="mt-6" asChild>
-          <Link href={`/student/courses/${courseId}`}>Go to Course</Link>
-        </Button>
-      </div>
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <ShieldCheck />
+          </EmptyMedia>
+          <EmptyTitle>Already Enrolled</EmptyTitle>
+          <EmptyDescription>
+            You&apos;re already enrolled in this course.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild>
+            <Link href={`/student/courses/${courseId}`}>Go to Course</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
     )
   }
 
   if (demoMode) {
     return (
-      <div className="mx-auto max-w-2xl p-6 text-center">
-        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success/10">
-          <ShieldCheck className="size-8 text-success" />
-        </div>
-        <h2 className="text-2xl font-bold">Enrollment Complete!</h2>
-        <p className="mt-2 text-muted-foreground">
-          You have been enrolled in {course?.title}. Redirecting...
-        </p>
-      </div>
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <ShieldCheck />
+          </EmptyMedia>
+          <EmptyTitle>Enrollment Complete!</EmptyTitle>
+          <EmptyDescription>
+            You have been enrolled in {course?.title}. Redirecting...
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
+    <div className="mx-auto flex max-w-2xl min-w-0 flex-col gap-6 p-6">
       <Button
         variant="ghost"
         size="icon"
         asChild
-        className="w-fit"
-        aria-label="Action"
+        className="self-start"
+        aria-label="Back to catalogue"
       >
         <Link href={`/student/courses/catalogue`}>
-          <ArrowLeft className="size-4" />
+          <ArrowLeft />
         </Link>
       </Button>
 
       {error && (
         <Alert variant="destructive">
+          <CircleAlert />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -196,7 +222,7 @@ export default function CheckoutPage() {
                   )}
                 </div>
               </div>
-              <Lock className="size-5 flex-shrink-0 text-muted-foreground" />
+              <Lock className="size-5 shrink-0 text-muted-foreground" />
             </div>
           </div>
 
@@ -210,7 +236,8 @@ export default function CheckoutPage() {
               <span className="text-muted-foreground">Tax</span>
               <span>$0.00</span>
             </div>
-            <div className="flex justify-between border-t pt-2 text-lg font-semibold">
+            <Separator />
+            <div className="flex justify-between pt-1 text-lg font-semibold">
               <span>Total</span>
               <span>${course?.price?.toFixed(2)}</span>
             </div>
@@ -223,16 +250,13 @@ export default function CheckoutPage() {
             disabled={isProcessing}
           >
             {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Processing...
-              </>
+              <Spinner />
             ) : (
-              <>
-                <CreditCard className="mr-2 size-4" />
-                Pay ${course?.price?.toFixed(2)} — Enroll Now
-              </>
+              <CreditCard data-icon="inline-start" />
             )}
+            {isProcessing
+              ? "Processing..."
+              : `Pay $${course?.price?.toFixed(2)} — Enroll Now`}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">

@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
   try {
     const identifier = `${getRateLimitIdentifier(request)}:login`
     const rateLimitResult = await rateLimit(identifier, {
-      maxRequests: 10,
+      // Production keeps a strict default; isolated test runs may raise it via
+      // LOGIN_RATE_LIMIT_MAX so a full browser suite isn't throttled by its own
+      // login volume.
+      maxRequests: Number(process.env.LOGIN_RATE_LIMIT_MAX) || 10,
       windowMs: 60 * 1000,
     })
 

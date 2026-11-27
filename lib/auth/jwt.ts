@@ -87,7 +87,7 @@ export async function setTokens(
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: 60 * 60, // matches ACCESS_TOKEN_EXPIRY (1h)
   })
 
   cookieStore.set("refresh_token", refreshToken, {
@@ -161,10 +161,13 @@ export async function getSession(): Promise<{
       role: true,
       avatarUrl: true,
       createdAt: true,
+      isActive: true,
+      deletedAt: true,
     },
   })
 
-  if (!user) return null
+  // Deactivated and soft-deleted accounts must not retain a valid session.
+  if (!user || !user.isActive || user.deletedAt) return null
 
   if (sessionCache.size > SESSION_CACHE_MAX) {
     purgeExpiredSessions()

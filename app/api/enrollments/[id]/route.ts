@@ -77,16 +77,21 @@ export async function GET(
       )
     }
 
-    if (
-      session.user.role !== "ADMIN" &&
-      enrollment.userId !== session.user.id
-    ) {
+    const isOwner = enrollment.userId === session.user.id
+    const isAdmin = session.user.role === "ADMIN"
+    const isCourseInstructor =
+      session.user.role === "INSTRUCTOR" &&
+      enrollment.course.instructorId === session.user.id
+
+    if (!isOwner && !isAdmin && !isCourseInstructor) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    // Always measure the enrolment owner's completions — never the viewer's.
+    // A GET must not mutate stored progress; it only reports the derived value.
     const completedLessons = await prisma.lessonCompletion.count({
       where: {
-        userId: session.user.id,
+        userId: enrollment.userId,
         lesson: {
           module: {
             courseId: enrollment.courseId,
@@ -102,11 +107,6 @@ export async function GET(
 
     const progress =
       totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0
-
-    await prisma.enrolment.update({
-      where: { id: (await params).id },
-      data: { progress },
-    })
 
     return NextResponse.json({
       enrollment: {

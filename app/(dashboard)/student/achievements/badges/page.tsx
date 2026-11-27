@@ -4,6 +4,15 @@ import * as React from "react"
 import { Award, ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { DashboardLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 import { toast } from "sonner"
@@ -77,31 +86,26 @@ export default function BadgesPage() {
 
   const earnedCount = badges.filter((b) => b.earned).length
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading badges...</p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <DashboardLoading />
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          aria-label="Back to achievements"
+        >
           <Link href="/student/achievements">
             <ArrowLeft />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Badges</h1>
-          <p className="mt-1 text-muted-foreground">
-            Track your achievements and earned rewards
-          </p>
-        </div>
+        <PageHeader
+          className="flex-1"
+          title="Badges"
+          description="Track your achievements and earned rewards"
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -114,7 +118,7 @@ export default function BadgesPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Award className="size-5 text-primary" />
-              <div className="text-2xl font-bold">{badges.length}</div>
+              <div className="text-2xl font-semibold">{badges.length}</div>
             </div>
           </CardContent>
         </Card>
@@ -127,7 +131,7 @@ export default function BadgesPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Award className="size-5 text-success" />
-              <div className="text-2xl font-bold">{earnedCount}</div>
+              <div className="text-2xl font-semibold">{earnedCount}</div>
             </div>
           </CardContent>
         </Card>
@@ -140,7 +144,7 @@ export default function BadgesPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Award className="size-5 text-muted-foreground" />
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-semibold">
                 {badges.length - earnedCount}
               </div>
             </div>
@@ -151,17 +155,17 @@ export default function BadgesPage() {
       {badges.length > 0 ? (
         <BadgeDisplay badges={badges} showAll />
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <Award className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No badges found</h3>
-              <p className="text-sm text-muted-foreground">
-                Badges are not configured yet. Check back later.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Award />
+            </EmptyMedia>
+            <EmptyTitle>No badges found</EmptyTitle>
+            <EmptyDescription>
+              Badges are not configured yet. Check back later.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </div>
   )

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Settings, Moon, Sun, Save, Loader2 } from "lucide-react"
+import { Settings, Moon, Sun, Save } from "lucide-react"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import {
@@ -13,9 +13,18 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
+import { Spinner } from "@/components/ui/spinner"
+import { PageLoading } from "@/components/loading-skeleton"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet, apiPut } from "@/lib/api-client"
 
 export default function AdminSettingsPage() {
@@ -77,22 +86,14 @@ export default function AdminSettingsPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading settings…" />
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="mt-1 text-muted-foreground">
-          Configure platform settings and preferences
-        </p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Configure platform settings and preferences"
+      />
 
       <Card>
         <CardHeader>
@@ -104,39 +105,45 @@ export default function AdminSettingsPage() {
             Basic platform configuration options
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="systemName">Site Name</Label>
-            <Input
-              id="systemName"
-              placeholder="LMS Platform"
-              value={systemName}
-              onChange={(e) => setSystemName(e.target.value)}
-              className="max-w-md"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="systemDescription">Site Description</Label>
-            <Input
-              id="systemDescription"
-              placeholder="Learning Management System"
-              value={systemDescription}
-              onChange={(e) => setSystemDescription(e.target.value)}
-              className="max-w-md"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="maxUploadSize">Max Upload Size (MB)</Label>
-            <Input
-              id="maxUploadSize"
-              type="number"
-              min={1}
-              max={100}
-              value={maxUploadSize}
-              onChange={(e) => setMaxUploadSize(Number(e.target.value))}
-              className="max-w-md"
-            />
-          </div>
+        <CardContent>
+          <FieldGroup className="gap-4">
+            <Field>
+              <FieldLabel htmlFor="systemName">Site Name</FieldLabel>
+              <Input
+                id="systemName"
+                placeholder="LMS Platform"
+                value={systemName}
+                onChange={(e) => setSystemName(e.target.value)}
+                className="max-w-md"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="systemDescription">
+                Site Description
+              </FieldLabel>
+              <Input
+                id="systemDescription"
+                placeholder="Learning Management System"
+                value={systemDescription}
+                onChange={(e) => setSystemDescription(e.target.value)}
+                className="max-w-md"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="maxUploadSize">
+                Max Upload Size (MB)
+              </FieldLabel>
+              <Input
+                id="maxUploadSize"
+                type="number"
+                min={1}
+                max={100}
+                value={maxUploadSize}
+                onChange={(e) => setMaxUploadSize(Number(e.target.value))}
+                className="max-w-md"
+              />
+            </Field>
+          </FieldGroup>
         </CardContent>
       </Card>
 
@@ -145,52 +152,54 @@ export default function AdminSettingsPage() {
           <CardTitle>Features</CardTitle>
           <CardDescription>Enable or disable platform features</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="allowRegistration" className="cursor-pointer">
-                Allow Registration
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Allow new users to register on the platform
-              </p>
-            </div>
-            <Switch
-              id="allowRegistration"
-              checked={allowRegistration}
-              onCheckedChange={setAllowRegistration}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="emailNotifications" className="cursor-pointer">
-                Email Notifications
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Send email notifications for important events
-              </p>
-            </div>
-            <Switch
-              id="emailNotifications"
-              checked={emailNotifications}
-              onCheckedChange={setEmailNotifications}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="maintenanceMode" className="cursor-pointer">
-                Maintenance Mode
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Temporarily disable access for non-admin users
-              </p>
-            </div>
-            <Switch
-              id="maintenanceMode"
-              checked={maintenanceMode}
-              onCheckedChange={setMaintenanceMode}
-            />
-          </div>
+        <CardContent>
+          <FieldGroup className="gap-4">
+            <Field orientation="responsive" className="items-center">
+              <FieldContent>
+                <FieldLabel htmlFor="allowRegistration">
+                  Allow Registration
+                </FieldLabel>
+                <FieldDescription>
+                  Allow new users to register on the platform
+                </FieldDescription>
+              </FieldContent>
+              <Switch
+                id="allowRegistration"
+                checked={allowRegistration}
+                onCheckedChange={setAllowRegistration}
+              />
+            </Field>
+            <Field orientation="responsive" className="items-center">
+              <FieldContent>
+                <FieldLabel htmlFor="emailNotifications">
+                  Email Notifications
+                </FieldLabel>
+                <FieldDescription>
+                  Send email notifications for important events
+                </FieldDescription>
+              </FieldContent>
+              <Switch
+                id="emailNotifications"
+                checked={emailNotifications}
+                onCheckedChange={setEmailNotifications}
+              />
+            </Field>
+            <Field orientation="responsive" className="items-center">
+              <FieldContent>
+                <FieldLabel htmlFor="maintenanceMode">
+                  Maintenance Mode
+                </FieldLabel>
+                <FieldDescription>
+                  Temporarily disable access for non-admin users
+                </FieldDescription>
+              </FieldContent>
+              <Switch
+                id="maintenanceMode"
+                checked={maintenanceMode}
+                onCheckedChange={setMaintenanceMode}
+              />
+            </Field>
+          </FieldGroup>
         </CardContent>
       </Card>
 
@@ -207,7 +216,7 @@ export default function AdminSettingsPage() {
           <CardDescription>Toggle between light and dark mode</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3">
+          <Field orientation="responsive" className="items-center gap-3">
             <Switch
               id="darkMode"
               checked={theme === "dark"}
@@ -215,10 +224,10 @@ export default function AdminSettingsPage() {
                 setTheme(checked ? "dark" : "light")
               }
             />
-            <Label htmlFor="darkMode" className="cursor-pointer">
+            <FieldLabel htmlFor="darkMode">
               {theme === "dark" ? "Dark Mode" : "Light Mode"}
-            </Label>
-          </div>
+            </FieldLabel>
+          </Field>
         </CardContent>
       </Card>
 
@@ -227,7 +236,7 @@ export default function AdminSettingsPage() {
       <div className="flex items-center gap-4">
         <Button onClick={handleSave} disabled={isSaving}>
           {isSaving ? (
-            <Loader2 data-icon="inline-start" className="animate-spin" />
+            <Spinner data-icon="inline-start" />
           ) : (
             <Save data-icon="inline-start" />
           )}

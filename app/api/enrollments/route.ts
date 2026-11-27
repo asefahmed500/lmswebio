@@ -24,20 +24,23 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Course not found" }, { status: 404 })
       }
 
-      if (
-        session.user.role === "INSTRUCTOR" &&
-        course.instructorId !== session.user.id
-      ) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-      }
+      // Only an admin or the course's own instructor may see the roster of
+      // enrolled users (which includes email addresses). Everyone else may
+      // only see their own enrolment for the course.
+      const canViewRoster =
+        session.user.role === "ADMIN" ||
+        (session.user.role === "INSTRUCTOR" &&
+          course.instructorId === session.user.id)
 
       const enrollments = await prisma.enrolment.findMany({
-        where: { courseId: courseId },
+        where: canViewRoster
+          ? { courseId }
+          : { courseId, userId: session.user.id },
         include: {
           user: {
             select: {
               id: true,
-              email: true,
+              ...(canViewRoster ? { email: true } : {}),
               fullName: true,
               avatarUrl: true,
             },

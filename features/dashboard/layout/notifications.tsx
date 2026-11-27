@@ -13,11 +13,13 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { LoadingTable } from "@/components/loading-skeleton"
 import {
   Sheet,
   SheetContent,
@@ -241,14 +243,8 @@ function NotificationList({
 }) {
   if (loading && items.length === 0) {
     return (
-      <div className="flex flex-col gap-1 p-1" aria-busy="true">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="h-14 animate-pulse rounded-lg bg-muted/60"
-            aria-hidden="true"
-          />
-        ))}
+      <div aria-busy="true">
+        <LoadingTable rows={3} />
       </div>
     )
   }
@@ -310,7 +306,7 @@ function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null
   return (
     <span
-      className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-none font-bold text-destructive-foreground tabular-nums"
+      className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-none font-semibold text-destructive-foreground tabular-nums"
       aria-hidden="true"
     >
       {count > 99 ? "99+" : count}
@@ -398,14 +394,16 @@ function NotificationsDropdown({
         {state.items.length > MAX_VISIBLE ? (
           <>
             <DropdownMenuSeparator className="my-0" />
-            <DropdownMenuItem
-              asChild
-              className="justify-center rounded-none py-2 text-sm"
-            >
-              <Link href={`${state.rolePath}/notifications`}>
-                View all notifications
-              </Link>
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                asChild
+                className="justify-center rounded-none py-2 text-sm"
+              >
+                <Link href={`${state.rolePath}/notifications`}>
+                  View all notifications
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </>
         ) : null}
       </DropdownMenuContent>
@@ -436,7 +434,7 @@ function NotificationsSheet({
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="flex flex-col p-0">
-        <SheetHeader className="flex-row items-center justify-between space-y-0 border-b px-4 py-3">
+        <SheetHeader className="flex-row items-center justify-between border-b px-4 py-3">
           <SheetTitle className="text-base">Notifications</SheetTitle>
           {state.unreadCount > 0 ? (
             <Button

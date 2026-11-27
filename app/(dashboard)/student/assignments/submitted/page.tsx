@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Clock, Send, HelpCircle, CheckCircle2 } from "lucide-react"
+import { Clock, Send, CircleAlert, CheckCircle2 } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -12,6 +12,16 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 
@@ -71,12 +81,9 @@ export default function SubmittedAssignmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading submissions...
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
       </div>
     )
@@ -84,31 +91,29 @@ export default function SubmittedAssignmentsPage() {
 
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <HelpCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">
-            Error loading submissions
-          </h3>
-          <p className="mb-4 text-sm text-muted-foreground">{error}</p>
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Error loading submissions</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Try Again
           </Button>
-        </div>
-      </div>
+        </EmptyContent>
+      </Empty>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Submitted Assignments
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Assignments awaiting grading
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Submitted Assignments"
+        description="Assignments awaiting grading"
+      />
 
       {submissions.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -132,7 +137,7 @@ export default function SubmittedAssignmentsPage() {
               <CardContent>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Send className="h-4 w-4" />
+                    <Send className="size-4" />
                     <span>
                       Submitted{" "}
                       {new Date(sub.submittedAt).toLocaleDateString(undefined, {
@@ -143,7 +148,7 @@ export default function SubmittedAssignmentsPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
+                    <Clock className="size-4" />
                     <span>{sub.assignment.maxPoints} points possible</span>
                   </div>
                 </div>
@@ -152,22 +157,22 @@ export default function SubmittedAssignmentsPage() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No submissions awaiting grading
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                All your submissions have been graded
-              </p>
-              <Button asChild>
-                <Link href="/student/assignments">View All Assignments</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CheckCircle2 />
+            </EmptyMedia>
+            <EmptyTitle>No submissions awaiting grading</EmptyTitle>
+            <EmptyDescription>
+              All your submissions have been graded
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/assignments">View All Assignments</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

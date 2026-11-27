@@ -22,6 +22,8 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { PageHeader } from "@/features/dashboard/components/page-header"
+import { apiGet, apiPut } from "@/lib/api-client"
 
 interface Integration {
   id: string
@@ -147,19 +149,48 @@ const defaultIntegrations: Integration[] = [
 
 export default function AdminIntegrationsPage() {
   const [integrations, setIntegrations] = React.useState(defaultIntegrations)
+  const [isSaving, setIsSaving] = React.useState(false)
 
-  function handleToggle(id: string) {
-    setIntegrations((prev) =>
-      prev.map((int) =>
-        int.id === id ? { ...int, enabled: !int.enabled } : int
-      )
-    )
-    const integration = integrations.find((i) => i.id === id)
-    if (integration) {
-      toast.success(
-        `${integration.name} ${integration.enabled ? "disabled" : "enabled"}`
-      )
+  React.useEffect(() => {
+    async function load() {
+      const res = await apiGet<{
+        settings: { integrations?: Record<string, boolean> }
+      }>("/settings")
+      const saved = res.data?.settings?.integrations
+      if (saved) {
+        setIntegrations((prev) =>
+          prev.map((item) => ({
+            ...item,
+            enabled: saved[item.id] ?? item.enabled,
+          }))
+        )
+      }
     }
+    load()
+  }, [])
+
+  async function handleToggle(id: string) {
+    const target = integrations.find((item) => item.id === id)
+    if (!target || target.comingSoon || isSaving) return
+
+    const next = integrations.map((item) =>
+      item.id === id ? { ...item, enabled: !item.enabled } : item
+    )
+    setIntegrations(next)
+    setIsSaving(true)
+    const res = await apiPut("/settings", {
+      integrations: Object.fromEntries(
+        next.map((item) => [item.id, item.enabled])
+      ),
+    })
+    setIsSaving(false)
+
+    if (res.error) {
+      setIntegrations(integrations)
+      toast.error(res.error)
+      return
+    }
+    toast.success(`${target.name} ${target.enabled ? "disabled" : "enabled"}`)
   }
 
   const activeCount = integrations.filter((i) => i.enabled).length
@@ -175,16 +206,10 @@ export default function AdminIntegrationsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        Integrations configuration is coming soon. This page is a placeholder
-        preview.
-      </div>
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Integrations</h1>
-        <p className="mt-1 text-muted-foreground">
-          Connect third-party services to extend platform capabilities
-        </p>
-      </div>
+      <PageHeader
+        title="Integrations"
+        description="Connect third-party services to extend platform capabilities"
+      />
 
       <Card size="sm">
         <CardHeader>
@@ -222,9 +247,7 @@ export default function AdminIntegrationsPage() {
                       <integration.icon className="size-5 text-primary" />
                     </div>
                     {integration.comingSoon && (
-                      <Badge variant="outline" className="text-[10px]">
-                        Coming Soon
-                      </Badge>
+                      <Badge variant="outline">Planned</Badge>
                     )}
                   </div>
                   <CardTitle className="mt-3 text-base">

@@ -2,20 +2,28 @@
 
 import * as React from "react"
 import { BookOpen, Search } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { CourseCard } from "@/features/courses/course-card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
+import { CourseGridLoading } from "@/components/loading-skeleton"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -129,42 +137,42 @@ export default function CourseCataloguePage() {
   }, [courses])
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div>
-        <CardTitle className="text-2xl">Course Catalogue</CardTitle>
-        <CardDescription>
-          Discover and enroll in courses to start learning
-        </CardDescription>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Course Catalogue"
+        description="Discover and enroll in courses to start learning"
+      />
 
       {/* Filter bar — shadcn Card with Select dropdowns */}
       <Card>
         <CardContent>
           <div className="flex flex-col gap-4 lg:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
+            <InputGroup className="min-w-0 flex-1">
+              <InputGroupInput
                 type="search"
                 placeholder="Search courses..."
-                className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
             <div className="flex flex-wrap gap-2">
               <Select
                 value={levelFilter}
                 onValueChange={(value) => setLevelFilter(value as LevelFilter)}
               >
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-full sm:w-[160px]">
                   <SelectValue placeholder="Level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Levels</SelectItem>
-                  <SelectItem value="BEGINNER">Beginner</SelectItem>
-                  <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-                  <SelectItem value="ADVANCED">Advanced</SelectItem>
+                  <SelectGroup>
+                    <SelectItem value="ALL">All Levels</SelectItem>
+                    <SelectItem value="BEGINNER">Beginner</SelectItem>
+                    <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+                    <SelectItem value="ADVANCED">Advanced</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
               <Select
@@ -173,29 +181,33 @@ export default function CourseCataloguePage() {
                   setCategoryFilter(value as CategoryFilter)
                 }
               >
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-full sm:w-[160px]">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    <SelectItem value="ALL">All Categories</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
               <Select
                 value={sortBy}
                 onValueChange={(value) => setSortBy(value as SortOption)}
               >
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-full sm:w-[160px]">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="popular">Popular</SelectItem>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="rating">Top Rated</SelectItem>
+                  <SelectGroup>
+                    <SelectItem value="popular">Popular</SelectItem>
+                    <SelectItem value="newest">Newest</SelectItem>
+                    <SelectItem value="rating">Top Rated</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
@@ -211,27 +223,8 @@ export default function CourseCataloguePage() {
         </p>
       </div>
 
-      {/* Loading state — Skeleton grid */}
-      {isLoading && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <Skeleton className="aspect-video w-full rounded-t-xl" />
-              <CardHeader>
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-48" />
-              </CardContent>
-              <CardContent>
-                <Skeleton className="h-9 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Loading state */}
+      {isLoading && <CourseGridLoading count={6} />}
 
       {/* Course grid */}
       {!isLoading && filteredCourses.length > 0 && (
@@ -270,30 +263,34 @@ export default function CourseCataloguePage() {
         </div>
       )}
 
-      {/* Empty state — shadcn Card with icon + message + action */}
       {!isLoading && filteredCourses.length === 0 && courses.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <BookOpen className="mb-4 size-12 text-muted-foreground/40" />
-            <CardTitle className="mb-2">No courses yet</CardTitle>
-            <CardDescription>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen />
+            </EmptyMedia>
+            <EmptyTitle>No courses yet</EmptyTitle>
+            <EmptyDescription>
               Courses will appear once instructors publish them. Check back
               soon.
-            </CardDescription>
-          </CardContent>
-        </Card>
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
 
-      {/* No results — filtered empty */}
       {!isLoading && filteredCourses.length === 0 && courses.length > 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Search className="mb-4 size-12 text-muted-foreground/40" />
-            <CardTitle className="mb-2">No courses found</CardTitle>
-            <CardDescription className="mb-6">
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Search />
+            </EmptyMedia>
+            <EmptyTitle>No courses found</EmptyTitle>
+            <EmptyDescription>
               Try adjusting your search or filters to find what you&apos;re
               looking for.
-            </CardDescription>
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
             <Button
               variant="outline"
               onClick={() => {
@@ -304,8 +301,8 @@ export default function CourseCataloguePage() {
             >
               Clear Filters
             </Button>
-          </CardContent>
-        </Card>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

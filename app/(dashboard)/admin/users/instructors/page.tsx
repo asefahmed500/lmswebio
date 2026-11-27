@@ -5,9 +5,24 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Loader2, UserPlus, Mail, Users } from "lucide-react"
+import { Search, UserPlus, Mail, Users } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { PageLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet } from "@/lib/api-client"
 
 interface ApiUser {
@@ -54,46 +69,43 @@ export default function InstructorsPage() {
       i.email.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading instructors…" />
 
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-destructive">{error}</p>
+      <div className="flex min-h-96 items-center justify-center">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Instructors</h1>
-          <p className="text-muted-foreground">Manage instructor accounts</p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/users/new">
-            <UserPlus className="mr-2 size-4" />
-            Add Instructor
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Instructors"
+        description="Manage instructor accounts"
+        action={
+          <Button asChild>
+            <Link href="/admin/users/new">
+              <UserPlus data-icon="inline-start" />
+              Add Instructor
+            </Link>
+          </Button>
+        }
+      />
 
-      <div className="relative max-w-sm">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
+      <InputGroup className="h-9 max-w-sm">
+        <InputGroupInput
           placeholder="Search instructors..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
         />
-      </div>
+        <InputGroupAddon align="inline-start">
+          <Search />
+        </InputGroupAddon>
+      </InputGroup>
 
       <Card>
         <CardHeader>
@@ -101,34 +113,38 @@ export default function InstructorsPage() {
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="py-12 text-center">
-              <Users className="mx-auto mb-4 size-12 text-muted-foreground/40" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No instructors found
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {searchQuery
-                  ? "No instructors match your search. Try a different query."
-                  : "No instructors have been created yet. Add your first instructor to get started."}
-              </p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Users />
+                </EmptyMedia>
+                <EmptyTitle>No instructors found</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery
+                    ? "No instructors match your search. Try a different query."
+                    : "No instructors have been created yet. Add your first instructor to get started."}
+                </EmptyDescription>
+              </EmptyHeader>
               {!searchQuery && (
-                <Button asChild>
-                  <Link href="/admin/users/new">
-                    <UserPlus className="mr-2 size-4" />
-                    Add Instructor
-                  </Link>
-                </Button>
+                <EmptyContent>
+                  <Button asChild>
+                    <Link href="/admin/users/new">
+                      <UserPlus data-icon="inline-start" />
+                      Add Instructor
+                    </Link>
+                  </Button>
+                </EmptyContent>
               )}
-            </div>
+            </Empty>
           ) : (
             <div className="flex flex-col gap-4">
               {filtered.map((instructor) => (
                 <div
                   key={instructor.id}
-                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                  className="flex flex-col gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex items-center gap-4">
-                    <Avatar>
+                  <div className="flex min-w-0 items-center gap-4">
+                    <Avatar className="shrink-0">
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {instructor.fullName
                           .split(" ")
@@ -137,24 +153,26 @@ export default function InstructorsPage() {
                           .slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-medium">{instructor.fullName}</p>
-                      <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Mail className="size-3" />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">
+                        {instructor.fullName}
+                      </p>
+                      <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+                        <Mail className="size-3 shrink-0" />
                         {instructor.email}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                     <div className="text-center">
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-semibold text-foreground">
                         {instructor._count?.courses ?? 0}
                       </p>
                       <p className="text-xs text-muted-foreground">Courses</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-semibold text-foreground">
                         {instructor._count?.enrolments ?? 0}
                       </p>
                       <p className="text-xs text-muted-foreground">Students</p>
@@ -168,10 +186,10 @@ export default function InstructorsPage() {
                       variant="ghost"
                       size="icon"
                       asChild
-                      aria-label="Action"
+                      aria-label="Edit instructor"
                     >
                       <Link href={`/admin/users/${instructor.id}`}>
-                        <Users className="size-4" />
+                        <Users />
                       </Link>
                     </Button>
                   </div>

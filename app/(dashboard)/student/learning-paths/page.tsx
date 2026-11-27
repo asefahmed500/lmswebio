@@ -9,14 +9,23 @@ import * as React from "react"
 import { TrendingUp, BookOpen, Clock, Users } from "lucide-react"
 import { LearningPathCard } from "@/features/gamification/learning-path-card"
 import { Card, CardContent } from "@/components/ui/card"
+import { LoadingCard } from "@/components/loading-skeleton"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet } from "@/lib/api-client"
 
 interface LearningPath {
@@ -115,33 +124,24 @@ export default function StudentLearningPathsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Learning Paths
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Structured course sequences for your learning journey
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <PageHeader
+          title="Learning Paths"
+          description="Structured course sequences for your learning journey"
+        />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
-        <LoadingCard count={3} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Learning Paths
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Structured course sequences for your learning journey
-          </p>
-        </div>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Learning Paths"
+        description="Structured course sequences for your learning journey"
+      />
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -151,7 +151,7 @@ export default function StudentLearningPathsPage() {
               <TrendingUp className="size-5 text-primary" />
             </div>
             <div>
-              <p className="text-xl font-bold">{learningPaths.length}</p>
+              <p className="text-2xl font-semibold">{learningPaths.length}</p>
               <p className="text-sm text-muted-foreground">Total Paths</p>
             </div>
           </CardContent>
@@ -162,7 +162,7 @@ export default function StudentLearningPathsPage() {
               <BookOpen className="size-5 text-success" />
             </div>
             <div>
-              <p className="text-xl font-bold">{enrolledPaths.size}</p>
+              <p className="text-2xl font-semibold">{enrolledPaths.size}</p>
               <p className="text-sm text-muted-foreground">Enrolled</p>
             </div>
           </CardContent>
@@ -173,7 +173,7 @@ export default function StudentLearningPathsPage() {
               <Clock className="size-5 text-info" />
             </div>
             <div>
-              <p className="text-xl font-bold">
+              <p className="text-2xl font-semibold">
                 {learningPaths.reduce((sum, p) => sum + p.estimatedDuration, 0)}
                 h
               </p>
@@ -187,7 +187,7 @@ export default function StudentLearningPathsPage() {
               <Users className="size-5 text-primary" />
             </div>
             <div>
-              <p className="text-xl font-bold">
+              <p className="text-2xl font-semibold">
                 {learningPaths.reduce(
                   (sum, p) => sum + p._count.enrollments,
                   0
@@ -200,46 +200,52 @@ export default function StudentLearningPathsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row">
         <Select
           value={filter}
           onValueChange={(v: "all" | "my") => setFilter(v)}
         >
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Paths</SelectItem>
-            <SelectItem value="my">My Paths</SelectItem>
+            <SelectGroup>
+              <SelectItem value="all">All Paths</SelectItem>
+              <SelectItem value="my">My Paths</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
 
         <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue placeholder="Level" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Levels</SelectItem>
-            <SelectItem value="BEGINNER">Beginner</SelectItem>
-            <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-            <SelectItem value="ADVANCED">Advanced</SelectItem>
+            <SelectGroup>
+              <SelectItem value="all">All Levels</SelectItem>
+              <SelectItem value="BEGINNER">Beginner</SelectItem>
+              <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+              <SelectItem value="ADVANCED">Advanced</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
 
       {/* Learning Paths */}
       {learningPaths.length === 0 ? (
-        <div className="py-12 text-center">
-          <TrendingUp className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-semibold">
-            No learning paths found
-          </h3>
-          <p className="text-muted-foreground">
-            {filter === "my"
-              ? "You haven't enrolled in any learning paths yet."
-              : "No learning paths available."}
-          </p>
-        </div>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <TrendingUp />
+            </EmptyMedia>
+            <EmptyTitle>No learning paths found</EmptyTitle>
+            <EmptyDescription>
+              {filter === "my"
+                ? "You haven't enrolled in any learning paths yet."
+                : "No learning paths available."}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {learningPaths.map((path) => (

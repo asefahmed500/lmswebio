@@ -6,7 +6,8 @@ import {
   Bell,
   Info,
   CheckCircle,
-  AlertTriangle,
+  TriangleAlert,
+  CircleAlert,
   XCircle,
   CheckCheck,
   Trash2,
@@ -15,12 +16,21 @@ import {
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
+import { LoadingTable } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 import { apiPatch, apiDelete } from "@/lib/api-client"
 
 interface Notification {
-  id: number
+  id: string
   title: string
   message: string
   type: string
@@ -34,7 +44,7 @@ function getNotifIcon(type: string) {
     case "success":
       return <CheckCircle className="size-5 shrink-0 text-success" />
     case "warning":
-      return <AlertTriangle className="size-5 shrink-0 text-warning" />
+      return <TriangleAlert className="size-5 shrink-0 text-warning" />
     case "error":
       return <XCircle className="size-5 shrink-0 text-destructive" />
     default:
@@ -94,7 +104,7 @@ export default function InstructorNotificationsPage() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
   }
 
-  const handleMarkRead = async (id: number) => {
+  const handleMarkRead = async (id: string) => {
     const res = await apiPatch("/notifications", {
       notificationIds: [id],
       read: true,
@@ -125,61 +135,63 @@ export default function InstructorNotificationsPage() {
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
+  const backButton = (
+    <Button variant="ghost" size="icon" asChild aria-label="Back to dashboard">
+      <Link href="/instructor">
+        <ArrowLeft />
+      </Link>
+    </Button>
+  )
+
+  const header = (
+    <PageHeader
+      className="min-w-0 flex-1"
+      title="Notifications"
+      description={
+        isLoading
+          ? "Loading notifications..."
+          : unreadCount > 0
+            ? `You have ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
+            : "You're all caught up!"
+      }
+      action={
+        isLoading ? undefined : (
+          <>
+            {unreadCount > 0 && (
+              <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
+                <CheckCheck data-icon="inline-start" />
+                Mark all read
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button variant="outline" size="sm" onClick={handleDeleteAll}>
+                <Trash2 data-icon="inline-start" />
+                Clear all
+              </Button>
+            )}
+          </>
+        )
+      }
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild aria-label="Action">
-            <Link href="/instructor">
-              <ArrowLeft className="size-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Notifications
-            </h1>
-            <p className="text-muted-foreground">Loading notifications...</p>
-          </div>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          {header}
         </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
+        <LoadingTable rows={4} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
-          <Link href="/instructor">
-            <ArrowLeft className="size-4" />
-          </Link>
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Notifications
-          </h1>
-          <p className="text-muted-foreground">
-            {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-              : "You're all caught up!"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
-              <CheckCheck className="mr-2 size-4" />
-              Mark all read
-            </Button>
-          )}
-          {notifications.length > 0 && (
-            <Button variant="outline" size="sm" onClick={handleDeleteAll}>
-              <Trash2 className="mr-2 size-4" />
-              Clear all
-            </Button>
-          )}
-        </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <div className="flex items-start gap-4">
+        {backButton}
+        {header}
       </div>
 
       <div className="flex items-center gap-2">
@@ -200,7 +212,8 @@ export default function InstructorNotificationsPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive">
+          <CircleAlert />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
@@ -244,19 +257,23 @@ export default function InstructorNotificationsPage() {
               ))}
             </div>
           ) : (
-            <div className="py-12 text-center">
-              <Bell className="mx-auto mb-4 size-12 text-muted-foreground/50" />
-              <h3 className="mb-2 text-lg font-semibold">
-                {filter === "unread"
-                  ? "No unread notifications"
-                  : "No notifications"}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {filter === "unread"
-                  ? "You're all caught up!"
-                  : "You'll see notifications here when there's activity."}
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Bell />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {filter === "unread"
+                    ? "No unread notifications"
+                    : "No notifications"}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {filter === "unread"
+                    ? "You're all caught up!"
+                    : "You'll see notifications here when there's activity."}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>

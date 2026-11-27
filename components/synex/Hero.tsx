@@ -1,128 +1,113 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
-import { motion } from "framer-motion"
+import { useState } from "react"
 import { ArrowRight, X, BookOpen, Play } from "lucide-react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Progress } from "@/components/ui/progress"
 import { SynexNavbar } from "@/components/synex/Navbar"
 
+/** Neutral illustration labels — no invented metrics or learner names. */
+const previewStats = ["Courses", "Hours", "Certificates", "Day streak"]
+const previewCourses = ["Course 01", "Course 02", "Course 03"]
+const previewNav = [
+  "Dashboard",
+  "Courses",
+  "Progress",
+  "Calendar",
+  "Certificates",
+  "Settings",
+]
+
 export function SynexHero() {
-  const rafRef = useRef<number | null>(null)
-  const [animateIn, setAnimateIn] = useState(false)
   const [bannerVisible, setBannerVisible] = useState(true)
 
-  useEffect(() => {
-    rafRef.current = requestAnimationFrame(() => {
-      setAnimateIn(true)
-    })
-    return () => {
-      if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
-    }
-  }, [])
-
   return (
-    <section className="bg-canvas">
+    <section className="bg-background">
       {bannerVisible && (
-        <div className="border-b border-graphite/10 bg-canvas">
-          <div className="mx-auto flex h-10 max-w-[1280px] items-center justify-center gap-3 px-5">
-            <span className="rounded bg-void-black px-2 py-0.5 font-visueltpro text-[10px] font-medium text-chalk">
-              New
-            </span>
-            <span className="font-visueltpro text-sm font-light text-graphite">
+        <div className="border-b border-border bg-background">
+          <div className="relative mx-auto flex min-h-10 max-w-7xl items-center justify-center gap-3 px-5 py-2">
+            <Badge variant="secondary">New</Badge>
+            <span className="text-sm text-muted-foreground">
               Learning paths — ordered course sequences you can enrol in.
             </span>
-            <Link
-              href="/student/learning-paths"
-              className="inline-flex items-center gap-1 font-visueltpro text-sm font-medium text-void-black hover:opacity-70"
-            >
-              Learn more <ArrowRight className="size-3" />
-            </Link>
-            <button
+            <Button asChild variant="link" size="sm" className="h-auto p-0">
+              <Link href="/student/learning-paths">
+                Learn more
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
               onClick={() => setBannerVisible(false)}
-              className="absolute right-5 text-smoke transition-colors hover:text-graphite"
+              className="absolute right-4"
               aria-label="Dismiss"
             >
-              <X className="size-4" />
-            </button>
+              <X data-icon />
+            </Button>
           </div>
         </div>
       )}
 
       <SynexNavbar />
 
-      <div className="mx-auto max-w-[1280px] px-5 pt-24 pb-0 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={animateIn ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <h1 className="mx-auto max-w-[820px] font-bradford text-[clamp(36px,7vw,64px)] leading-[1.05] font-medium tracking-[-0.03em] text-void-black">
+      <div className="mx-auto max-w-7xl px-5 pt-20 sm:pt-24">
+        <div className="text-center">
+          <h1 className="mx-auto max-w-3xl text-[clamp(36px,7vw,64px)] leading-tight font-medium tracking-tight text-foreground">
             Great careers start with great courses.
           </h1>
-          <p className="mx-auto mt-5 max-w-[480px] font-visueltpro text-base leading-[1.6] font-light text-smoke">
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">
             Expert-led courses in technology, design, and business. Learn at
             your own pace, earn certificates, advance your career.
           </p>
-          <div className="mt-8 flex items-center justify-center gap-3">
-            <Link
-              href="/register"
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk"
-              style={{ boxShadow: "var(--shadow-sq-button)" }}
-            >
-              Get started for free <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/courses"
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-graphite/20 px-3 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/40"
-            >
-              <Play className="size-3.5" />
-              Browse courses
-            </Link>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild>
+              <Link href="/register">
+                Get started for free
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/courses">
+                <Play data-icon="inline-start" />
+                Browse courses
+              </Link>
+            </Button>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          animate={animateIn ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto mt-16 max-w-[1100px] overflow-hidden rounded-[10px] border border-graphite/10 bg-chalk"
-          style={{ boxShadow: "var(--shadow-sq-hero)" }}
-        >
-          <div className="flex items-center justify-between border-b border-graphite/10 bg-chalk px-4 py-2.5">
+        <Card className="mx-auto mt-14 max-w-6xl overflow-hidden py-0">
+          <div className="flex items-center justify-between px-4 py-2.5">
             <div className="flex items-center gap-2">
-              <div className="flex size-6 items-center justify-center rounded-sm bg-void-black">
-                <span className="font-visueltpro text-[9px] font-bold text-chalk">
-                  L
-                </span>
-              </div>
-              <span className="font-visueltpro text-xs font-light text-graphite">
-                LMSio
+              <span className="flex size-6 items-center justify-center rounded-sm bg-primary text-primary-foreground">
+                <span className="text-[9px] font-medium">L</span>
               </span>
+              <span className="text-xs text-muted-foreground">LMSio</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="size-2 rounded-full bg-smoke/30" />
-              <div className="size-2 rounded-full bg-smoke/30" />
-              <div className="size-2 rounded-full bg-smoke/30" />
+            <div className="flex items-center gap-1.5" aria-hidden="true">
+              <span className="size-2 rounded-full bg-muted-foreground/30" />
+              <span className="size-2 rounded-full bg-muted-foreground/30" />
+              <span className="size-2 rounded-full bg-muted-foreground/30" />
             </div>
           </div>
 
-          <div className="flex min-h-[320px]">
-            <div className="hidden w-[180px] shrink-0 flex-col border-r border-graphite/10 bg-canvas/50 md:flex">
+          <Separator />
+
+          <div className="flex min-h-80">
+            <div className="hidden w-44 shrink-0 flex-col border-r border-border bg-muted/30 md:flex">
               <div className="p-3">
-                {[
-                  "Dashboard",
-                  "Courses",
-                  "Progress",
-                  "Calendar",
-                  "Certs",
-                  "Settings",
-                ].map((item, i) => (
+                {previewNav.map((item, i) => (
                   <div
                     key={item}
-                    className={`mb-0.5 rounded-md px-3 py-1.5 font-visueltpro text-xs font-light ${
+                    className={`mb-0.5 rounded-md px-3 py-1.5 text-xs ${
                       i === 0
-                        ? "bg-chalk font-medium text-void-black"
-                        : "text-smoke"
+                        ? "bg-muted font-medium text-foreground"
+                        : "text-muted-foreground"
                     }`}
                   >
                     {item}
@@ -130,60 +115,44 @@ export function SynexHero() {
                 ))}
               </div>
             </div>
-            <div className="flex-1 bg-chalk p-4">
-              <div className="mb-3 font-visueltpro text-sm font-medium text-void-black">
-                Welcome back, John
+            <div className="min-w-0 flex-1 p-4">
+              <div className="mb-3 text-sm font-medium text-foreground">
+                Welcome back
               </div>
               <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {["12 Courses", "148 Hours", "8 Certs", "14d Streak"].map(
-                  (s) => (
-                    <div
-                      key={s}
-                      className="rounded-lg border border-graphite/8 bg-canvas p-2.5"
-                    >
-                      <div className="font-visueltpro text-lg font-medium text-void-black">
-                        {s.split(" ")[0]}
-                      </div>
-                      <div className="font-visueltpro text-[10px] font-light text-smoke">
-                        {s.split(" ").slice(1).join(" ")}
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
-              <div className="space-y-2">
-                {[
-                  { t: "Advanced React Patterns", p: 78 },
-                  { t: "System Design Fundamentals", p: 45 },
-                  { t: "Data Structures in Python", p: 92 },
-                ].map((c) => (
+                {previewStats.map((label) => (
                   <div
-                    key={c.t}
-                    className="flex items-center gap-2 rounded-lg border border-graphite/8 bg-canvas p-2"
+                    key={label}
+                    className="rounded-lg border border-border bg-background p-2.5"
                   >
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-chalk">
-                      <BookOpen className="size-3 text-smoke" />
+                    <div className="text-lg font-medium text-foreground">—</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {label}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-visueltpro text-xs font-light text-graphite">
-                        {c.t}
-                      </div>
-                      <div className="mt-1 h-1 overflow-hidden rounded-full bg-graphite/10">
-                        <div
-                          className="h-full rounded-full bg-void-black"
-                          style={{ width: `${c.p}%` }}
-                        />
-                      </div>
-                    </div>
-                    <span className="shrink-0 font-visueltpro text-[10px] font-light text-smoke">
-                      {c.p}%
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2">
+                {previewCourses.map((title) => (
+                  <div
+                    key={title}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-background p-2"
+                  >
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                      <BookOpen className="size-3" />
                     </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-xs text-foreground">
+                        {title}
+                      </div>
+                      <Progress value={0} className="mt-1 h-1" />
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-        </motion.div>
+        </Card>
       </div>
     </section>
   )

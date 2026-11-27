@@ -12,13 +12,11 @@ import {
   hasActiveDescendant,
   isNavItemActive,
 } from "@/features/dashboard/nav/active"
-import { sidebarMotion } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -44,6 +42,12 @@ function NavLink({ item, isSub = false }: { item: NavItem; isSub?: boolean }) {
       isActive={active}
       tooltip={isSub ? undefined : item.title}
       data-nav-item={item.href}
+      className={cn(
+        // A quiet rail makes the current section scannable without colour.
+        !isSub &&
+          "before:absolute before:top-1/2 before:left-0 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary before:opacity-0 data-[active=true]:before:opacity-100",
+        isSub && "data-[active=true]:text-primary"
+      )}
     >
       <Link
         href={item.href}
@@ -53,7 +57,7 @@ function NavLink({ item, isSub = false }: { item: NavItem; isSub?: boolean }) {
         <Icon />
         <span className="truncate">{item.title}</span>
         {item.badge ? (
-          <span className="ml-auto text-xs tabular-nums opacity-70">
+          <span className="ml-auto shrink-0 rounded-md bg-sidebar-accent px-1.5 py-0.5 text-[11px] text-sidebar-foreground tabular-nums">
             {item.badge}
           </span>
         ) : null}
@@ -105,18 +109,22 @@ function NavSectionGroup({ section }: { section: NavSection }) {
           <SidebarMenuButton
             tooltip={section.title}
             isActive={groupActive}
-            className="font-medium"
+            className={cn(
+              "font-medium before:absolute before:top-1/2 before:left-0 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary before:opacity-0 data-[active=true]:before:opacity-100"
+            )}
           >
             <Icon />
             <span className="truncate">{section.title}</span>
-            <SidebarMenuBadge>
-              <ChevronDown
-                className={cn(sidebarMotion.chevron, open && "rotate-180")}
-              />
-            </SidebarMenuBadge>
+            <ChevronDown
+              aria-hidden="true"
+              className={cn(
+                "ml-auto size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-data-[collapsible=icon]:hidden",
+                open && "rotate-180"
+              )}
+            />
           </SidebarMenuButton>
         </CollapsibleTrigger>
-        <CollapsibleContent className={sidebarMotion.group}>
+        <CollapsibleContent>
           <SidebarMenuSub>
             {section.items.map((item) => (
               <SidebarMenuSubItem key={item.href}>

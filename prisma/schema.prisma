@@ -103,6 +103,7 @@ model Course {
   learningPaths  LearningPathCourse[]
   calendarEvents CalendarEvent[]
   payments       Payment[]
+  promotions     Promotion[]
 
   @@index([instructorId])
   @@index([isPublished])
@@ -531,6 +532,22 @@ model InstructorProfile {
   updatedAt     DateTime @updatedAt
 }
 
+model Promotion {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  description     String
+  badge           String?
+  discountPercent Int?
+  courseId        String?   @db.ObjectId
+  course          Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  isActive        Boolean   @default(true)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([isActive, startsAt, endsAt])
+}
+
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
@@ -555,6 +572,14 @@ model Settings {
   maintenanceMode    Boolean @default(false)
   maxUploadSize      Int     @default(20)
   emailNotifications Boolean @default(true)
+
+  smtpHost    String?
+  smtpPort    Int?
+  smtpUser    String?
+  smtpPass    String?
+  smtpFrom    String?
+  smtpSecure  Boolean @default(false)
+  integrations Json?
 }
 
 model Payment {

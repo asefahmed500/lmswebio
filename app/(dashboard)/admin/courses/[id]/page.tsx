@@ -13,10 +13,10 @@ import {
   Trash2,
   Clock,
   DollarSign,
-  Loader2,
   Eye,
-  ToggleLeft,
-  ToggleRight,
+  CircleCheck,
+  Circle,
+  CircleAlert,
 } from "lucide-react"
 import {
   Card,
@@ -27,6 +27,16 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { DetailLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -161,59 +171,67 @@ export default function AdminCourseDetailPage() {
     [course]
   )
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  if (isLoading) return <DetailLoading />
 
   if (error || !course) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-semibold">Course not found</h3>
-          <Button asChild>
-            <Link href="/admin/courses">Back to Courses</Link>
-          </Button>
-        </div>
+      <div className="flex min-h-96 items-center justify-center">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>Course not found</EmptyTitle>
+            <EmptyDescription>
+              {error || "This course is no longer available."}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/admin/courses">Back to Courses</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild aria-label="Action">
-            <Link href="/admin/courses">
-              <ArrowLeft />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {course.title}
-            </h1>
-            <p className="mt-1 text-muted-foreground">Course management</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/instructor/courses/${course.id}/edit`}>
-              <Eye data-icon="inline-start" />
-              Edit Content
-            </Link>
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            <Trash2 data-icon="inline-start" />
-            Delete
-          </Button>
-        </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          aria-label="Back to courses"
+          className="shrink-0"
+        >
+          <Link href="/admin/courses">
+            <ArrowLeft />
+          </Link>
+        </Button>
+        <PageHeader
+          title={course.title}
+          description="Course management"
+          className="min-w-0 flex-1"
+          action={
+            <>
+              <Button variant="outline" asChild>
+                <Link href={`/instructor/courses/${course.id}/edit`}>
+                  <Eye data-icon="inline-start" />
+                  Edit Content
+                </Link>
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 data-icon="inline-start" />
+                Delete
+              </Button>
+            </>
+          }
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-5">
@@ -227,15 +245,21 @@ export default function AdminCourseDetailPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="-ml-2 h-auto p-2"
+              className="-ml-2"
               onClick={handleTogglePublish}
             >
               {course.isPublished ? (
-                <ToggleRight className="mr-1 size-5 text-success" />
+                <CircleCheck
+                  className="text-success"
+                  data-icon="inline-start"
+                />
               ) : (
-                <ToggleLeft className="mr-1 size-5 text-muted-foreground" />
+                <Circle
+                  className="text-muted-foreground"
+                  data-icon="inline-start"
+                />
               )}
-              <Badge variant={course.isPublished ? "default" : "secondary"}>
+              <Badge variant={course.isPublished ? "success" : "secondary"}>
                 {course.isPublished ? "Published" : "Draft"}
               </Badge>
             </Button>
@@ -248,7 +272,7 @@ export default function AdminCourseDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold capitalize">
+            <div className="text-2xl font-semibold text-foreground capitalize">
               {course.level.toLowerCase()}
             </div>
           </CardContent>
@@ -261,7 +285,7 @@ export default function AdminCourseDetailPage() {
             <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-semibold text-foreground">
               {course.price != null && course.price > 0
                 ? `$${course.price.toFixed(2)}`
                 : "Free"}
@@ -276,7 +300,9 @@ export default function AdminCourseDetailPage() {
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{studentCount}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {studentCount}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -287,7 +313,7 @@ export default function AdminCourseDetailPage() {
             <Layers className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-semibold text-foreground">
               {course.modules.length}m / {totalLessons}l
             </div>
           </CardContent>
@@ -413,9 +439,17 @@ export default function AdminCourseDetailPage() {
                 ))}
             </div>
           ) : (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              No modules yet.
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Layers />
+                </EmptyMedia>
+                <EmptyTitle>No modules yet</EmptyTitle>
+                <EmptyDescription>
+                  Content can be added from the course edit page.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>
@@ -431,10 +465,7 @@ export default function AdminCourseDetailPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground"
-            >
+            <AlertDialogAction variant="destructive" onClick={handleDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

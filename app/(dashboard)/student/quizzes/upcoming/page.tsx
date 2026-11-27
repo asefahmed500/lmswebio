@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Clock, FileQuestion, BookOpen, HelpCircle } from "lucide-react"
+import { CircleAlert, Clock, FileQuestion, BookOpen } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -11,6 +11,16 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 
@@ -52,16 +62,16 @@ function QuizCard({ quiz }: { quiz: QuizListItem }) {
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className="size-4" />
               <span>{quiz.course.title}</span>
             </div>
             <div className="flex items-center gap-1">
-              <FileQuestion className="h-4 w-4" />
+              <FileQuestion className="size-4" />
               <span>{quiz._count.questions} questions</span>
             </div>
             {quiz.timeLimit && (
               <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
+                <Clock className="size-4" />
                 <span>{quiz.timeLimit} min</span>
               </div>
             )}
@@ -136,10 +146,9 @@ export default function UpcomingQuizzesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading quizzes...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
       </div>
     )
@@ -147,29 +156,29 @@ export default function UpcomingQuizzesPage() {
 
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <HelpCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">Error loading quizzes</h3>
-          <p className="mb-4 text-sm text-muted-foreground">{error}</p>
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Error loading quizzes</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Try Again
           </Button>
-        </div>
-      </div>
+        </EmptyContent>
+      </Empty>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Upcoming Quizzes
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Quizzes you haven&apos;t attempted yet
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Upcoming Quizzes"
+        description="Quizzes you haven't attempted yet"
+      />
 
       {quizzes.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -178,23 +187,23 @@ export default function UpcomingQuizzesPage() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <FileQuestion className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No upcoming quizzes
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                You&apos;ve attempted all available quizzes. Check back later
-                for new ones.
-              </p>
-              <Button asChild>
-                <Link href="/student/quizzes">View All Quizzes</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FileQuestion />
+            </EmptyMedia>
+            <EmptyTitle>No upcoming quizzes</EmptyTitle>
+            <EmptyDescription>
+              You&apos;ve attempted all available quizzes. Check back later for
+              new ones.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/quizzes">View All Quizzes</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

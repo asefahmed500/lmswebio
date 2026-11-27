@@ -1,6 +1,12 @@
 "use client"
 
 import { CourseCard } from "./course-card"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { cn } from "@/lib/utils"
 
 interface CourseListProps {
@@ -35,6 +41,26 @@ interface CourseListProps {
   }
 }
 
+/** Static maps so Tailwind can see every grid column class at build time. */
+const gridColumns: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+  4: "grid-cols-4",
+}
+const tabletColumns: Record<number, string> = {
+  1: "md:grid-cols-1",
+  2: "md:grid-cols-2",
+  3: "md:grid-cols-3",
+  4: "md:grid-cols-4",
+}
+const desktopColumns: Record<number, string> = {
+  1: "lg:grid-cols-1",
+  2: "lg:grid-cols-2",
+  3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4",
+}
+
 /**
  * Course list component
  * Responsive grid layout with mobile-first approach
@@ -52,9 +78,14 @@ export function CourseList({
 }: CourseListProps) {
   if (courses.length === 0) {
     return (
-      <div className="px-4 py-12 text-center">
-        <p className="text-lg text-muted-foreground">No courses found</p>
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No courses found</EmptyTitle>
+          <EmptyDescription>
+            Try a different search or browse the catalogue.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
 
@@ -75,12 +106,11 @@ export function CourseList({
     )
   }
 
-  // Responsive grid with custom columns
   const gridCols = cn(
     "grid gap-4 sm:gap-6",
-    `grid-cols-${columns.mobile}`,
-    columns.tablet && `md:grid-cols-${columns.tablet}`,
-    columns.desktop && `lg:grid-cols-${columns.desktop}`
+    gridColumns[columns.mobile ?? 1],
+    tabletColumns[columns.tablet ?? 2],
+    desktopColumns[columns.desktop ?? 3]
   )
 
   return (

@@ -20,6 +20,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { DashboardLoading } from "@/components/loading-skeleton"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet } from "@/lib/api-client"
 import type { KPICard, WeeklyEnrollment, User as UserType } from "@/types"
 import {
@@ -61,7 +64,9 @@ function KPICardComponent({ kpi }: { kpi: KPICard }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{kpi.value}</div>
+        <div className="text-2xl font-semibold text-foreground">
+          {kpi.value}
+        </div>
         {kpi.change !== undefined && (
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             {isPositive && <ArrowUpRight className="size-3 text-success" />}
@@ -227,33 +232,20 @@ export default function AdminDashboardPage() {
     loadData()
   }, [])
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <DashboardLoading />
 
   return (
     <div className="flex flex-col gap-6">
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Admin Dashboard
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Overview of platform performance and user activity
-        </p>
-      </div>
+      <PageHeader
+        title="Admin Dashboard"
+        description="Overview of platform performance and user activity"
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi, index) => (

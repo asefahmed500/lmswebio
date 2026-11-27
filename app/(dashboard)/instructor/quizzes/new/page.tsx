@@ -3,15 +3,28 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Loader2, ArrowLeft, Plus, Trash2, GripVertical } from "lucide-react"
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  GripVertical,
+  CircleAlert,
+} from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Spinner } from "@/components/ui/spinner"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -24,6 +37,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPost } from "@/lib/api-client"
 import { QuestionType } from "@/types"
@@ -223,33 +237,35 @@ export default function NewQuizPage() {
     switch (q.type) {
       case QuestionType.MC_SINGLE:
         return (
-          <div className="flex flex-col gap-2">
-            <Label>Correct Answer</Label>
+          <Field>
+            <FieldLabel>Correct Answer</FieldLabel>
             <Select
               value={String(q.correctAnswer || "")}
               onValueChange={(value) =>
                 updateQuestion(qIndex, "correctAnswer", value)
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select correct answer" />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(q.options)
-                  .filter(([, v]) => v.trim())
-                  .map(([key]) => (
-                    <SelectItem key={key} value={key}>
-                      {key}
-                    </SelectItem>
-                  ))}
+                <SelectGroup>
+                  {Object.entries(q.options)
+                    .filter(([, v]) => v.trim())
+                    .map(([key]) => (
+                      <SelectItem key={key} value={key}>
+                        {key}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
-          </div>
+          </Field>
         )
       case QuestionType.MC_MULTI:
         return (
-          <div className="flex flex-col gap-2">
-            <Label>Correct Answers (select all that apply)</Label>
+          <Field>
+            <FieldLabel>Correct Answers (select all that apply)</FieldLabel>
             <div className="flex flex-wrap gap-2">
               {Object.entries(q.options)
                 .filter(([, v]) => v.trim())
@@ -274,12 +290,12 @@ export default function NewQuizPage() {
                   )
                 })}
             </div>
-          </div>
+          </Field>
         )
       case QuestionType.TRUE_FALSE:
         return (
-          <div className="flex flex-col gap-2">
-            <Label>Correct Answer</Label>
+          <Field>
+            <FieldLabel>Correct Answer</FieldLabel>
             <div className="flex gap-2">
               {["True", "False"].map((val) => (
                 <Button
@@ -299,12 +315,12 @@ export default function NewQuizPage() {
                 </Button>
               ))}
             </div>
-          </div>
+          </Field>
         )
       case QuestionType.TEXT:
         return (
-          <div className="flex flex-col gap-2">
-            <Label>Correct Answer</Label>
+          <Field>
+            <FieldLabel>Correct Answer</FieldLabel>
             <Input
               placeholder="Enter the correct answer"
               value={String(q.correctAnswer || "")}
@@ -312,7 +328,7 @@ export default function NewQuizPage() {
                 updateQuestion(qIndex, "correctAnswer", e.target.value)
               }
             />
-          </div>
+          </Field>
         )
       default:
         return null
@@ -320,26 +336,29 @@ export default function NewQuizPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
+    <div className="mx-auto flex max-w-4xl min-w-0 flex-col gap-6">
+      <div className="flex items-start gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          aria-label="Back to quizzes"
+        >
           <Link href="/instructor/quizzes">
             <ArrowLeft />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Create New Quiz
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Fill in the details and add questions to create a new quiz
-          </p>
-        </div>
+        <PageHeader
+          className="min-w-0 flex-1"
+          title="Create New Quiz"
+          description="Fill in the details and add questions to create a new quiz"
+        />
       </div>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-6">
         {error && (
           <Alert variant="destructive">
+            <CircleAlert />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -351,99 +370,103 @@ export default function NewQuizPage() {
               Define the quiz parameters and settings
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="title">Quiz Title *</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Week 1: JavaScript Fundamentals"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value)
-                  if (titleError) setTitleError(null)
-                }}
-                disabled={isSubmitting}
-              />
-              {titleError && (
-                <p className="text-sm text-destructive">{titleError}</p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe the quiz, topics covered, and any instructions..."
-                className="min-h-[100px]"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="courseId">Course *</Label>
-                <Select
-                  value={courseId ? String(courseId) : ""}
-                  onValueChange={(value) => {
-                    setCourseId(value)
-                    if (courseError) setCourseError(null)
+          <CardContent>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="title">Quiz Title *</FieldLabel>
+                <Input
+                  id="title"
+                  placeholder="e.g., Week 1: JavaScript Fundamentals"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value)
+                    if (titleError) setTitleError(null)
                   }}
-                  disabled={isSubmitting || isLoadingCourses}
-                >
-                  <SelectTrigger id="courseId">
-                    <SelectValue
-                      placeholder={
-                        isLoadingCourses
-                          ? "Loading courses..."
-                          : "Select a course"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map((course) => (
-                      <SelectItem key={course.id} value={String(course.id)}>
-                        {course.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {courseError && (
-                  <p className="text-sm text-destructive">{courseError}</p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
-                <Input
-                  id="timeLimit"
-                  type="number"
-                  min={1}
-                  placeholder="Optional"
-                  value={timeLimit ?? ""}
-                  onChange={(e) =>
-                    setTimeLimit(
-                      e.target.value ? Number(e.target.value) : undefined
-                    )
-                  }
                   disabled={isSubmitting}
                 />
-              </div>
+                <FieldError>{titleError}</FieldError>
+              </Field>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="attemptsAllowed">Attempts Allowed *</Label>
-                <Input
-                  id="attemptsAllowed"
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={attemptsAllowed}
-                  onChange={(e) => setAttemptsAllowed(Number(e.target.value))}
+              <Field>
+                <FieldLabel htmlFor="description">Description</FieldLabel>
+                <Textarea
+                  id="description"
+                  placeholder="Describe the quiz, topics covered, and any instructions..."
+                  className="min-h-[100px]"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   disabled={isSubmitting}
                 />
+              </Field>
+
+              <div className="grid min-w-0 gap-4 md:grid-cols-3">
+                <Field>
+                  <FieldLabel htmlFor="courseId">Course *</FieldLabel>
+                  <Select
+                    value={courseId ? String(courseId) : ""}
+                    onValueChange={(value) => {
+                      setCourseId(value)
+                      if (courseError) setCourseError(null)
+                    }}
+                    disabled={isSubmitting || isLoadingCourses}
+                  >
+                    <SelectTrigger id="courseId" className="w-full">
+                      <SelectValue
+                        placeholder={
+                          isLoadingCourses
+                            ? "Loading courses..."
+                            : "Select a course"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {courses.map((course) => (
+                          <SelectItem key={course.id} value={String(course.id)}>
+                            {course.title}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldError>{courseError}</FieldError>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="timeLimit">
+                    Time Limit (minutes)
+                  </FieldLabel>
+                  <Input
+                    id="timeLimit"
+                    type="number"
+                    min={1}
+                    placeholder="Optional"
+                    value={timeLimit ?? ""}
+                    onChange={(e) =>
+                      setTimeLimit(
+                        e.target.value ? Number(e.target.value) : undefined
+                      )
+                    }
+                    disabled={isSubmitting}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="attemptsAllowed">
+                    Attempts Allowed *
+                  </FieldLabel>
+                  <Input
+                    id="attemptsAllowed"
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={attemptsAllowed}
+                    onChange={(e) => setAttemptsAllowed(Number(e.target.value))}
+                    disabled={isSubmitting}
+                  />
+                </Field>
               </div>
-            </div>
+            </FieldGroup>
           </CardContent>
         </Card>
 
@@ -469,135 +492,139 @@ export default function NewQuizPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="flex flex-col gap-6">
-            {questions.map((q, qIndex) => (
-              <React.Fragment key={qIndex}>
-                {qIndex > 0 && <Separator />}
-                <div className="flex flex-col gap-4 rounded-lg border bg-muted/20 p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="size-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">
-                        Question {qIndex + 1}
-                      </span>
+          <CardContent>
+            <FieldGroup className="gap-6">
+              {questions.map((q, qIndex) => (
+                <React.Fragment key={qIndex}>
+                  {qIndex > 0 && <Separator />}
+                  <FieldGroup className="min-w-0 gap-4 rounded-lg border bg-muted/20 p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <GripVertical className="size-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          Question {qIndex + 1}
+                        </span>
+                      </div>
+                      {questions.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon-sm"
+                          onClick={() => removeQuestion(qIndex)}
+                          aria-label="Delete question"
+                          disabled={isSubmitting}
+                        >
+                          <Trash2 />
+                        </Button>
+                      )}
                     </div>
-                    {questions.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeQuestion(qIndex)}
-                        aria-label="Delete question"
-                        disabled={isSubmitting}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
+
+                    <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                      <Field className="md:col-span-2">
+                        <FieldLabel>Question Text *</FieldLabel>
+                        <Input
+                          placeholder="Enter your question"
+                          value={q.text}
+                          onChange={(e) =>
+                            updateQuestion(qIndex, "text", e.target.value)
+                          }
+                          disabled={isSubmitting}
+                        />
+                      </Field>
+
+                      <Field>
+                        <FieldLabel>Question Type *</FieldLabel>
+                        <Select
+                          value={q.type}
+                          onValueChange={(value) => {
+                            const type = value as QuestionType
+                            updateQuestion(qIndex, "type", type)
+                            updateQuestion(qIndex, "correctAnswer", "")
+                            updateQuestion(
+                              qIndex,
+                              "options",
+                              type === QuestionType.MC_SINGLE ||
+                                type === QuestionType.MC_MULTI
+                                ? { ...defaultOptions }
+                                : undefined
+                            )
+                          }}
+                          disabled={isSubmitting}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value={QuestionType.MC_SINGLE}>
+                                Multiple Choice (Single)
+                              </SelectItem>
+                              <SelectItem value={QuestionType.MC_MULTI}>
+                                Multiple Choice (Multi)
+                              </SelectItem>
+                              <SelectItem value={QuestionType.TRUE_FALSE}>
+                                True / False
+                              </SelectItem>
+                              <SelectItem value={QuestionType.TEXT}>
+                                Text Answer
+                              </SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+
+                      <Field>
+                        <FieldLabel>Points *</FieldLabel>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={q.points}
+                          onChange={(e) =>
+                            updateQuestion(
+                              qIndex,
+                              "points",
+                              Number(e.target.value)
+                            )
+                          }
+                          disabled={isSubmitting}
+                        />
+                      </Field>
+                    </div>
+
+                    {(q.type === QuestionType.MC_SINGLE ||
+                      q.type === QuestionType.MC_MULTI) && (
+                      <Field>
+                        <FieldLabel>Options *</FieldLabel>
+                        {["A", "B", "C", "D"].map((key) => (
+                          <div key={key} className="flex items-center gap-2">
+                            <span className="w-6 text-sm font-medium text-muted-foreground">
+                              {key}
+                            </span>
+                            <Input
+                              placeholder={`Option ${key}`}
+                              value={q.options[key] || ""}
+                              onChange={(e) =>
+                                updateOption(qIndex, key, e.target.value)
+                              }
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                        ))}
+                      </Field>
                     )}
-                  </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="flex flex-col gap-2 md:col-span-2">
-                      <Label>Question Text *</Label>
-                      <Input
-                        placeholder="Enter your question"
-                        value={q.text}
-                        onChange={(e) =>
-                          updateQuestion(qIndex, "text", e.target.value)
-                        }
-                        disabled={isSubmitting}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Label>Question Type *</Label>
-                      <Select
-                        value={q.type}
-                        onValueChange={(value) => {
-                          const type = value as QuestionType
-                          updateQuestion(qIndex, "type", type)
-                          updateQuestion(qIndex, "correctAnswer", "")
-                          updateQuestion(
-                            qIndex,
-                            "options",
-                            type === QuestionType.MC_SINGLE ||
-                              type === QuestionType.MC_MULTI
-                              ? { ...defaultOptions }
-                              : undefined
-                          )
-                        }}
-                        disabled={isSubmitting}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={QuestionType.MC_SINGLE}>
-                            Multiple Choice (Single)
-                          </SelectItem>
-                          <SelectItem value={QuestionType.MC_MULTI}>
-                            Multiple Choice (Multi)
-                          </SelectItem>
-                          <SelectItem value={QuestionType.TRUE_FALSE}>
-                            True / False
-                          </SelectItem>
-                          <SelectItem value={QuestionType.TEXT}>
-                            Text Answer
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Label>Points *</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={100}
-                        value={q.points}
-                        onChange={(e) =>
-                          updateQuestion(
-                            qIndex,
-                            "points",
-                            Number(e.target.value)
-                          )
-                        }
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </div>
-
-                  {(q.type === QuestionType.MC_SINGLE ||
-                    q.type === QuestionType.MC_MULTI) && (
-                    <div className="flex flex-col gap-3">
-                      <Label>Options *</Label>
-                      {["A", "B", "C", "D"].map((key) => (
-                        <div key={key} className="flex items-center gap-2">
-                          <span className="w-6 text-sm font-medium text-muted-foreground">
-                            {key}
-                          </span>
-                          <Input
-                            placeholder={`Option ${key}`}
-                            value={q.options[key] || ""}
-                            onChange={(e) =>
-                              updateOption(qIndex, key, e.target.value)
-                            }
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {renderCorrectAnswerInput(q, qIndex)}
-                </div>
-              </React.Fragment>
-            ))}
+                    {renderCorrectAnswerInput(q, qIndex)}
+                  </FieldGroup>
+                </React.Fragment>
+              ))}
+            </FieldGroup>
           </CardContent>
         </Card>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {isSubmitting && <Spinner data-icon="inline-start" />}
             Create Quiz
           </Button>
           <Button

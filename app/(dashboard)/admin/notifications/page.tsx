@@ -15,12 +15,21 @@ import {
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
+import { PageLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { cn } from "@/lib/utils"
 import { apiPatch, apiDelete } from "@/lib/api-client"
 
 interface Notification {
-  id: number
+  id: string
   title: string
   message: string
   type: string
@@ -94,7 +103,7 @@ export default function AdminNotificationsPage() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
   }
 
-  const handleMarkRead = async (id: number) => {
+  const handleMarkRead = async (id: string) => {
     const res = await apiPatch("/notifications", {
       notificationIds: [id],
       read: true,
@@ -125,61 +134,47 @@ export default function AdminNotificationsPage() {
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild aria-label="Action">
-            <Link href="/admin">
-              <ArrowLeft className="size-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Notifications
-            </h1>
-            <p className="text-muted-foreground">Loading notifications...</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading notifications…" />
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          aria-label="Back to dashboard"
+          className="shrink-0"
+        >
           <Link href="/admin">
-            <ArrowLeft className="size-4" />
+            <ArrowLeft />
           </Link>
         </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Notifications
-          </h1>
-          <p className="text-muted-foreground">
-            {unreadCount > 0
+        <PageHeader
+          title="Notifications"
+          description={
+            unreadCount > 0
               ? `You have ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-              : "You're all caught up!"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
-              <CheckCheck className="mr-2 size-4" />
-              Mark all read
-            </Button>
-          )}
-          {notifications.length > 0 && (
-            <Button variant="outline" size="sm" onClick={handleDeleteAll}>
-              <Trash2 className="mr-2 size-4" />
-              Clear all
-            </Button>
-          )}
-        </div>
+              : "You're all caught up!"
+          }
+          className="min-w-0 flex-1"
+          action={
+            <>
+              {unreadCount > 0 && (
+                <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
+                  <CheckCheck data-icon="inline-start" />
+                  Mark all read
+                </Button>
+              )}
+              {notifications.length > 0 && (
+                <Button variant="outline" size="sm" onClick={handleDeleteAll}>
+                  <Trash2 data-icon="inline-start" />
+                  Clear all
+                </Button>
+              )}
+            </>
+          }
+        />
       </div>
 
       <div className="flex items-center gap-2">
@@ -244,19 +239,23 @@ export default function AdminNotificationsPage() {
               ))}
             </div>
           ) : (
-            <div className="py-12 text-center">
-              <Bell className="mx-auto mb-4 size-12 text-muted-foreground/50" />
-              <h3 className="mb-2 text-lg font-semibold">
-                {filter === "unread"
-                  ? "No unread notifications"
-                  : "No notifications"}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {filter === "unread"
-                  ? "You're all caught up!"
-                  : "You'll see notifications here when there's activity."}
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Bell />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {filter === "unread"
+                    ? "No unread notifications"
+                    : "No notifications"}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {filter === "unread"
+                    ? "You're all caught up!"
+                    : "You'll see notifications here when there's activity."}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>

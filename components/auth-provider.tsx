@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import type { User, AuthState } from "@/types"
-import { invalidateCSRFToken } from "@/lib/api-client"
+import { apiPost, invalidateCSRFToken } from "@/lib/api-client"
 
 type AuthContextType = AuthState & {
   login: (
@@ -88,13 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const refreshRes = await fetch("/api/auth/refresh", {
-          method: "POST",
-          signal: controller.signal,
-        })
-        const refreshData = await refreshRes.json()
+        const { data: refreshData } = await apiPost<{ user: User }>(
+          "/auth/refresh",
+          undefined,
+          { signal: controller.signal }
+        )
         if (isStale(seq) || controller.signal.aborted) return
-        if (refreshData.user) {
+        if (refreshData?.user) {
           setAuthState({
             user: refreshData.user,
             isAuthenticated: true,
@@ -125,16 +125,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string
     ): Promise<{ success: boolean; error?: string; user?: User }> => {
       try {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+        const { data, error } = await apiPost<{ user: User }>("/auth/login", {
+          email,
+          password,
         })
 
-        const data = await res.json()
-
-        if (!res.ok) {
-          return { success: false, error: data.error || "Login failed" }
+        if (error || !data?.user) {
+          return { success: false, error: error || "Login failed" }
         }
 
         // Invalidate any in-flight mount-time session read before writing.
@@ -160,18 +157,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string
     ): Promise<{ success: boolean; error?: string; user?: User }> => {
       try {
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullName, email, password }),
-        })
+        const { data, error } = await apiPost<{ user: User }>(
+          "/auth/register",
+          { fullName, email, password }
+        )
 
-        const data = await res.json()
-
-        if (!res.ok) {
+        if (error || !data?.user) {
           return {
             success: false,
-            error: data.error || "Registration failed",
+            error: error || "Registration failed",
           }
         }
 
@@ -196,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = React.useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" })
+      await apiPost("/auth/logout")
     } catch {}
 
     invalidateCSRFToken()

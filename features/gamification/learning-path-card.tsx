@@ -1,12 +1,19 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
-import { Clock, BookOpen, Users, TrendingUp, Lock } from "lucide-react"
+import { Clock, BookOpen, Users, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import type { ComponentProps } from "react"
+
+/** Level labels carry a quiet status colour, never a bespoke tint. */
+const levelVariants: Record<string, ComponentProps<typeof Badge>["variant"]> = {
+  BEGINNER: "success",
+  INTERMEDIATE: "info",
+  ADVANCED: "warning",
+}
 
 interface LearningPath {
   id: number
@@ -49,14 +56,8 @@ export function LearningPathCard({
   userProgress = 0,
   isEnrolled = false,
 }: LearningPathCardProps) {
-  const levelColors: Record<string, string> = {
-    BEGINNER: "bg-success/10 text-success",
-    INTERMEDIATE: "bg-info/10 text-info",
-    ADVANCED: "bg-warning/10 text-warning",
-  }
-
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-lg">
+    <Card className="min-w-0 overflow-hidden">
       {/* Thumbnail */}
       <div className="relative aspect-video w-full bg-muted">
         {path.thumbnail ? (
@@ -70,15 +71,18 @@ export function LearningPathCard({
             <TrendingUp className="size-12 text-muted-foreground" />
           </div>
         )}
-        <Badge className="absolute top-2 right-2" variant="secondary">
+        <Badge
+          className="absolute top-2 right-2"
+          variant={levelVariants[path.level] ?? "outline"}
+        >
           {path.level}
         </Badge>
       </div>
 
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <h3 className="line-clamp-1 text-lg font-semibold">{path.title}</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-lg font-semibold">{path.title}</h3>
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
               {path.description}
             </p>
@@ -88,7 +92,7 @@ export function LearningPathCard({
 
       <CardContent className="flex flex-col gap-3">
         {/* Stats */}
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <BookOpen className="size-4" />
             <span>{path._count.courses} courses</span>
@@ -145,7 +149,7 @@ export function LearningPathCard({
         </div>
       </CardContent>
 
-      <CardFooter className="border-t pt-4">
+      <CardFooter>
         <Button asChild className="w-full">
           <Link href="/student/learning-paths">
             {isEnrolled ? "Continue Learning" : "View Path"}

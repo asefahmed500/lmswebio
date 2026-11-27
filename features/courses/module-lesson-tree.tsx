@@ -59,11 +59,11 @@ export function ModuleLessonTree({
   const getLessonIcon = (contentType: string) => {
     switch (contentType) {
       case "video":
-        return <Video className="size-4" />
+        return <Video data-icon="inline-start" />
       case "pdf":
-        return <FileText className="size-4" />
+        return <FileText data-icon="inline-start" />
       default:
-        return <FileText className="size-4" />
+        return <FileText data-icon="inline-start" />
     }
   }
 
@@ -79,9 +79,9 @@ export function ModuleLessonTree({
           >
             <div className="flex items-center gap-2">
               {expandedModules.has(module.id) ? (
-                <ChevronDown className="size-4" />
+                <ChevronDown data-icon="inline-start" />
               ) : (
-                <ChevronRight className="size-4" />
+                <ChevronRight data-icon="inline-start" />
               )}
               <span className="font-medium">{module.title}</span>
               <span className="text-sm text-muted-foreground">
@@ -114,11 +114,20 @@ export function ModuleLessonTree({
                     )}
                   >
                     {lesson.locked ? (
-                      <Lock className="size-4 text-muted-foreground" />
+                      <Lock
+                        data-icon="inline-start"
+                        className="text-muted-foreground"
+                      />
                     ) : isCompleted ? (
-                      <CheckCircle2 className="size-4 text-success" />
+                      <CheckCircle2
+                        data-icon="inline-start"
+                        className="text-success"
+                      />
                     ) : (
-                      <Circle className="size-4 text-muted-foreground" />
+                      <Circle
+                        data-icon="inline-start"
+                        className="text-muted-foreground"
+                      />
                     )}
                     {getLessonIcon(lesson.contentType)}
                     <span

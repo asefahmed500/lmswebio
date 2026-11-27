@@ -15,8 +15,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { DashboardLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { BadgeDisplay } from "@/features/gamification/badge-display"
 import { CertificateViewer } from "@/features/gamification/certificate-viewer"
 import { Button } from "@/components/ui/button"
@@ -190,27 +198,14 @@ export default function AchievementsPage() {
     return { enrolled, completed, avgProgress, earnedBadges, totalPoints }
   }, [enrollments, completedCourses, badges])
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading achievements...
-          </p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <DashboardLoading />
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Achievements</h1>
-        <p className="mt-1 text-muted-foreground">
-          Track your learning milestones, badges, and certificates
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Achievements"
+        description="Track your learning milestones, badges, and certificates"
+      />
 
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
@@ -223,7 +218,7 @@ export default function AchievementsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.enrolled}</div>
+            <div className="text-2xl font-semibold">{stats.enrolled}</div>
           </CardContent>
         </Card>
         <Card>
@@ -236,7 +231,7 @@ export default function AchievementsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.completed}</div>
+            <div className="text-2xl font-semibold">{stats.completed}</div>
           </CardContent>
         </Card>
         <Card>
@@ -249,7 +244,7 @@ export default function AchievementsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-semibold">
               {stats.avgProgress.toFixed(0)}%
             </div>
           </CardContent>
@@ -264,7 +259,7 @@ export default function AchievementsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.earnedBadges}</div>
+            <div className="text-2xl font-semibold">{stats.earnedBadges}</div>
           </CardContent>
         </Card>
         <Card>
@@ -277,7 +272,7 @@ export default function AchievementsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPoints}</div>
+            <div className="text-2xl font-semibold">{stats.totalPoints}</div>
           </CardContent>
         </Card>
       </div>
@@ -326,19 +321,17 @@ export default function AchievementsPage() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="py-8 text-center">
-                <Award className="mx-auto mb-4 size-12 text-muted-foreground" />
-                <h3 className="mb-2 text-lg font-semibold">
-                  No certificates yet
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Complete a course to earn your first certificate.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <Empty className="rounded-lg border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Award />
+              </EmptyMedia>
+              <EmptyTitle>No certificates yet</EmptyTitle>
+              <EmptyDescription>
+                Complete a course to earn your first certificate.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
       </div>
     </div>

@@ -14,15 +14,29 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { LoadingCard } from "@/components/loading-skeleton"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 
@@ -129,29 +143,28 @@ export default function AllSubmissionsPage() {
   ).length
   const pendingCount = submissions.length - gradedCount
 
+  const header = (
+    <PageHeader
+      title="All Submissions"
+      description="View and manage all student submissions across your courses"
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading submissions...
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
+        <LoadingCard />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          All Submissions
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          View and manage all student submissions across your courses
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -163,7 +176,7 @@ export default function AllSubmissionsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileText className="size-5 text-primary" />
-              <div className="text-2xl font-bold">{submissions.length}</div>
+              <div className="text-2xl font-semibold">{submissions.length}</div>
             </div>
           </CardContent>
         </Card>
@@ -176,7 +189,7 @@ export default function AllSubmissionsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <CheckCircle className="size-5 text-success" />
-              <div className="text-2xl font-bold">{gradedCount}</div>
+              <div className="text-2xl font-semibold">{gradedCount}</div>
             </div>
           </CardContent>
         </Card>
@@ -189,7 +202,7 @@ export default function AllSubmissionsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="size-5 text-warning" />
-              <div className="text-2xl font-bold">{pendingCount}</div>
+              <div className="text-2xl font-semibold">{pendingCount}</div>
             </div>
           </CardContent>
         </Card>
@@ -197,28 +210,31 @@ export default function AllSubmissionsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative max-w-sm flex-1">
-              <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
-              <Input
+          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+            <InputGroup className="h-9 max-w-sm min-w-0 flex-1">
+              <InputGroupInput
                 type="search"
                 placeholder="Search submissions..."
-                className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
             <Select
               value={gradeFilter}
               onValueChange={(value) => setGradeFilter(value as GradeFilter)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All Submissions</SelectItem>
-                <SelectItem value="GRADED">Graded</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectGroup>
+                  <SelectItem value="ALL">All Submissions</SelectItem>
+                  <SelectItem value="GRADED">Graded</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -306,17 +322,19 @@ export default function AllSubmissionsPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-12 text-center">
-              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No submissions found
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {searchQuery || gradeFilter !== "ALL"
-                  ? "Try adjusting your filters or search query"
-                  : "No submissions have been made yet"}
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>No submissions found</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery || gradeFilter !== "ALL"
+                    ? "Try adjusting your filters or search query"
+                    : "No submissions have been made yet"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>

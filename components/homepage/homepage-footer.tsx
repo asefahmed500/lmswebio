@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Separator } from "@/components/ui/separator"
 
 /**
  * Marketing footer.
@@ -39,29 +40,28 @@ const LINK_GROUPS = [
 
 export function HomepageFooter() {
   return (
-    <footer className="border-t border-graphite/10 bg-canvas">
-      <div className="mx-auto max-w-[1280px] px-5 py-12">
+    <footer className="bg-background">
+      <Separator />
+      <div className="mx-auto max-w-7xl px-5 py-12">
         <div className="flex flex-col gap-10 md:flex-row md:gap-16">
-          <div className="md:w-[260px]">
+          <div className="min-w-0 md:w-64">
             <Link href="/" className="inline-flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-sm bg-void-black">
-                <span className="font-visueltpro text-xs font-bold text-chalk">
-                  L
-                </span>
+              <span className="flex size-7 items-center justify-center rounded-sm bg-primary text-primary-foreground">
+                <span className="text-xs font-medium">L</span>
               </span>
-              <span className="font-visueltpro text-lg tracking-[-0.02em] text-void-black">
+              <span className="text-lg tracking-tight text-foreground">
                 LMSio
               </span>
             </Link>
-            <p className="mt-3 max-w-[240px] font-visueltpro text-sm leading-[1.6] text-smoke">
+            <p className="mt-3 max-w-60 text-sm leading-relaxed text-muted-foreground">
               Create courses, sell them, and track progress through to
               completion.
             </p>
-            <p className="mt-4 font-visueltpro text-[13px] leading-[1.6] text-smoke">
+            <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">
               Seeded demo accounts for each role are listed on the{" "}
               <Link
                 href="#try-it"
-                className="text-graphite underline underline-offset-4 hover:text-void-black"
+                className="text-foreground underline underline-offset-4 transition-colors hover:text-primary"
               >
                 try it
               </Link>{" "}
@@ -71,11 +71,11 @@ export function HomepageFooter() {
 
           <nav
             aria-label="Footer"
-            className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3"
+            className="grid min-w-0 flex-1 grid-cols-2 gap-8 sm:grid-cols-3"
           >
             {LINK_GROUPS.map((group) => (
-              <div key={group.title}>
-                <h2 className="mb-3 font-visueltpro text-[13px] font-medium text-void-black">
+              <div key={group.title} className="min-w-0">
+                <h2 className="mb-3 text-[13px] font-medium text-foreground">
                   {group.title}
                 </h2>
                 <ul className="flex flex-col gap-2">
@@ -83,7 +83,7 @@ export function HomepageFooter() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="font-visueltpro text-sm text-smoke transition-colors hover:text-void-black"
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                       >
                         {link.label}
                       </Link>
@@ -95,11 +95,10 @@ export function HomepageFooter() {
           </nav>
         </div>
 
-        <div className="mt-10 border-t border-graphite/10 pt-6">
-          <p className="font-visueltpro text-xs text-smoke">
-            &copy; {new Date().getFullYear()} LMSio
-          </p>
-        </div>
+        <Separator className="mt-10" />
+        <p className="pt-6 text-xs text-muted-foreground">
+          &copy; {new Date().getFullYear()} LMSio
+        </p>
       </div>
     </footer>
   )

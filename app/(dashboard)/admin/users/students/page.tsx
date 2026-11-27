@@ -5,9 +5,24 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Loader2, UserPlus, Mail, Users } from "lucide-react"
+import { Search, UserPlus, Mail, Users } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { PageLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet } from "@/lib/api-client"
 
 interface ApiUser {
@@ -55,46 +70,43 @@ export default function StudentsPage() {
       s.email.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading students…" />
 
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <p className="text-destructive">{error}</p>
+      <div className="flex min-h-96 items-center justify-center">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Students</h1>
-          <p className="text-muted-foreground">Manage student accounts</p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/users/new">
-            <UserPlus className="mr-2 size-4" />
-            Add Student
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Students"
+        description="Manage student accounts"
+        action={
+          <Button asChild>
+            <Link href="/admin/users/new">
+              <UserPlus data-icon="inline-start" />
+              Add Student
+            </Link>
+          </Button>
+        }
+      />
 
-      <div className="relative max-w-sm">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
+      <InputGroup className="h-9 max-w-sm">
+        <InputGroupInput
           placeholder="Search students..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
         />
-      </div>
+        <InputGroupAddon align="inline-start">
+          <Search />
+        </InputGroupAddon>
+      </InputGroup>
 
       <Card>
         <CardHeader>
@@ -102,32 +114,38 @@ export default function StudentsPage() {
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="py-12 text-center">
-              <Users className="mx-auto mb-4 size-12 text-muted-foreground/40" />
-              <h3 className="mb-2 text-lg font-semibold">No students found</h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {searchQuery
-                  ? "No students match your search. Try a different query."
-                  : "No students have registered yet. Students can sign up on their own, or you can add them manually."}
-              </p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Users />
+                </EmptyMedia>
+                <EmptyTitle>No students found</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery
+                    ? "No students match your search. Try a different query."
+                    : "No students have registered yet. Students can sign up on their own, or you can add them manually."}
+                </EmptyDescription>
+              </EmptyHeader>
               {!searchQuery && (
-                <Button asChild>
-                  <Link href="/admin/users/new">
-                    <UserPlus className="mr-2 size-4" />
-                    Add Student
-                  </Link>
-                </Button>
+                <EmptyContent>
+                  <Button asChild>
+                    <Link href="/admin/users/new">
+                      <UserPlus data-icon="inline-start" />
+                      Add Student
+                    </Link>
+                  </Button>
+                </EmptyContent>
               )}
-            </div>
+            </Empty>
           ) : (
             <div className="flex flex-col gap-4">
               {filtered.map((student) => (
                 <div
                   key={student.id}
-                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                  className="flex flex-col gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex items-center gap-4">
-                    <Avatar>
+                  <div className="flex min-w-0 items-center gap-4">
+                    <Avatar className="shrink-0">
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {student.fullName
                           .split(" ")
@@ -136,18 +154,18 @@ export default function StudentsPage() {
                           .slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-medium">{student.fullName}</p>
-                      <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Mail className="size-3" />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{student.fullName}</p>
+                      <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+                        <Mail className="size-3 shrink-0" />
                         {student.email}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                     <div className="text-center">
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-semibold text-foreground">
                         {student._count?.enrolments ?? 0}
                       </p>
                       <p className="text-xs text-muted-foreground">Enrolled</p>
@@ -165,10 +183,10 @@ export default function StudentsPage() {
                       variant="ghost"
                       size="icon"
                       asChild
-                      aria-label="Action"
+                      aria-label="Edit student"
                     >
                       <Link href={`/admin/users/${student.id}`}>
-                        <Users className="size-4" />
+                        <Users />
                       </Link>
                     </Button>
                   </div>

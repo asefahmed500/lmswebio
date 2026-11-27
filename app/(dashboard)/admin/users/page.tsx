@@ -14,15 +14,27 @@ import {
   ToggleRight,
   GraduationCap,
   UserCog,
-  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { apiGet, apiPut, apiDelete } from "@/lib/api-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Table,
   TableBody,
@@ -34,6 +46,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -42,6 +55,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -166,33 +180,22 @@ export default function AdminUsersPage() {
     return variants[role] || "outline"
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading users...</p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading users…" />
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
-          <p className="mt-1 text-muted-foreground">
-            Manage platform users and their roles
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/users/new">
-            <Plus data-icon="inline-start" />
-            Add User
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Users"
+        description="Manage platform users and their roles"
+        action={
+          <Button asChild>
+            <Link href="/admin/users/new">
+              <Plus data-icon="inline-start" />
+              Add User
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card size="sm">
@@ -203,7 +206,9 @@ export default function AdminUsersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {stats.total}
+            </div>
           </CardContent>
         </Card>
         <Card size="sm">
@@ -214,7 +219,9 @@ export default function AdminUsersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.instructors}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {stats.instructors}
+            </div>
           </CardContent>
         </Card>
         <Card size="sm">
@@ -225,44 +232,55 @@ export default function AdminUsersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.students}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {stats.students}
+            </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <InputGroup className="h-9 flex-1">
+          <InputGroupInput
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
           />
-        </div>
+          <InputGroupAddon align="inline-start">
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="All Roles" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Roles</SelectItem>
-            <SelectItem value="ADMIN">Admin</SelectItem>
-            <SelectItem value="INSTRUCTOR">Instructor</SelectItem>
-            <SelectItem value="STUDENT">Student</SelectItem>
+            <SelectGroup>
+              <SelectItem value="ALL">All Roles</SelectItem>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="INSTRUCTOR">Instructor</SelectItem>
+              <SelectItem value="STUDENT">Student</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
 
       {filteredUsers.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Users className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-lg font-medium">No users found</p>
-            <p className="text-sm text-muted-foreground">
-              {search || roleFilter !== "ALL"
-                ? "Try adjusting your search or filters"
-                : "Get started by adding your first user"}
-            </p>
+          <CardContent>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Users />
+                </EmptyMedia>
+                <EmptyTitle>No users found</EmptyTitle>
+                <EmptyDescription>
+                  {search || roleFilter !== "ALL"
+                    ? "Try adjusting your search or filters"
+                    : "Get started by adding your first user"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </CardContent>
         </Card>
       ) : (
@@ -289,14 +307,16 @@ export default function AdminUsersPage() {
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar className="size-8 shrink-0">
                           <AvatarImage src={user.avatarUrl} />
                           <AvatarFallback>
                             {getInitials(user.fullName)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{user.fullName}</span>
+                        <span className="truncate font-medium">
+                          {user.fullName}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="hidden text-muted-foreground sm:table-cell">
@@ -333,32 +353,36 @@ export default function AdminUsersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/admin/users/${user.id}`)
-                            }
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleToggleActive(user)}
-                          >
-                            {user.isActive ? (
-                              <ToggleLeft className="mr-2 h-4 w-4" />
-                            ) : (
-                              <ToggleRight className="mr-2 h-4 w-4" />
-                            )}
-                            {user.isActive ? "Deactivate" : "Activate"}
-                          </DropdownMenuItem>
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(`/admin/users/${user.id}`)
+                              }
+                            >
+                              <Edit data-icon="inline-start" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleToggleActive(user)}
+                            >
+                              {user.isActive ? (
+                                <ToggleLeft data-icon="inline-start" />
+                              ) : (
+                                <ToggleRight data-icon="inline-start" />
+                              )}
+                              {user.isActive ? "Deactivate" : "Activate"}
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => setDeleteId(user.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setDeleteId(user.id)}
+                            >
+                              <Trash2 data-icon="inline-start" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

@@ -12,6 +12,7 @@ const createCourseSchema = z.object({
   category: z.string().optional(),
   tags: z.array(z.string()).default([]),
   thumbnail: z.string().url().optional(),
+  price: z.number().min(0).optional(),
 })
 
 const updateCourseSchema = z.object({
@@ -22,6 +23,7 @@ const updateCourseSchema = z.object({
   tags: z.array(z.string()).optional(),
   thumbnail: z.string().url().optional(),
   isPublished: z.boolean().optional(),
+  price: z.number().min(0).optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -52,8 +54,8 @@ export async function GET(request: NextRequest) {
     if (level) where.level = level as Level
     if (isPublished === "true") where.isPublished = true
     else if (isPublished === "false") where.isPublished = false
-    // Only allow instructorId filter for ADMIN (prevents IDOR)
-    if (instructorId && session.user.role !== "INSTRUCTOR")
+    // Only allow the instructorId filter for ADMIN (prevents IDOR).
+    if (instructorId && session.user.role === "ADMIN")
       where.instructorId = instructorId
     if (search) {
       where.OR = [
@@ -140,6 +142,7 @@ export async function POST(request: NextRequest) {
         category: data.category,
         tags: data.tags,
         thumbnail: data.thumbnail,
+        price: data.price ?? 0,
         instructorId: session.user.id,
       },
       include: {

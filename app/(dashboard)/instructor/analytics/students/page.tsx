@@ -13,9 +13,22 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Dialog,
   DialogContent,
@@ -26,14 +39,16 @@ import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 
 interface StudentAnalytics {
-  userId: number
+  userId: string
   fullName: string
   email: string
+  avatarUrl?: string | null
   enrolledCount: number
   avgProgress: number
   completedCount: number
+  lastAccessedAt?: string | null
   courses: Array<{
-    courseId: number
+    courseId: string
     courseTitle: string
     progress: number
     status: string
@@ -58,17 +73,11 @@ export default function StudentPerformancePage() {
       if (!user) return
       setIsLoading(true)
       try {
-        const result = await apiGet<AnalyticsApiResponse | StudentAnalytics[]>(
-          "/analytics?type=user"
+        const result = await apiGet<AnalyticsApiResponse>(
+          "/instructors/students"
         )
         if (result.error) throw new Error(result.error)
-        const data = result.data
-        const list = Array.isArray(data)
-          ? data
-          : (data as AnalyticsApiResponse).students ||
-            (data as AnalyticsApiResponse).users ||
-            []
-        setStudents(list)
+        setStudents(result.data?.students ?? [])
       } catch (error) {
         console.error("Failed to load student analytics:", error)
       } finally {
@@ -96,29 +105,28 @@ export default function StudentPerformancePage() {
         )
       : 0
 
+  const header = (
+    <PageHeader
+      title="Student Performance"
+      description="View enrollment and progress data for students in your courses"
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading student analytics...
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
+        <LoadingCard />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Student Performance
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          View enrollment and progress data for students in your courses
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -130,7 +138,7 @@ export default function StudentPerformancePage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Users className="size-5 text-primary" />
-              <div className="text-2xl font-bold">{totalStudents}</div>
+              <div className="text-2xl font-semibold">{totalStudents}</div>
             </div>
           </CardContent>
         </Card>
@@ -143,7 +151,7 @@ export default function StudentPerformancePage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <BookOpen className="size-5 text-info" />
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-semibold">
                 {totalStudents > 0
                   ? (
                       students.reduce((sum, s) => sum + s.enrolledCount, 0) /
@@ -163,7 +171,7 @@ export default function StudentPerformancePage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <TrendingUp className="size-5 text-success" />
-              <div className="text-2xl font-bold">{avgProgressAll}%</div>
+              <div className="text-2xl font-semibold">{avgProgressAll}%</div>
             </div>
           </CardContent>
         </Card>
@@ -171,18 +179,17 @@ export default function StudentPerformancePage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative max-w-sm flex-1">
-              <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search students by name or email..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
+          <InputGroup className="h-9 max-w-sm min-w-0 flex-1">
+            <InputGroupInput
+              type="search"
+              placeholder="Search students by name or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+          </InputGroup>
         </CardHeader>
         <CardContent>
           {filteredStudents.length > 0 ? (
@@ -259,19 +266,23 @@ export default function StudentPerformancePage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-12 text-center">
-              <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                {searchQuery
-                  ? "No students found"
-                  : "No student data available"}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {searchQuery
-                  ? "Try adjusting your search query"
-                  : "Students will appear here once they enroll in your courses."}
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Users />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {searchQuery
+                    ? "No students found"
+                    : "No student data available"}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery
+                    ? "Try adjusting your search query"
+                    : "Students will appear here once they enroll in your courses."}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>
@@ -310,7 +321,7 @@ export default function StudentPerformancePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-bold">
+                  <div className="text-xl font-semibold">
                     {selectedStudent?.enrolledCount}
                   </div>
                 </CardContent>
@@ -322,7 +333,7 @@ export default function StudentPerformancePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-bold">
+                  <div className="text-xl font-semibold">
                     {selectedStudent?.avgProgress}%
                   </div>
                 </CardContent>
@@ -334,7 +345,7 @@ export default function StudentPerformancePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xl font-bold">
+                  <div className="text-xl font-semibold">
                     {selectedStudent?.completedCount}
                   </div>
                 </CardContent>

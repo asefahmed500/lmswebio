@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Save, Lock, User } from "lucide-react"
+import { Save, Lock, User } from "lucide-react"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import {
@@ -14,9 +14,18 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { LoadingCard } from "@/components/loading-skeleton"
+import { Spinner } from "@/components/ui/spinner"
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet, apiPut, apiPost } from "@/lib/api-client"
 import type { User as UserType } from "@/types"
 
@@ -112,10 +121,18 @@ export default function InstructorProfilePage() {
     }
   }
 
+  const header = (
+    <PageHeader
+      title="Profile"
+      description="Manage your personal information and security settings"
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="mx-auto size-8 animate-spin rounded-full border-b-2 border-primary" />
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <LoadingCard />
       </div>
     )
   }
@@ -130,13 +147,8 @@ export default function InstructorProfilePage() {
     : "I"
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage your personal information and security settings
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       <Card>
         <CardHeader>
@@ -160,60 +172,55 @@ export default function InstructorProfilePage() {
             </div>
           </div>
 
-          <form
-            onSubmit={profileForm.handleSubmit(handleProfileSubmit)}
-            className="flex flex-col gap-4"
-          >
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={user?.email || ""}
-                readOnly
-                className="cursor-not-allowed bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">
-                Email cannot be changed
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                {...profileForm.register("fullName", {
-                  required: "Full name is required",
-                })}
-              />
-              {profileForm.formState.errors.fullName && (
-                <p className="text-sm text-destructive">
-                  {profileForm.formState.errors.fullName.message}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>Member Since</Label>
-              <Input
-                value={
-                  user?.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : ""
-                }
-                readOnly
-                className="cursor-not-allowed bg-muted"
-              />
-            </div>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? (
-                <Loader2 data-icon="inline-start" className="animate-spin" />
-              ) : (
-                <Save data-icon="inline-start" />
-              )}
-              Save Changes
-            </Button>
+          <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)}>
+            <FieldGroup className="gap-4">
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  value={user?.email || ""}
+                  readOnly
+                  className="cursor-not-allowed bg-muted"
+                />
+                <FieldDescription>Email cannot be changed</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
+                <Input
+                  id="fullName"
+                  {...profileForm.register("fullName", {
+                    required: "Full name is required",
+                  })}
+                />
+                <FieldError errors={[profileForm.formState.errors.fullName]} />
+              </Field>
+              <Field>
+                <FieldLabel>Member Since</FieldLabel>
+                <Input
+                  value={
+                    user?.createdAt
+                      ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : ""
+                  }
+                  readOnly
+                  className="cursor-not-allowed bg-muted"
+                />
+              </Field>
+              <Field>
+                <Button type="submit" disabled={isSaving} className="w-fit">
+                  {isSaving ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <Save data-icon="inline-start" />
+                  )}
+                  Save Changes
+                </Button>
+              </Field>
+            </FieldGroup>
           </form>
         </CardContent>
       </Card>
@@ -232,70 +239,73 @@ export default function InstructorProfilePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
-            className="flex flex-col gap-4"
-          >
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                {...passwordForm.register("currentPassword", {
-                  required: "Current password is required",
-                })}
-              />
-              {passwordForm.formState.errors.currentPassword && (
-                <p className="text-sm text-destructive">
-                  {passwordForm.formState.errors.currentPassword.message}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                {...passwordForm.register("newPassword", {
-                  required: "New password is required",
-                  minLength: {
-                    value: 8,
-                    message: "Password must be at least 8 characters",
-                  },
-                })}
-              />
-              {passwordForm.formState.errors.newPassword && (
-                <p className="text-sm text-destructive">
-                  {passwordForm.formState.errors.newPassword.message}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                {...passwordForm.register("confirmPassword", {
-                  required: "Please confirm your new password",
-                  validate: (value, formValues) =>
-                    value === formValues.newPassword ||
-                    "Passwords do not match",
-                })}
-              />
-              {passwordForm.formState.errors.confirmPassword && (
-                <p className="text-sm text-destructive">
-                  {passwordForm.formState.errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-            <Button type="submit" disabled={isChangingPassword}>
-              {isChangingPassword ? (
-                <Loader2 data-icon="inline-start" className="animate-spin" />
-              ) : (
-                <Lock data-icon="inline-start" />
-              )}
-              Change Password
-            </Button>
+          <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
+            <FieldGroup className="gap-4">
+              <Field>
+                <FieldLabel htmlFor="currentPassword">
+                  Current Password
+                </FieldLabel>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  {...passwordForm.register("currentPassword", {
+                    required: "Current password is required",
+                  })}
+                />
+                <FieldError
+                  errors={[passwordForm.formState.errors.currentPassword]}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  {...passwordForm.register("newPassword", {
+                    required: "New password is required",
+                    minLength: {
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
+                  })}
+                />
+                <FieldError
+                  errors={[passwordForm.formState.errors.newPassword]}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="confirmPassword">
+                  Confirm New Password
+                </FieldLabel>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...passwordForm.register("confirmPassword", {
+                    required: "Please confirm your new password",
+                    validate: (value, formValues) =>
+                      value === formValues.newPassword ||
+                      "Passwords do not match",
+                  })}
+                />
+                <FieldError
+                  errors={[passwordForm.formState.errors.confirmPassword]}
+                />
+              </Field>
+              <Field>
+                <Button
+                  type="submit"
+                  disabled={isChangingPassword}
+                  className="w-fit"
+                >
+                  {isChangingPassword ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <Lock data-icon="inline-start" />
+                  )}
+                  Change Password
+                </Button>
+              </Field>
+            </FieldGroup>
           </form>
         </CardContent>
       </Card>

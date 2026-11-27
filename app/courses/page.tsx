@@ -1,21 +1,36 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
 import { BookOpen, Search } from "lucide-react"
 import { CourseCard } from "@/features/courses/course-card"
+import { PromotionList } from "@/features/promotions/promotion-list"
 import { SynexNavbar } from "@/components/synex/Navbar"
+import { apiGet } from "@/lib/api-client"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { HomepageFooter } from "@/components/homepage/homepage-footer"
-import { useAuth } from "@/components/auth-provider"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { CourseGridLoading } from "@/components/loading-skeleton"
 
 interface ApiCourse {
   id: number
@@ -30,9 +45,12 @@ interface ApiCourse {
   _count: { modules: number; enrolments: number }
 }
 
+interface PublicCoursesResponse {
+  courses?: ApiCourse[]
+  pagination?: { pages?: number; total?: number }
+}
+
 export default function PublicCoursesPage() {
-  const router = useRouter()
-  const { isAuthenticated } = useAuth()
   const [courses, setCourses] = React.useState<ApiCourse[]>([])
   const [loading, setLoading] = React.useState(true)
 
@@ -72,28 +90,29 @@ export default function PublicCoursesPage() {
         if (search) p.set("search", search)
         if (category !== "all") p.set("category", category)
         if (level !== "all") p.set("level", level)
-        const res = await fetch(`/api/courses/public?${p}`)
-        if (res.ok) {
-          const data = await res.json()
-          setCourses(data.courses || [])
-          setTotalPages(data.pagination?.pages || 1)
-          setTotal(data.pagination?.total || 0)
-          if (!categories.length) {
-            const cats = [
-              ...new Set(
-                data.courses?.map((c: ApiCourse) => c.category).filter(Boolean)
-              ),
-            ] as string[]
-            if (cats.length) setCategories(cats)
-          }
+        const res = await apiGet<PublicCoursesResponse>(
+          `/courses/public?${p.toString()}`
+        )
+        if (res.error || !res.data) return
+        const data = res.data
+        setCourses(data.courses || [])
+        setTotalPages(data.pagination?.pages || 1)
+        setTotal(data.pagination?.total || 0)
+        if (!categories.length) {
+          const cats = [
+            ...new Set(
+              data.courses?.map((c: ApiCourse) => c.category).filter(Boolean)
+            ),
+          ] as string[]
+          if (cats.length) setCategories(cats)
         }
       } catch {
       } finally {
         setLoading(false)
       }
     }
-    load()
-  }, [page, category, level, search])
+    void load()
+  }, [page, category, level, search, categories.length])
 
   // Adopt ?q= / ?search= from the URL on first mount, so a link from the
   // command palette or navbar lands on a filtered catalogue. This is a lazy
@@ -106,37 +125,44 @@ export default function PublicCoursesPage() {
     setPage(1)
   }
 
+  const hasFilters = Boolean(search) || category !== "all" || level !== "all"
+
+  function clearFilters() {
+    setSearchDraft("")
+    setSearch("")
+    setCategory("all")
+    setLevel("all")
+    setPage(1)
+  }
+
   return (
-    <div className="flex min-h-screen flex-col bg-canvas">
+    <div className="flex min-h-screen flex-col bg-background">
       <SynexNavbar />
 
       <main id="main-content" className="flex-1">
-        <div className="border-b border-graphite/10 py-12">
+        <div className="border-b border-border py-12">
           <div className="mx-auto max-w-[1280px] px-5">
-            <div className="mb-8">
-              <h1 className="font-bradford text-[40px] leading-[1.1] font-medium tracking-[-0.03em] text-void-black">
-                Course Catalog
-              </h1>
-              <p className="mt-2 font-visueltpro text-[15px] font-light text-smoke">
-                Browse {total} courses from expert instructors
-              </p>
-            </div>
+            <PageHeader
+              title="Course Catalog"
+              description={`Browse ${total} courses from expert instructors`}
+            />
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-smoke" />
-                <Input
+            <form
+              onSubmit={handleSearch}
+              className="mt-8 flex flex-col gap-3 sm:flex-row"
+            >
+              <InputGroup className="h-9 min-w-0 flex-1">
+                <InputGroupAddon>
+                  <Search />
+                </InputGroupAddon>
+                <InputGroupInput
                   type="search"
                   aria-label="Search courses"
                   placeholder="Search courses..."
                   value={searchDraft}
                   onChange={(e) => setSearchDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSearch(e)
-                  }}
-                  className="pl-9"
                 />
-              </div>
+              </InputGroup>
               <Select
                 value={category}
                 onValueChange={(v) => {
@@ -146,17 +172,19 @@ export default function PublicCoursesPage() {
               >
                 <SelectTrigger
                   aria-label="Filter by category"
-                  className="w-[180px]"
+                  className="w-full sm:w-[180px]"
                 >
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
               <Select
@@ -168,72 +196,51 @@ export default function PublicCoursesPage() {
               >
                 <SelectTrigger
                   aria-label="Filter by level"
-                  className="w-[160px]"
+                  className="w-full sm:w-[160px]"
                 >
                   <SelectValue placeholder="All Levels" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="BEGINNER">Beginner</SelectItem>
-                  <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-                  <SelectItem value="ADVANCED">Advanced</SelectItem>
+                  <SelectGroup>
+                    <SelectItem value="all">All Levels</SelectItem>
+                    <SelectItem value="BEGINNER">Beginner</SelectItem>
+                    <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+                    <SelectItem value="ADVANCED">Advanced</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
-              <Button type="button" onClick={handleSearch}>
-                Search
-              </Button>
-            </div>
+              <Button type="submit">Search</Button>
+            </form>
           </div>
         </div>
 
         <div className="mx-auto max-w-[1280px] px-5 py-10">
           {loading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="animate-pulse rounded-xl border border-graphite/10 bg-chalk"
-                >
-                  <div className="aspect-[4/3] bg-canvas" />
-                  <div className="p-5">
-                    <div className="mb-2 h-3 w-16 rounded bg-canvas" />
-                    <div className="mb-2 h-4 w-full rounded bg-canvas" />
-                    <div className="h-3 w-3/4 rounded bg-canvas" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <CourseGridLoading count={8} />
           ) : courses.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <BookOpen className="mb-4 size-16 text-smoke/20" />
-              <h2 className="font-bradford text-[24px] font-medium text-void-black">
-                No courses found
-              </h2>
-              <p className="mt-2 font-visueltpro text-sm font-light text-smoke">
-                {search || category !== "all" || level !== "all"
-                  ? "Try adjusting your filters."
-                  : "Courses will appear once instructors publish them."}
-              </p>
-              {(search || category !== "all" || level !== "all") && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchDraft("")
-                    setSearch("")
-                    setCategory("all")
-                    setLevel("all")
-                    setPage(1)
-                  }}
-                  className="mt-4 rounded-md border border-graphite/20 px-3 py-1.5 font-visueltpro text-sm text-graphite transition-colors hover:border-graphite/40"
-                >
-                  Clear Filters
-                </Button>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <BookOpen />
+                </EmptyMedia>
+                <EmptyTitle>No courses found</EmptyTitle>
+                <EmptyDescription>
+                  {hasFilters
+                    ? "Try adjusting your filters."
+                    : "Courses will appear once instructors publish them."}
+                </EmptyDescription>
+              </EmptyHeader>
+              {hasFilters && (
+                <EmptyContent>
+                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                    Clear Filters
+                  </Button>
+                </EmptyContent>
               )}
-            </div>
+            </Empty>
           ) : (
             <>
-              <p className="mb-6 font-visueltpro text-sm font-light text-smoke">
+              <p className="mb-6 text-sm text-muted-foreground">
                 Showing {courses.length} of {total} courses
               </p>
 
@@ -268,13 +275,15 @@ export default function PublicCoursesPage() {
               </div>
 
               {totalPages > 1 && (
-                <div className="mt-10 flex items-center justify-center gap-1">
+                <nav
+                  aria-label="Course pages"
+                  className="mt-10 flex flex-wrap items-center justify-center gap-1"
+                >
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="rounded-lg px-3 py-2 font-visueltpro text-sm text-smoke transition-colors hover:text-void-black disabled:opacity-30"
                   >
                     Previous
                   </Button>
@@ -286,19 +295,15 @@ export default function PublicCoursesPage() {
                     .map((p, i, arr) => (
                       <React.Fragment key={p}>
                         {i > 0 && arr[i - 1] !== p - 1 && (
-                          <span className="px-1 font-visueltpro text-sm text-smoke">
+                          <span className="px-1 text-sm text-muted-foreground">
                             ...
                           </span>
                         )}
                         <Button
-                          variant="ghost"
                           size="sm"
+                          variant={p === page ? "default" : "ghost"}
                           onClick={() => setPage(p)}
-                          className={`rounded-lg px-3 py-2 font-visueltpro text-sm transition-colors ${
-                            p === page
-                              ? "bg-void-black text-chalk"
-                              : "text-smoke hover:text-void-black"
-                          }`}
+                          aria-current={p === page ? "page" : undefined}
                         >
                           {p}
                         </Button>
@@ -309,14 +314,17 @@ export default function PublicCoursesPage() {
                     size="sm"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    className="rounded-lg px-3 py-2 font-visueltpro text-sm text-smoke transition-colors hover:text-void-black disabled:opacity-30"
                   >
                     Next
                   </Button>
-                </div>
+                </nav>
               )}
             </>
           )}
+        </div>
+
+        <div className="mt-12">
+          <PromotionList />
         </div>
       </main>
 

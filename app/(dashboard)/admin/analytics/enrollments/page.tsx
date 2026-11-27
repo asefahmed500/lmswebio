@@ -7,8 +7,15 @@ import {
   TrendingUp,
   Activity,
   CalendarDays,
-  Loader2,
 } from "lucide-react"
+import { DashboardLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiGet } from "@/lib/api-client"
 import {
   Card,
@@ -75,18 +82,7 @@ export default function AdminEnrollmentsAnalyticsPage() {
     }
   }, [])
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 size-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading enrollment analytics...
-          </p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <DashboardLoading />
 
   const enrollmentByMonth = data ? aggregateByMonth(data.enrollmentGrowth) : []
   const usersByMonth = data ? aggregateByMonth(data.userGrowth) : []
@@ -128,14 +124,10 @@ export default function AdminEnrollmentsAnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Enrollment Analytics
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Track user growth and enrollment trends across the platform
-        </p>
-      </div>
+      <PageHeader
+        title="Enrollment Analytics"
+        description="Track user growth and enrollment trends across the platform"
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi) => (
@@ -147,7 +139,9 @@ export default function AdminEnrollmentsAnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{kpi.value}</div>
+              <div className="text-2xl font-semibold text-foreground">
+                {kpi.value}
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -204,9 +198,16 @@ export default function AdminEnrollmentsAnalyticsPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="flex h-[350px] items-center justify-center text-muted-foreground">
-              No enrollment data available yet
-            </div>
+            <Empty className="h-[350px] p-6">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <TrendingUp />
+                </EmptyMedia>
+                <EmptyDescription>
+                  No enrollment data available yet
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>
@@ -250,9 +251,16 @@ export default function AdminEnrollmentsAnalyticsPage() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-                No enrollment data available yet
-              </div>
+              <Empty className="h-[300px] p-6">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <CalendarDays />
+                  </EmptyMedia>
+                  <EmptyDescription>
+                    No enrollment data available yet
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </CardContent>
         </Card>
@@ -295,9 +303,16 @@ export default function AdminEnrollmentsAnalyticsPage() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-                No user registration data available yet
-              </div>
+              <Empty className="h-[300px] p-6">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Users />
+                  </EmptyMedia>
+                  <EmptyDescription>
+                    No user registration data available yet
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </CardContent>
         </Card>

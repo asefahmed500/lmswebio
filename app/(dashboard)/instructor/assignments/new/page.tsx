@@ -5,16 +5,23 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, ArrowLeft } from "lucide-react"
+import { ArrowLeft, CircleAlert } from "lucide-react"
 import { assignmentSchema, type AssignmentFormData } from "@/lib/validators"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Spinner } from "@/components/ui/spinner"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -26,6 +33,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPost } from "@/lib/api-client"
 import type { Course } from "@/types"
@@ -86,21 +94,23 @@ export default function NewAssignmentPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
+    <div className="mx-auto flex max-w-4xl min-w-0 flex-col gap-6">
+      <div className="flex items-start gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          aria-label="Back to assignments"
+        >
           <Link href="/instructor/assignments">
             <ArrowLeft />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Create New Assignment
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Fill in the details to create a new assignment
-          </p>
-        </div>
+        <PageHeader
+          className="min-w-0 flex-1"
+          title="Create New Assignment"
+          description="Fill in the details to create a new assignment"
+        />
       </div>
 
       <form
@@ -109,6 +119,7 @@ export default function NewAssignmentPage() {
       >
         {error && (
           <Alert variant="destructive">
+            <CircleAlert />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -120,108 +131,92 @@ export default function NewAssignmentPage() {
               Define the assignment parameters and requirements
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="title">Assignment Title *</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Week 1: Essay on Machine Learning"
-                disabled={isSubmitting}
-                {...form.register("title")}
-              />
-              {form.formState.errors.title && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.title.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe the assignment requirements, expectations, and any resources..."
-                className="min-h-[120px]"
-                disabled={isSubmitting}
-                {...form.register("description")}
-              />
-              {form.formState.errors.description && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.description.message}
-                </p>
-              )}
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="courseId">Course *</Label>
-                <Select
-                  value={String(form.watch("courseId") || "")}
-                  onValueChange={(value) => form.setValue("courseId", value)}
-                  disabled={isSubmitting || isLoadingCourses}
-                >
-                  <SelectTrigger id="courseId">
-                    <SelectValue
-                      placeholder={
-                        isLoadingCourses
-                          ? "Loading courses..."
-                          : "Select a course"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map((course) => (
-                      <SelectItem key={course.id} value={String(course.id)}>
-                        {course.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.courseId && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.courseId.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="dueDate">Due Date</Label>
+          <CardContent>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="title">Assignment Title *</FieldLabel>
                 <Input
-                  id="dueDate"
-                  type="date"
+                  id="title"
+                  placeholder="e.g., Week 1: Essay on Machine Learning"
                   disabled={isSubmitting}
-                  {...form.register("dueDate")}
+                  {...form.register("title")}
                 />
-                {form.formState.errors.dueDate && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.dueDate.message}
-                  </p>
-                )}
-              </div>
-            </div>
+                <FieldError errors={[form.formState.errors.title]} />
+              </Field>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="maxPoints">Max Points *</Label>
-              <Input
-                id="maxPoints"
-                type="number"
-                min={1}
-                max={1000}
-                disabled={isSubmitting}
-                {...form.register("maxPoints", { valueAsNumber: true })}
-              />
-              {form.formState.errors.maxPoints && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.maxPoints.message}
-                </p>
-              )}
-            </div>
+              <Field>
+                <FieldLabel htmlFor="description">Description</FieldLabel>
+                <Textarea
+                  id="description"
+                  placeholder="Describe the assignment requirements, expectations, and any resources..."
+                  className="min-h-[120px]"
+                  disabled={isSubmitting}
+                  {...form.register("description")}
+                />
+                <FieldError errors={[form.formState.errors.description]} />
+              </Field>
+
+              <div className="grid min-w-0 gap-4 md:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="courseId">Course *</FieldLabel>
+                  <Select
+                    value={String(form.watch("courseId") || "")}
+                    onValueChange={(value) => form.setValue("courseId", value)}
+                    disabled={isSubmitting || isLoadingCourses}
+                  >
+                    <SelectTrigger id="courseId" className="w-full">
+                      <SelectValue
+                        placeholder={
+                          isLoadingCourses
+                            ? "Loading courses..."
+                            : "Select a course"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {courses.map((course) => (
+                          <SelectItem key={course.id} value={String(course.id)}>
+                            {course.title}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldError errors={[form.formState.errors.courseId]} />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="dueDate">Due Date</FieldLabel>
+                  <Input
+                    id="dueDate"
+                    type="date"
+                    disabled={isSubmitting}
+                    {...form.register("dueDate")}
+                  />
+                  <FieldError errors={[form.formState.errors.dueDate]} />
+                </Field>
+              </div>
+
+              <Field>
+                <FieldLabel htmlFor="maxPoints">Max Points *</FieldLabel>
+                <Input
+                  id="maxPoints"
+                  type="number"
+                  min={1}
+                  max={1000}
+                  disabled={isSubmitting}
+                  {...form.register("maxPoints", { valueAsNumber: true })}
+                />
+                <FieldError errors={[form.formState.errors.maxPoints]} />
+              </Field>
+            </FieldGroup>
           </CardContent>
         </Card>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {isSubmitting && <Spinner data-icon="inline-start" />}
             Create Assignment
           </Button>
           <Button

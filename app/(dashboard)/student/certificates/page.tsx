@@ -8,8 +8,16 @@
 import * as React from "react"
 import { Award } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { CertificateViewer } from "@/features/gamification/certificate-viewer"
 import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
+import { CertificateViewer } from "@/features/gamification/certificate-viewer"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 import { toast } from "sonner"
@@ -61,39 +69,33 @@ export default function StudentCertificatesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            My Certificates
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            View and download your earned certificates
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <PageHeader
+          title="My Certificates"
+          description="View and download your earned certificates"
+        />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
-        <LoadingCard count={3} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          My Certificates
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          View and download your earned certificates
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="My Certificates"
+        description="View and download your earned certificates"
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardContent className="flex items-center gap-4 p-6">
             <div className="rounded-md bg-primary/10 p-2">
-              <Award className="h-6 w-6 text-primary" />
+              <Award className="size-6 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{certificates.length}</p>
+              <p className="text-2xl font-semibold">{certificates.length}</p>
               <p className="text-sm text-muted-foreground">
                 Certificates Earned
               </p>
@@ -103,13 +105,17 @@ export default function StudentCertificatesPage() {
       </div>
 
       {certificates.length === 0 ? (
-        <div className="py-12 text-center">
-          <Award className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-semibold">No certificates yet</h3>
-          <p className="mb-4 text-muted-foreground">
-            Complete a course to earn your first certificate!
-          </p>
-        </div>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Award />
+            </EmptyMedia>
+            <EmptyTitle>No certificates yet</EmptyTitle>
+            <EmptyDescription>
+              Complete a course to earn your first certificate!
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="flex flex-col gap-6">
           {certificates.map((certificate) => (

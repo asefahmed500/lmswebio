@@ -10,6 +10,8 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  CircleAlert,
+  Search,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -23,6 +25,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -40,14 +43,30 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPatch, apiDelete } from "@/lib/api-client"
 
@@ -203,38 +222,44 @@ export default function InstructorCoursesPage() {
     }
   }
 
+  const newCourseButton = (
+    <Button asChild>
+      <Link href="/instructor/courses/new">
+        <Plus data-icon="inline-start" />
+        New Course
+      </Link>
+    </Button>
+  )
+
+  const header = (
+    <PageHeader
+      title="My Courses"
+      description="Manage and organize your course content"
+      action={newCourseButton}
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading courses...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-4">
+          <LoadingCard count={4} />
         </div>
+        <LoadingCard />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">My Courses</h1>
-          <p className="mt-1 text-muted-foreground">
-            Manage and organize your course content
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/instructor/courses/new">
-            <Plus data-icon="inline-start" />
-            New Course
-          </Link>
-        </Button>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <CircleAlert />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -245,7 +270,7 @@ export default function InstructorCoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{courses.length}</div>
+            <div className="text-2xl font-semibold">{courses.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -255,7 +280,7 @@ export default function InstructorCoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-semibold">
               {courses.filter((c) => c.isPublished).length}
             </div>
           </CardContent>
@@ -267,7 +292,7 @@ export default function InstructorCoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-semibold">
               {courses.filter((c) => !c.isPublished).length}
             </div>
           </CardContent>
@@ -279,7 +304,7 @@ export default function InstructorCoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-semibold">
               {courses.reduce((sum, c) => sum + (c._count?.modules || 0), 0)}
             </div>
           </CardContent>
@@ -288,15 +313,18 @@ export default function InstructorCoursesPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="max-w-sm flex-1">
-              <Input
+          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+            <InputGroup className="h-9 max-w-sm min-w-0 flex-1">
+              <InputGroupInput
                 type="search"
                 placeholder="Search courses..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
             <Select
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as CourseStatus)}
@@ -305,9 +333,11 @@ export default function InstructorCoursesPage() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All Courses</SelectItem>
-                <SelectItem value="PUBLISHED">Published</SelectItem>
-                <SelectItem value="DRAFT">Drafts</SelectItem>
+                <SelectGroup>
+                  <SelectItem value="ALL">All Courses</SelectItem>
+                  <SelectItem value="PUBLISHED">Published</SelectItem>
+                  <SelectItem value="DRAFT">Drafts</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -414,43 +444,47 @@ export default function InstructorCoursesPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <Link href={`/instructor/courses/${course.id}`}>
-                                <BookOpen className="mr-2 size-4" />
-                                View Details
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/instructor/courses/${course.id}/edit`}
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/instructor/courses/${course.id}`}>
+                                  <BookOpen data-icon="inline-start" />
+                                  View Details
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/instructor/courses/${course.id}/edit`}
+                                >
+                                  <Edit data-icon="inline-start" />
+                                  Edit Course
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleStatusToggle(course.id)}
                               >
-                                <Edit className="mr-2 size-4" />
-                                Edit Course
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleStatusToggle(course.id)}
-                            >
-                              {course.isPublished ? (
-                                <>
-                                  <EyeOff className="mr-2 size-4" />
-                                  Unpublish
-                                </>
-                              ) : (
-                                <>
-                                  <Eye className="mr-2 size-4" />
-                                  Publish
-                                </>
-                              )}
-                            </DropdownMenuItem>
+                                {course.isPublished ? (
+                                  <>
+                                    <EyeOff data-icon="inline-start" />
+                                    Unpublish
+                                  </>
+                                ) : (
+                                  <>
+                                    <Eye data-icon="inline-start" />
+                                    Publish
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => setDeleteId(course.id)}
-                            >
-                              <Trash2 className="mr-2 size-4" />
-                              Delete Course
-                            </DropdownMenuItem>
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => setDeleteId(course.id)}
+                              >
+                                <Trash2 data-icon="inline-start" />
+                                Delete Course
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -460,23 +494,29 @@ export default function InstructorCoursesPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-12 text-center">
-              <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No courses found</h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {searchQuery || statusFilter !== "ALL"
-                  ? "Try adjusting your filters or search query"
-                  : "Get started by creating your first course"}
-              </p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <BookOpen />
+                </EmptyMedia>
+                <EmptyTitle>No courses found</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery || statusFilter !== "ALL"
+                    ? "Try adjusting your filters or search query"
+                    : "Get started by creating your first course"}
+                </EmptyDescription>
+              </EmptyHeader>
               {!searchQuery && statusFilter === "ALL" && (
-                <Button asChild>
-                  <Link href="/instructor/courses/new">
-                    <Plus data-icon="inline-start" />
-                    Create Course
-                  </Link>
-                </Button>
+                <EmptyContent>
+                  <Button asChild>
+                    <Link href="/instructor/courses/new">
+                      <Plus data-icon="inline-start" />
+                      Create Course
+                    </Link>
+                  </Button>
+                </EmptyContent>
               )}
-            </div>
+            </Empty>
           )}
         </CardContent>
       </Card>

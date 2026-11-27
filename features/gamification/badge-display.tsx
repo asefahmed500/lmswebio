@@ -59,8 +59,8 @@ export function BadgeDisplay({
       </div>
 
       {!showAll && badges.length > maxDisplay && (
-        <div className="text-center">
-          <Badge variant="outline" className="cursor-pointer hover:bg-accent">
+        <div className="flex justify-center">
+          <Badge variant="outline">
             +{badges.length - maxDisplay} more badges
           </Badge>
         </div>
@@ -74,11 +74,7 @@ function BadgeCard({ badge }: { badge: BadgeItem }) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Card
-            className={`cursor-pointer transition-all hover:shadow-md ${
-              !badge.earned ? "opacity-50 grayscale" : ""
-            }`}
-          >
+          <Card className={!badge.earned ? "opacity-50" : undefined}>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <Avatar
@@ -95,11 +91,7 @@ function BadgeCard({ badge }: { badge: BadgeItem }) {
                     {badge.points} points
                   </p>
                 </div>
-                {badge.earned && (
-                  <Badge variant="default" className="text-xs">
-                    Earned
-                  </Badge>
-                )}
+                {badge.earned && <Badge variant="success">Earned</Badge>}
               </div>
             </CardContent>
           </Card>

@@ -11,8 +11,9 @@ import { CalendarView } from "@/features/learning/calendar/calendar-view"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { format } from "date-fns"
 import { LoadingCard } from "@/components/loading-skeleton"
+import { PageHeader } from "@/features/dashboard/components/page-header"
+import { format } from "date-fns"
 import { apiGet, apiPost } from "@/lib/api-client"
 import { toast } from "sonner"
 
@@ -97,24 +98,25 @@ export default function StudentCalendarPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
-          <p className="mt-1 text-muted-foreground">
-            View your schedule and upcoming events
-          </p>
-        </div>
+      <div className="flex min-w-0 flex-col gap-6">
+        <PageHeader
+          title="Calendar"
+          description="View your schedule and upcoming events"
+        />
         <LoadingCard />
       </div>
     )
   }
 
-  const eventTypeColors: Record<string, string> = {
-    live_session: "bg-info",
-    deadline: "bg-destructive",
-    assignment_due: "bg-warning",
-    quiz: "bg-primary",
-    other: "bg-muted-foreground",
+  const eventTypeVariants: Record<
+    string,
+    "info" | "destructive" | "warning" | "default" | "secondary"
+  > = {
+    live_session: "info",
+    deadline: "destructive",
+    assignment_due: "warning",
+    quiz: "default",
+    other: "secondary",
   }
 
   const eventTypeLabels: Record<string, string> = {
@@ -126,14 +128,11 @@ export default function StudentCalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
-        <p className="mt-1 text-muted-foreground">
-          View your schedule and upcoming events
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Calendar"
+        description="View your schedule and upcoming events"
+      />
 
       {/* Calendar */}
       <CalendarView
@@ -148,12 +147,14 @@ export default function StudentCalendarPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="mb-4 flex items-center gap-3">
-                  <Badge className={eventTypeColors[selectedEvent.eventType]}>
+              <div className="min-w-0 flex-1">
+                <div className="mb-4 flex flex-wrap items-center gap-3">
+                  <Badge variant={eventTypeVariants[selectedEvent.eventType]}>
                     {eventTypeLabels[selectedEvent.eventType]}
                   </Badge>
-                  <h3 className="text-xl font-bold">{selectedEvent.title}</h3>
+                  <h3 className="text-xl font-semibold">
+                    {selectedEvent.title}
+                  </h3>
                 </div>
 
                 {selectedEvent.description && (
@@ -164,7 +165,7 @@ export default function StudentCalendarPage() {
 
                 <div className="flex flex-col gap-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Clock className="size-4 text-muted-foreground" />
                     <span>
                       {format(new Date(selectedEvent.startTime), "PPp")}
                       {selectedEvent.endTime &&
@@ -174,7 +175,7 @@ export default function StudentCalendarPage() {
 
                   {selectedEvent.location && (
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <MapPin className="size-4 text-muted-foreground" />
                       <span>{selectedEvent.location}</span>
                     </div>
                   )}
@@ -187,7 +188,7 @@ export default function StudentCalendarPage() {
                   )}
 
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <Users className="size-4 text-muted-foreground" />
                     <span>{selectedEvent._count.attendees} attending</span>
                   </div>
                 </div>
@@ -195,7 +196,7 @@ export default function StudentCalendarPage() {
 
               {/* RSVP Buttons */}
               {selectedEvent.eventType === "live_session" && (
-                <div className="flex flex-col gap-2">
+                <div className="flex shrink-0 flex-col gap-2">
                   <Button
                     size="sm"
                     variant={
@@ -203,7 +204,7 @@ export default function StudentCalendarPage() {
                     }
                     onClick={() => handleRsvp(selectedEvent.id, "going")}
                   >
-                    <Check className="mr-1 h-4 w-4" />
+                    <Check data-icon="inline-start" />
                     Going
                   </Button>
                   <Button

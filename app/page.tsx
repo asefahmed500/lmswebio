@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div id="main-content" className="flex min-h-screen flex-col bg-canvas">
+    <div id="main-content" className="flex min-h-screen flex-col bg-background">
       <SynexHero />
       <HomepageContent />
       <HomepageFooter />

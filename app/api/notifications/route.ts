@@ -63,6 +63,25 @@ export async function POST(request: NextRequest) {
 
     const data = createNotificationSchema.parse(body)
 
+    // An instructor may only notify students enrolled in a course they teach.
+    // Without this check any instructor could send arbitrary messages to any
+    // user id (a phishing/spam vector).
+    if (session.user.role === "INSTRUCTOR") {
+      const isTaughtStudent = await prisma.enrolment.findFirst({
+        where: {
+          userId: data.userId,
+          course: { instructorId: session.user.id },
+        },
+        select: { id: true },
+      })
+      if (!isTaughtStudent) {
+        return NextResponse.json(
+          { error: "You can only notify students in your own courses" },
+          { status: 403 }
+        )
+      }
+    }
+
     const notification = await prisma.notification.create({
       data: {
         userId: data.userId,
@@ -104,7 +123,22 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { notificationIds, read, markAll } = body
+    const parsed = z
+      .object({
+        notificationIds: z.array(z.string().min(1)).optional(),
+        read: z.boolean().optional(),
+        markAll: z.boolean().optional(),
+      })
+      .safeParse(body)
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.issues },
+        { status: 400 }
+      )
+    }
+
+    const { notificationIds, read, markAll } = parsed.data
 
     if (markAll) {
       await prisma.notification.updateMany({

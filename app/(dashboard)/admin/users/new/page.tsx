@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import {
   Card,
@@ -14,14 +14,22 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Spinner } from "@/components/ui/spinner"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { apiPost } from "@/lib/api-client"
 
 export default function NewUserPage() {
@@ -80,12 +88,11 @@ export default function NewUserPage() {
             <ArrowLeft />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Add User</h1>
-          <p className="mt-1 text-muted-foreground">
-            Create a new platform user account
-          </p>
-        </div>
+        <PageHeader
+          title="Add User"
+          description="Create a new platform user account"
+          className="min-w-0 flex-1"
+        />
       </div>
 
       <Card className="max-w-lg">
@@ -97,72 +104,70 @@ export default function NewUserPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                aria-invalid={!!errors.fullName}
-              />
-              {errors.fullName && (
-                <p className="text-xs text-destructive">{errors.fullName}</p>
-              )}
-            </div>
+            <FieldGroup className="gap-4">
+              <Field data-invalid={!!errors.fullName}>
+                <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
+                <Input
+                  id="fullName"
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  aria-invalid={!!errors.fullName}
+                />
+                <FieldError>{errors.fullName}</FieldError>
+              </Field>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                aria-invalid={!!errors.email}
-              />
-              {errors.email && (
-                <p className="text-xs text-destructive">{errors.email}</p>
-              )}
-            </div>
+              <Field data-invalid={!!errors.email}>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  aria-invalid={!!errors.email}
+                />
+                <FieldError>{errors.email}</FieldError>
+              </Field>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Minimum 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-invalid={!!errors.password}
-              />
-              {errors.password && (
-                <p className="text-xs text-destructive">{errors.password}</p>
-              )}
-            </div>
+              <Field data-invalid={!!errors.password}>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Minimum 8 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-invalid={!!errors.password}
+                />
+                <FieldError>{errors.password}</FieldError>
+              </Field>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="role">Role</Label>
-              <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="w-full" aria-invalid={!!errors.role}>
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="INSTRUCTOR">Instructor</SelectItem>
-                  <SelectItem value="STUDENT">Student</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.role && (
-                <p className="text-xs text-destructive">{errors.role}</p>
-              )}
-            </div>
+              <Field data-invalid={!!errors.role}>
+                <FieldLabel htmlFor="role">Role</FieldLabel>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger
+                    id="role"
+                    className="w-full"
+                    aria-invalid={!!errors.role}
+                  >
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value="INSTRUCTOR">Instructor</SelectItem>
+                      <SelectItem value="STUDENT">Student</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldError>{errors.role}</FieldError>
+              </Field>
+            </FieldGroup>
 
             <div className="flex items-center gap-4 pt-4">
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {isSubmitting && <Spinner data-icon="inline-start" />}
                 {isSubmitting ? "Creating..." : "Create User"}
               </Button>
               <Button variant="outline" asChild>

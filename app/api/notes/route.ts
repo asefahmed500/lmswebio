@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const lessonId = searchParams.get("lessonId")
     const courseId = searchParams.get("courseId")
+    const search = searchParams.get("search")?.trim()
 
     const where: Prisma.NoteWhereInput = { userId: session.user.id }
 
@@ -46,6 +47,13 @@ export async function GET(req: NextRequest) {
           courseId: courseId,
         },
       }
+    }
+
+    if (search) {
+      where.OR = [
+        { content: { contains: search } },
+        { lesson: { is: { title: { contains: search } } } },
+      ]
     }
 
     const notes = await prisma.note.findMany({

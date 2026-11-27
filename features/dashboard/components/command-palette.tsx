@@ -210,7 +210,7 @@ export function CommandPalette({ role }: { role: Role }) {
         onClick={() => setOpen(true)}
       >
         <span className="flex items-center gap-2">
-          <Search className="size-4" />
+          <Search data-icon="inline-start" />
           Search…
         </span>
         <kbd className="pointer-events-none hidden h-5 items-center gap-0.5 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium select-none sm:inline-flex">

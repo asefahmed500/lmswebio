@@ -15,7 +15,8 @@ import {
   Trash2,
   Users,
   Clock,
-  AlertCircle,
+  Search,
+  TriangleAlert,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -29,6 +30,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -46,7 +48,21 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiDelete } from "@/lib/api-client"
 import type { Assignment } from "@/types"
@@ -115,35 +131,36 @@ export default function InstructorAssignmentsPage() {
     0
   )
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading assignments...
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Assignments</h1>
-          <p className="mt-1 text-muted-foreground">
-            Create and manage assignments for your courses
-          </p>
-        </div>
+  const header = (
+    <PageHeader
+      title="Assignments"
+      description="Create and manage assignments for your courses"
+      action={
         <Button asChild>
           <Link href="/instructor/assignments/new">
             <Plus data-icon="inline-start" />
             New Assignment
           </Link>
         </Button>
+      }
+    />
+  )
+
+  if (isLoading) {
+    return (
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-3">
+          <LoadingCard count={3} />
+        </div>
+        <LoadingCard />
       </div>
+    )
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -155,7 +172,7 @@ export default function InstructorAssignmentsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileText className="size-5 text-primary" />
-              <div className="text-2xl font-bold">{assignments.length}</div>
+              <div className="text-2xl font-semibold">{assignments.length}</div>
             </div>
           </CardContent>
         </Card>
@@ -168,7 +185,7 @@ export default function InstructorAssignmentsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Users className="size-5 text-info" />
-              <div className="text-2xl font-bold">{totalSubmissions}</div>
+              <div className="text-2xl font-semibold">{totalSubmissions}</div>
             </div>
           </CardContent>
         </Card>
@@ -181,7 +198,9 @@ export default function InstructorAssignmentsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="size-5 text-warning" />
-              <div className="text-2xl font-bold">{totalPendingGrading}</div>
+              <div className="text-2xl font-semibold">
+                {totalPendingGrading}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -189,16 +208,17 @@ export default function InstructorAssignmentsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="max-w-sm flex-1">
-              <Input
-                type="search"
-                placeholder="Search assignments..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
+          <InputGroup className="h-9 max-w-sm min-w-0 flex-1">
+            <InputGroupInput
+              type="search"
+              placeholder="Search assignments..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+          </InputGroup>
         </CardHeader>
         <CardContent>
           {filteredAssignments.length > 0 ? (
@@ -239,7 +259,7 @@ export default function InstructorAssignmentsPage() {
                         {assignment.dueDate ? (
                           <div className="flex items-center gap-2">
                             {isOverdue && (
-                              <AlertCircle className="size-4 text-destructive" />
+                              <TriangleAlert className="size-4 text-destructive" />
                             )}
                             <span className="text-sm">
                               {new Date(
@@ -283,30 +303,34 @@ export default function InstructorAssignmentsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/instructor/assignments/${assignment.id}`}
-                              >
-                                <FileText className="mr-2 size-4" />
-                                View Submissions
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/instructor/assignments/${assignment.id}`}
-                              >
-                                <Edit className="mr-2 size-4" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/instructor/assignments/${assignment.id}`}
+                                >
+                                  <FileText data-icon="inline-start" />
+                                  View Submissions
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/instructor/assignments/${assignment.id}`}
+                                >
+                                  <Edit data-icon="inline-start" />
+                                  Edit
+                                </Link>
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => setDeleteId(assignment.id)}
-                            >
-                              <Trash2 className="mr-2 size-4" />
-                              Delete
-                            </DropdownMenuItem>
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => setDeleteId(assignment.id)}
+                              >
+                                <Trash2 data-icon="inline-start" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -316,25 +340,29 @@ export default function InstructorAssignmentsPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-12 text-center">
-              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No assignments found
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {searchQuery
-                  ? "Try adjusting your search query"
-                  : "Get started by creating your first assignment"}
-              </p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>No assignments found</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery
+                    ? "Try adjusting your search query"
+                    : "Get started by creating your first assignment"}
+                </EmptyDescription>
+              </EmptyHeader>
               {!searchQuery && (
-                <Button asChild>
-                  <Link href="/instructor/assignments/new">
-                    <Plus data-icon="inline-start" />
-                    Create Assignment
-                  </Link>
-                </Button>
+                <EmptyContent>
+                  <Button asChild>
+                    <Link href="/instructor/assignments/new">
+                      <Plus data-icon="inline-start" />
+                      Create Assignment
+                    </Link>
+                  </Button>
+                </EmptyContent>
               )}
-            </div>
+            </Empty>
           )}
         </CardContent>
       </Card>
@@ -355,8 +383,8 @@ export default function InstructorAssignmentsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() => deleteId && handleDelete(deleteId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

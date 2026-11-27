@@ -13,6 +13,7 @@ import {
   Users,
   TrendingUp,
   ArrowUpRight,
+  Search,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -25,14 +26,29 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 import type { Quiz } from "@/types"
@@ -107,25 +123,28 @@ export default function QuizResultsPage() {
     (q) => (q.attemptsCount || 0) > 0
   ).length
 
+  const header = (
+    <PageHeader
+      title="Quiz Results"
+      description="View combined results and performance across all quizzes"
+    />
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading results...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
+        <LoadingCard />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Quiz Results</h1>
-        <p className="mt-1 text-muted-foreground">
-          View combined results and performance across all quizzes
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -137,7 +156,7 @@ export default function QuizResultsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileText className="size-5 text-primary" />
-              <div className="text-2xl font-bold">{quizzes.length}</div>
+              <div className="text-2xl font-semibold">{quizzes.length}</div>
             </div>
           </CardContent>
         </Card>
@@ -150,7 +169,7 @@ export default function QuizResultsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Users className="size-5 text-info" />
-              <div className="text-2xl font-bold">{totalAttempts}</div>
+              <div className="text-2xl font-semibold">{totalAttempts}</div>
             </div>
           </CardContent>
         </Card>
@@ -163,7 +182,9 @@ export default function QuizResultsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <BarChart3 className="size-5 text-warning" />
-              <div className="text-2xl font-bold">{quizzesWithAttempts}</div>
+              <div className="text-2xl font-semibold">
+                {quizzesWithAttempts}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -171,29 +192,34 @@ export default function QuizResultsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="max-w-sm flex-1">
-              <Input
+          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+            <InputGroup className="h-9 max-w-sm min-w-0 flex-1">
+              <InputGroupInput
                 type="search"
                 placeholder="Search quizzes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
             <Select
               value={courseFilter}
               onValueChange={(value) => setCourseFilter(value)}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Filter by course" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All Courses</SelectItem>
-                {uniqueCourses.map((course) => (
-                  <SelectItem key={course.id} value={String(course.id)}>
-                    {course.title}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  <SelectItem value="ALL">All Courses</SelectItem>
+                  {uniqueCourses.map((course) => (
+                    <SelectItem key={course.id} value={String(course.id)}>
+                      {course.title}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -270,20 +296,26 @@ export default function QuizResultsPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-12 text-center">
-              <BarChart3 className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No results found</h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {searchQuery || courseFilter !== "ALL"
-                  ? "Try adjusting your filters or search query"
-                  : "No quiz results available yet. Create quizzes and wait for students to attempt them."}
-              </p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <BarChart3 />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery || courseFilter !== "ALL"
+                    ? "Try adjusting your filters or search query"
+                    : "No quiz results available yet. Create quizzes and wait for students to attempt them."}
+                </EmptyDescription>
+              </EmptyHeader>
               {!searchQuery && courseFilter === "ALL" && (
-                <Button asChild>
-                  <Link href="/instructor/quizzes/new">Create Quiz</Link>
-                </Button>
+                <EmptyContent>
+                  <Button asChild>
+                    <Link href="/instructor/quizzes/new">Create Quiz</Link>
+                  </Button>
+                </EmptyContent>
               )}
-            </div>
+            </Empty>
           )}
         </CardContent>
       </Card>

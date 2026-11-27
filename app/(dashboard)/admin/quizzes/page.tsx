@@ -4,19 +4,32 @@ import * as React from "react"
 import {
   HelpCircle,
   Search,
-  Loader2,
   Trash2,
   Clock,
   ListChecks,
   CheckCircle2,
   Layers,
+  CircleAlert,
 } from "lucide-react"
 import { toast } from "sonner"
 import { apiDelete } from "@/lib/api-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Badge } from "@/components/ui/badge"
+import { PageLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Table,
   TableBody,
@@ -28,6 +41,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -132,25 +146,14 @@ export default function AdminQuizzesPage() {
     ),
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 size-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading quizzes...</p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading quizzes…" />
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Quizzes</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage all quizzes across the platform
-        </p>
-      </div>
+      <PageHeader
+        title="Quizzes"
+        description="Manage all quizzes across the platform"
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card size="sm">
@@ -161,7 +164,9 @@ export default function AdminQuizzesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {stats.total}
+            </div>
           </CardContent>
         </Card>
         <Card size="sm">
@@ -172,46 +177,57 @@ export default function AdminQuizzesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.totalQuestions}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {stats.totalQuestions}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <InputGroup className="h-9 flex-1">
+          <InputGroupInput
             placeholder="Search quizzes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
           />
-        </div>
+          <InputGroupAddon align="inline-start">
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
         <Select value={courseFilter} onValueChange={setCourseFilter}>
-          <SelectTrigger className="w-56">
+          <SelectTrigger className="w-full sm:w-56">
             <SelectValue placeholder="All Courses" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Courses</SelectItem>
-            {courses.map((course) => (
-              <SelectItem key={course.id} value={String(course.id)}>
-                {course.title}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              <SelectItem value="ALL">All Courses</SelectItem>
+              {courses.map((course) => (
+                <SelectItem key={course.id} value={String(course.id)}>
+                  {course.title}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
 
       {filteredQuizzes.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <HelpCircle className="mb-4 size-12 text-muted-foreground" />
-            <p className="text-lg font-medium">No quizzes found</p>
-            <p className="text-sm text-muted-foreground">
-              {search || courseFilter !== "ALL"
-                ? "Try adjusting your search or filters"
-                : "No quizzes have been created yet"}
-            </p>
+          <CardContent>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CircleAlert />
+                </EmptyMedia>
+                <EmptyTitle>No quizzes found</EmptyTitle>
+                <EmptyDescription>
+                  {search || courseFilter !== "ALL"
+                    ? "Try adjusting your search or filters"
+                    : "No quizzes have been created yet"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </CardContent>
         </Card>
       ) : (
@@ -232,8 +248,8 @@ export default function AdminQuizzesPage() {
                 {filteredQuizzes.map((quiz) => (
                   <TableRow key={quiz.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{quiz.title}</p>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{quiz.title}</p>
                         {quiz.description && (
                           <p className="max-w-xs truncate text-xs text-muted-foreground">
                             {quiz.description}
@@ -269,8 +285,9 @@ export default function AdminQuizzesPage() {
                         variant="ghost"
                         size="icon-xs"
                         onClick={() => setDeleteId(quiz.id)}
+                        aria-label={`Delete ${quiz.title}`}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        <Trash2 className="text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>

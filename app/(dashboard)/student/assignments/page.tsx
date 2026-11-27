@@ -12,7 +12,7 @@ import {
   Clock,
   CheckCircle2,
   BookOpen,
-  HelpCircle,
+  CircleAlert,
   Calendar,
 } from "lucide-react"
 import {
@@ -25,6 +25,16 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 
@@ -107,7 +117,7 @@ function AssignmentCard({
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <CardTitle className="line-clamp-1 text-base">
               {assignment.title}
             </CardTitle>
@@ -155,7 +165,7 @@ function AssignmentCard({
               </div>
             ) : (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
+                <Clock className="size-4" />
                 <span>
                   Submitted{" "}
                   {new Date(submission.submittedAt).toLocaleDateString()}
@@ -263,12 +273,9 @@ export default function StudentAssignmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading assignments...
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
       </div>
     )
@@ -276,31 +283,29 @@ export default function StudentAssignmentsPage() {
 
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <HelpCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">
-            Error loading assignments
-          </h3>
-          <p className="mb-4 text-sm text-muted-foreground">{error}</p>
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Error loading assignments</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Try Again
           </Button>
-        </div>
-      </div>
+        </EmptyContent>
+      </Empty>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          My Assignments
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          View and submit assignments for your enrolled courses
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="My Assignments"
+        description="View and submit assignments for your enrolled courses"
+      />
 
       {assignments.length > 0 ? (
         <Tabs
@@ -328,19 +333,17 @@ export default function StudentAssignmentsPage() {
                 ))}
               </div>
             ) : (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="py-12 text-center">
-                    <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" />
-                    <h3 className="mb-2 text-lg font-semibold">
-                      No pending assignments
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      You&apos;ve submitted all assignments. Great work!
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <Empty className="rounded-lg border border-dashed">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <CheckCircle2 />
+                  </EmptyMedia>
+                  <EmptyTitle>No pending assignments</EmptyTitle>
+                  <EmptyDescription>
+                    You&apos;ve submitted all assignments. Great work!
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </TabsContent>
 
@@ -356,19 +359,17 @@ export default function StudentAssignmentsPage() {
                 ))}
               </div>
             ) : (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="py-12 text-center">
-                    <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <h3 className="mb-2 text-lg font-semibold">
-                      No submitted assignments
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Assignments awaiting grading will appear here
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <Empty className="rounded-lg border border-dashed">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Clock />
+                  </EmptyMedia>
+                  <EmptyTitle>No submitted assignments</EmptyTitle>
+                  <EmptyDescription>
+                    Assignments awaiting grading will appear here
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </TabsContent>
 
@@ -384,39 +385,37 @@ export default function StudentAssignmentsPage() {
                 ))}
               </div>
             ) : (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="py-12 text-center">
-                    <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <h3 className="mb-2 text-lg font-semibold">
-                      No graded assignments
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Grades will appear here once assignments are marked
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <Empty className="rounded-lg border border-dashed">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <FileText />
+                  </EmptyMedia>
+                  <EmptyTitle>No graded assignments</EmptyTitle>
+                  <EmptyDescription>
+                    Grades will appear here once assignments are marked
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </TabsContent>
         </Tabs>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No assignments found
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Assignments from your enrolled courses will appear here
-              </p>
-              <Button asChild>
-                <Link href="/student/courses/catalogue">Browse Courses</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen />
+            </EmptyMedia>
+            <EmptyTitle>No assignments found</EmptyTitle>
+            <EmptyDescription>
+              Assignments from your enrolled courses will appear here
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/courses/catalogue">Browse Courses</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

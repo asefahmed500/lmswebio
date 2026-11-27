@@ -5,10 +5,12 @@ import Link from "next/link"
 
 import type { Role, User } from "@/types"
 import { useAuth } from "@/components/auth-provider"
+import { LogoMark } from "@/components/homepage/lmsio-logo"
 import { useIsDesktop } from "@/hooks/use-media-query"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { PageLoading } from "@/components/loading-skeleton"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import {
   Sidebar,
@@ -25,7 +27,6 @@ import {
 import { DashboardHeader } from "@/features/dashboard/layout/dashboard-header"
 import { SidebarNav } from "@/features/dashboard/layout/sidebar-nav"
 import { MobileNav } from "@/features/dashboard/layout/mobile-nav"
-import { getInitials } from "@/features/dashboard/layout/user-menu"
 
 /**
  * Breakpoint for the sidebar/mobile-nav switch.
@@ -37,18 +38,7 @@ import { getInitials } from "@/features/dashboard/layout/user-menu"
  */
 
 function LoadingShell() {
-  return (
-    <div
-      className="flex min-h-svh items-center justify-center"
-      role="status"
-      aria-live="polite"
-    >
-      <div className="flex flex-col items-center gap-3 text-muted-foreground">
-        <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <p className="text-sm">Loading your workspace…</p>
-      </div>
-    </div>
-  )
+  return <PageLoading label="Loading your workspace…" />
 }
 
 function MobileShell({
@@ -118,7 +108,6 @@ function DesktopShell({
   children: React.ReactNode
   onLogout: () => void
 }) {
-  const initials = getInitials(user.fullName)
   const basePath = `/${user.role.toLowerCase()}`
 
   return (
@@ -130,9 +119,7 @@ function DesktopShell({
               href={basePath}
               className="flex items-center gap-2.5 rounded-md px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-                L
-              </span>
+              <LogoMark className="size-8" />
               <span className="truncate text-base font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
                 LMSio
               </span>
@@ -153,8 +140,8 @@ function DesktopShell({
                 >
                   <Link href={`${basePath}/profile`}>
                     <Avatar className="size-5">
-                      <AvatarFallback className="text-[10px]">
-                        {initials}
+                      <AvatarFallback className="size-5 p-0">
+                        <LogoMark className="size-5 rounded-full" />
                       </AvatarFallback>
                     </Avatar>
                     <span className="truncate group-data-[collapsible=icon]:hidden">

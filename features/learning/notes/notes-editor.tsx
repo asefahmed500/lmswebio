@@ -27,7 +27,6 @@ interface Note {
 
 interface NotesEditorProps {
   note?: Note
-  lessonId?: number
   onSave?: (content: string, timestamp?: number) => void
   onDelete?: () => void
   readOnly?: boolean
@@ -35,15 +34,12 @@ interface NotesEditorProps {
 
 export function NotesEditor({
   note,
-  lessonId,
   onSave,
   onDelete,
   readOnly = false,
 }: NotesEditorProps) {
   const [content, setContent] = React.useState(note?.content || "")
-  const [timestamp, setTimestamp] = React.useState<number | undefined>(
-    note?.timestamp || undefined
-  )
+  const timestamp = note?.timestamp || undefined
   const [isSaving, setIsSaving] = React.useState(false)
   const [lastSaved, setLastSaved] = React.useState<Date | null>(
     note ? new Date(note.updatedAt) : null
@@ -59,10 +55,6 @@ export function NotesEditor({
     } finally {
       setIsSaving(false)
     }
-  }
-
-  const handleTimestampChange = (time: number) => {
-    setTimestamp(time)
   }
 
   return (
@@ -85,12 +77,12 @@ export function NotesEditor({
               <>
                 {onDelete && note && (
                   <Button
-                    variant="ghost"
-                    size="sm"
+                    variant="destructive"
+                    size="icon-sm"
                     onClick={onDelete}
-                    className="text-destructive"
+                    aria-label="Delete note"
                   >
-                    <Trash2 />
+                    <Trash2 data-icon />
                   </Button>
                 )}
                 <Button
@@ -98,7 +90,7 @@ export function NotesEditor({
                   onClick={handleSave}
                   disabled={!content.trim() || isSaving}
                 >
-                  <Save className="mr-1 size-4" />
+                  <Save data-icon="inline-start" />
                   {isSaving ? "Saving..." : "Save"}
                 </Button>
               </>

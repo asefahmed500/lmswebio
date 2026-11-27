@@ -10,7 +10,6 @@ import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
 import { useParams } from "next/navigation"
 import {
-  BookOpen,
   Users,
   Layers,
   FileText,
@@ -18,6 +17,7 @@ import {
   Edit,
   Eye,
   Clock,
+  CircleAlert,
 } from "lucide-react"
 import {
   Card,
@@ -28,6 +28,15 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 import type { Course, Module } from "@/types"
@@ -135,66 +144,84 @@ export default function InstructorCourseDetailPage() {
     [course]
   )
 
+  const backButton = (
+    <Button variant="ghost" size="icon" asChild aria-label="Back to courses">
+      <Link href="/instructor/courses">
+        <ArrowLeft />
+      </Link>
+    </Button>
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading course...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          <PageHeader
+            className="min-w-0 flex-1"
+            title="Course"
+            description="Course overview and content"
+          />
         </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          <LoadingCard count={4} />
+        </div>
+        <LoadingCard />
       </div>
     )
   }
 
   if (!course) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <BookOpen className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h3 className="mb-2 text-lg font-semibold">Course not found</h3>
-          <p className="mb-4 text-sm text-muted-foreground">
-            The course you&apos;re looking for doesn&apos;t exist.
-          </p>
-          <Button asChild>
-            <Link href="/instructor/courses">Back to Courses</Link>
-          </Button>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          <PageHeader
+            className="min-w-0 flex-1"
+            title="Course not found"
+            description="The course you're looking for doesn't exist."
+          />
         </div>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>Course not found</EmptyTitle>
+            <EmptyDescription>
+              The course you&apos;re looking for doesn&apos;t exist.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild aria-label="Action">
-            <Link href="/instructor/courses">
-              <ArrowLeft />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {course.title}
-            </h1>
-            <p className="mt-1 text-muted-foreground">
-              Course overview and content
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/student/courses/${course.id}`}>
-              <Eye data-icon="inline-start" />
-              View as Student
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href={`/instructor/courses/${course.id}/edit`}>
-              <Edit data-icon="inline-start" />
-              Edit Course
-            </Link>
-          </Button>
-        </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <div className="flex items-start gap-4">
+        {backButton}
+        <PageHeader
+          className="min-w-0 flex-1"
+          title={course.title}
+          description="Course overview and content"
+          action={
+            <>
+              <Button variant="outline" asChild>
+                <Link href={`/student/courses/${course.id}`}>
+                  <Eye data-icon="inline-start" />
+                  View as Student
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href={`/instructor/courses/${course.id}/edit`}>
+                  <Edit data-icon="inline-start" />
+                  Edit Course
+                </Link>
+              </Button>
+            </>
+          }
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -217,7 +244,7 @@ export default function InstructorCourseDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold capitalize">
+            <div className="text-2xl font-semibold capitalize">
               {course.level.toLowerCase()}
             </div>
           </CardContent>
@@ -232,7 +259,7 @@ export default function InstructorCourseDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{studentCount}</div>
+            <div className="text-2xl font-semibold">{studentCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -245,7 +272,7 @@ export default function InstructorCourseDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-semibold">
               {course.modules.length}m / {totalLessons}l
             </div>
           </CardContent>
@@ -361,9 +388,17 @@ export default function InstructorCourseDetailPage() {
                 ))}
             </div>
           ) : (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              No modules yet. Use the course editor to add content.
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Layers />
+                </EmptyMedia>
+                <EmptyTitle>No modules yet</EmptyTitle>
+                <EmptyDescription>
+                  Use the course editor to add content.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>

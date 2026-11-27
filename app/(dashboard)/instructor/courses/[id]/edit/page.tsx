@@ -11,7 +11,6 @@ import { useParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
-  Loader2,
   ArrowLeft,
   Plus,
   Trash2,
@@ -19,6 +18,8 @@ import {
   ChevronDown,
   Save,
   Eye,
+  CircleAlert,
+  Layers,
 } from "lucide-react"
 import {
   Card,
@@ -30,13 +31,29 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { LoadingCard } from "@/components/loading-skeleton"
+import { Spinner } from "@/components/ui/spinner"
 import { Badge } from "@/components/ui/badge"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -123,28 +140,28 @@ function LessonEditor({
   onDelete: (lessonId: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-1 flex-col gap-2">
-          <Label>Lesson Title</Label>
+    <FieldGroup className="min-w-0 gap-3 rounded-lg border bg-card p-4">
+      <div className="flex min-w-0 items-start justify-between gap-2">
+        <Field className="min-w-0 flex-1">
+          <FieldLabel>Lesson Title</FieldLabel>
           <Input
             value={lesson.title}
             onChange={(e) => onUpdate(lesson.id, { title: e.target.value })}
             placeholder="Lesson title"
           />
-        </div>
+        </Field>
         <Button
-          variant="ghost"
-          size="icon"
-          className="mt-6 text-destructive"
+          variant="destructive"
+          size="icon-sm"
+          aria-label="Delete lesson"
           onClick={() => onDelete(lesson.id)}
         >
           <Trash2 />
         </Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <Label>Content Type</Label>
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+        <Field>
+          <FieldLabel>Content Type</FieldLabel>
           <Select
             value={lesson.contentType}
             onValueChange={(value) =>
@@ -153,18 +170,20 @@ function LessonEditor({
               })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="text">Text</SelectItem>
-              <SelectItem value="video">Video</SelectItem>
-              <SelectItem value="pdf">PDF</SelectItem>
+              <SelectGroup>
+                <SelectItem value="text">Text</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
+                <SelectItem value="pdf">PDF</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label>Duration (minutes)</Label>
+        </Field>
+        <Field>
+          <FieldLabel>Duration (minutes)</FieldLabel>
           <Input
             type="number"
             min={0}
@@ -176,12 +195,12 @@ function LessonEditor({
             }
             placeholder="e.g. 15"
           />
-        </div>
+        </Field>
       </div>
-      <div className="flex flex-col gap-2">
-        <Label>
+      <Field>
+        <FieldLabel>
           {lesson.contentType === "video" ? "Video URL" : "Content"}
-        </Label>
+        </FieldLabel>
         {lesson.contentType === "video" ? (
           <Input
             value={lesson.content ?? ""}
@@ -196,8 +215,8 @@ function LessonEditor({
             rows={3}
           />
         )}
-      </div>
-    </div>
+      </Field>
+    </FieldGroup>
   )
 }
 
@@ -229,41 +248,42 @@ function ModuleEditor({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
               {index + 1}
             </div>
-            <div className="flex-1">
+            <Field className="min-w-0 flex-1">
+              <FieldLabel className="sr-only">Module title</FieldLabel>
               <Input
                 value={module.title}
                 onChange={(e) => onUpdate(module.id, { title: e.target.value })}
                 placeholder="Module title"
                 className="h-8 text-base font-medium"
               />
-            </div>
+            </Field>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <Button
               variant="ghost"
-              size="icon"
-              className="size-8"
+              size="icon-sm"
+              aria-label="Move module up"
               onClick={() => onMoveUp(module.id)}
             >
               <ChevronUp />
             </Button>
             <Button
               variant="ghost"
-              size="icon"
-              className="size-8"
+              size="icon-sm"
+              aria-label="Move module down"
               onClick={() => onMoveDown(module.id)}
             >
               <ChevronDown />
             </Button>
             <Button
-              variant="ghost"
-              size="icon"
-              className="size-8 text-destructive"
+              variant="destructive"
+              size="icon-sm"
+              aria-label="Delete module"
               onClick={() => onDelete(module.id)}
             >
               <Trash2 />
@@ -635,14 +655,27 @@ export default function InstructorCourseEditPage() {
     setTags(tags.filter((t) => t !== tag))
   }
 
+  const backButton = (
+    <Button variant="ghost" size="icon" asChild aria-label="Back to course">
+      <Link href={`/instructor/courses/${courseId}`}>
+        <ArrowLeft />
+      </Link>
+    </Button>
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading course editor...
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          <PageHeader
+            className="min-w-0 flex-1"
+            title="Edit Course"
+            description="Manage course settings and content"
+          />
+        </div>
+        <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+          <LoadingCard count={2} />
         </div>
       </div>
     )
@@ -650,64 +683,67 @@ export default function InstructorCourseEditPage() {
 
   if (!course) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">Course not found</p>
-          <Button className="mt-4" asChild>
-            <Link href="/instructor/courses">Back to Courses</Link>
-          </Button>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          <PageHeader className="min-w-0 flex-1" title="Course not found" />
         </div>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>Course not found</EmptyTitle>
+            <EmptyDescription>
+              This course is no longer available.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild aria-label="Action">
-            <Link href={`/instructor/courses/${courseId}`}>
-              <ArrowLeft />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Edit Course
-            </h1>
-            <p className="mt-1 text-muted-foreground">
-              Manage course settings and content
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/student/courses/${courseId}`}>
-              <Eye data-icon="inline-start" />
-              Preview
-            </Link>
-          </Button>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="publish-toggle" className="text-sm">
-              {course.isPublished ? "Published" : "Draft"}
-            </Label>
-            <Switch
-              id="publish-toggle"
-              checked={course.isPublished}
-              onCheckedChange={handleTogglePublish}
-            />
-          </div>
-        </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <div className="flex items-start gap-4">
+        {backButton}
+        <PageHeader
+          className="min-w-0 flex-1"
+          title="Edit Course"
+          description="Manage course settings and content"
+          action={
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/student/courses/${courseId}`}>
+                  <Eye data-icon="inline-start" />
+                  Preview
+                </Link>
+              </Button>
+              <Field orientation="horizontal">
+                <FieldLabel htmlFor="publish-toggle">
+                  {course.isPublished ? "Published" : "Draft"}
+                </FieldLabel>
+                <Switch
+                  id="publish-toggle"
+                  checked={course.isPublished}
+                  onCheckedChange={handleTogglePublish}
+                />
+              </Field>
+            </>
+          }
+        />
       </div>
 
       {saveError && (
         <Alert variant="destructive">
+          <CircleAlert />
           <AlertDescription>{saveError}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         {/* Left panel - Course Settings */}
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Course Settings</CardTitle>
@@ -715,144 +751,151 @@ export default function InstructorCourseEditPage() {
                 Basic information and configuration
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="title">Course Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., Introduction to Web Development"
-                  {...form.register("title")}
-                />
-                {form.formState.errors.title && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.title.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe what students will learn..."
-                  rows={5}
-                  {...form.register("description")}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="level">Difficulty Level *</Label>
-                  <Select
-                    value={form.watch("level")}
-                    onValueChange={(value) =>
-                      form.setValue("level", value as Level)
-                    }
-                  >
-                    <SelectTrigger id="level">
-                      <SelectValue placeholder="Select level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="BEGINNER">Beginner</SelectItem>
-                      <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-                      <SelectItem value="ADVANCED">Advanced</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.level && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.level.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="category">Category</Label>
+            <CardContent>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="title">Course Title *</FieldLabel>
                   <Input
-                    id="category"
-                    placeholder="e.g., Web Development"
-                    {...form.register("category")}
+                    id="title"
+                    placeholder="e.g., Introduction to Web Development"
+                    {...form.register("title")}
                   />
-                </div>
-              </div>
+                  <FieldError errors={[form.formState.errors.title]} />
+                </Field>
 
-              <div className="flex flex-col gap-2">
-                <Label>Tags (max 10)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add a tag..."
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        handleAddTag()
+                <Field>
+                  <FieldLabel htmlFor="description">Description</FieldLabel>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe what students will learn..."
+                    rows={5}
+                    {...form.register("description")}
+                  />
+                </Field>
+
+                <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="level">Difficulty Level *</FieldLabel>
+                    <Select
+                      value={form.watch("level")}
+                      onValueChange={(value) =>
+                        form.setValue("level", value as Level)
                       }
-                    }}
-                    disabled={tags.length >= 10}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddTag}
-                    disabled={tags.length >= 10 || !tagInput.trim()}
-                  >
-                    <Plus />
-                  </Button>
+                    >
+                      <SelectTrigger id="level" className="w-full">
+                        <SelectValue placeholder="Select level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="BEGINNER">Beginner</SelectItem>
+                          <SelectItem value="INTERMEDIATE">
+                            Intermediate
+                          </SelectItem>
+                          <SelectItem value="ADVANCED">Advanced</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FieldError errors={[form.formState.errors.level]} />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="category">Category</FieldLabel>
+                    <Input
+                      id="category"
+                      placeholder="e.g., Web Development"
+                      {...form.register("category")}
+                    />
+                  </Field>
                 </div>
-                {tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="gap-1">
-                        {tag}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveTag(tag)}
-                          className="size-5 rounded-full p-0.5 hover:bg-destructive/20"
-                        >
-                          ×
-                        </Button>
-                      </Badge>
-                    ))}
+
+                <Field>
+                  <FieldLabel>Tags (max 10)</FieldLabel>
+                  <div className="flex min-w-0 gap-2">
+                    <Input
+                      placeholder="Add a tag..."
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          handleAddTag()
+                        }
+                      }}
+                      disabled={tags.length >= 10}
+                      className="min-w-0"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Add tag"
+                      onClick={handleAddTag}
+                      disabled={tags.length >= 10 || !tagInput.trim()}
+                    >
+                      <Plus />
+                    </Button>
                   </div>
-                )}
-              </div>
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="gap-1">
+                          {tag}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => handleRemoveTag(tag)}
+                            aria-label="Remove tag"
+                          >
+                            ×
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </Field>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="thumbnail">Thumbnail URL</Label>
-                <Input
-                  id="thumbnail"
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  {...form.register("thumbnail")}
-                />
-              </div>
+                <Field>
+                  <FieldLabel htmlFor="thumbnail">Thumbnail URL</FieldLabel>
+                  <Input
+                    id="thumbnail"
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    {...form.register("thumbnail")}
+                  />
+                </Field>
 
-              <Button onClick={handleSaveCourse} disabled={isSaving}>
-                {isSaving ? (
-                  <Loader2 data-icon="inline-start" className="animate-spin" />
-                ) : (
-                  <Save data-icon="inline-start" />
-                )}
-                Save Settings
-              </Button>
+                <Field>
+                  <Button
+                    onClick={handleSaveCourse}
+                    disabled={isSaving}
+                    className="w-fit"
+                  >
+                    {isSaving ? (
+                      <Spinner data-icon="inline-start" />
+                    ) : (
+                      <Save data-icon="inline-start" />
+                    )}
+                    Save Settings
+                  </Button>
+                </Field>
+              </FieldGroup>
             </CardContent>
           </Card>
         </div>
 
         {/* Right panel - Module/Lesson Builder */}
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
                   <CardTitle>Modules &amp; Lessons</CardTitle>
                   <CardDescription>
                     Build your course content structure
                   </CardDescription>
                 </div>
-                <Button onClick={handleAddModule}>
+                <Button size="sm" onClick={handleAddModule}>
                   <Plus data-icon="inline-start" />
                   Add Module
                 </Button>
@@ -877,9 +920,17 @@ export default function InstructorCourseEditPage() {
                   ))}
                 </div>
               ) : (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  No modules yet. Click &quot;Add Module&quot; to get started.
-                </div>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Layers />
+                    </EmptyMedia>
+                    <EmptyTitle>No modules yet</EmptyTitle>
+                    <EmptyDescription>
+                      Click &quot;Add Module&quot; to get started.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               )}
             </CardContent>
           </Card>

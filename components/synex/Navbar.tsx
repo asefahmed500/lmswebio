@@ -5,6 +5,8 @@ import Link from "next/link"
 import { ArrowRight, Menu, X } from "lucide-react"
 
 import { useAuth } from "@/components/auth-provider"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 
 /**
  * Public marketing navigation.
@@ -48,17 +50,13 @@ export function SynexNavbar() {
   const close = () => setMobileOpen(false)
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-graphite/10 bg-canvas/85 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between gap-4 px-5">
+    <nav className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-5">
         <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-sm bg-void-black">
-            <span className="font-visueltpro text-xs font-bold text-chalk">
-              L
-            </span>
+          <span className="flex size-7 items-center justify-center rounded-sm bg-primary text-primary-foreground">
+            <span className="text-xs font-medium">L</span>
           </span>
-          <span className="font-visueltpro text-lg tracking-[-0.02em] text-void-black">
-            LMSio
-          </span>
+          <span className="text-lg tracking-tight text-foreground">LMSio</span>
         </Link>
 
         <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
@@ -66,7 +64,7 @@ export function SynexNavbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="font-visueltpro text-sm text-graphite transition-colors hover:text-void-black"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.label}
             </Link>
@@ -75,89 +73,79 @@ export function SynexNavbar() {
 
         <div className="hidden shrink-0 items-center gap-3 md:flex">
           {isAuthenticated ? (
-            <Link
-              href={getDashboardHref()}
-              className="inline-flex h-9 items-center rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-colors hover:bg-graphite"
-            >
-              Go to dashboard
-              <ArrowRight className="ml-1.5 size-4" />
-            </Link>
+            <Button asChild>
+              <Link href={getDashboardHref()}>
+                Go to dashboard
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="font-visueltpro text-sm text-graphite transition-colors hover:text-void-black"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/register"
-                className="inline-flex h-9 items-center rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk transition-colors hover:bg-graphite"
-              >
-                Create account
-                <ArrowRight className="ml-1.5 size-4" />
-              </Link>
+              <Button asChild variant="ghost">
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/register">
+                  Create account
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
+              </Button>
             </>
           )}
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => setMobileOpen((prev) => !prev)}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
-          className="-mr-1 flex size-9 shrink-0 items-center justify-center rounded-md md:hidden"
+          className="-mr-1 md:hidden"
         >
-          {mobileOpen ? (
-            <X className="size-5 text-graphite" />
-          ) : (
-            <Menu className="size-5 text-graphite" />
-          )}
-        </button>
+          {mobileOpen ? <X data-icon /> : <Menu data-icon />}
+        </Button>
       </div>
 
       {mobileOpen ? (
-        <div className="border-t border-graphite/10 bg-canvas md:hidden">
-          <div className="mx-auto max-w-[1280px] px-5 py-3">
+        <div className="bg-background md:hidden">
+          <Separator />
+          <div className="mx-auto max-w-7xl px-5 py-3">
             <nav aria-label="Mobile" className="flex flex-col">
               {NAV_LINKS.map((link) => (
-                <Link
+                <Button
                   key={link.href}
-                  href={link.href}
-                  onClick={close}
-                  className="rounded-md px-2 py-2.5 font-visueltpro text-sm text-graphite transition-colors hover:bg-linen hover:text-void-black"
+                  asChild
+                  variant="ghost"
+                  className="h-10 w-full justify-start font-normal"
                 >
-                  {link.label}
-                </Link>
+                  <Link href={link.href} onClick={close}>
+                    {link.label}
+                  </Link>
+                </Button>
               ))}
             </nav>
 
-            <div className="my-3 border-t border-graphite/10" />
+            <Separator className="my-3" />
 
             {isAuthenticated ? (
-              <Link
-                href={getDashboardHref()}
-                onClick={close}
-                className="flex h-9 items-center justify-center rounded-md bg-void-black px-3 font-visueltpro text-sm font-medium text-chalk"
-              >
-                Go to dashboard
-              </Link>
+              <Button asChild className="w-full">
+                <Link href={getDashboardHref()} onClick={close}>
+                  Go to dashboard
+                </Link>
+              </Button>
             ) : (
               <div className="flex flex-col gap-2">
-                <Link
-                  href="/login"
-                  onClick={close}
-                  className="flex h-9 items-center justify-center rounded-md border border-graphite/15 font-visueltpro text-sm text-graphite"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={close}
-                  className="flex h-9 items-center justify-center rounded-md bg-void-black font-visueltpro text-sm font-medium text-chalk"
-                >
-                  Create account
-                </Link>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/login" onClick={close}>
+                    Log in
+                  </Link>
+                </Button>
+                <Button asChild className="w-full">
+                  <Link href="/register" onClick={close}>
+                    Create account
+                  </Link>
+                </Button>
               </div>
             )}
           </div>

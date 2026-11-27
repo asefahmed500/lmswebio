@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/auth/jwt"
 import { prisma } from "@/lib/prisma"
+import { normaliseCorrectAnswer, normaliseOptions } from "@/lib/quiz"
 import { z } from "zod"
 
 const updateQuizSchema = z.object({
@@ -54,25 +55,37 @@ export async function GET(
     }
 
     if (!isInstructor) {
-      return NextResponse.json({
-        quiz: {
-          id: quiz.id,
-          title: quiz.title,
-          description: quiz.description,
-          timeLimit: quiz.timeLimit,
-          attemptsAllowed: quiz.attemptsAllowed,
-          course: quiz.course,
-          questionCount: quiz.questions.length,
-          questions: quiz.questions.map((q) => ({
-            id: q.id,
-            text: q.text,
-            type: q.type,
-            points: q.points,
-            options: q.options,
-            correctAnswer: null,
-          })),
-        },
+      const attemptCount = await prisma.quizAttempt.count({
+        where: { quizId: quiz.id, userId: session.user.id },
       })
+
+      // Answers are only revealed once the student has attempted the quiz.
+      const canReview = attemptCount > 0
+      const safeQuiz = {
+        id: quiz.id,
+        title: quiz.title,
+        description: quiz.description,
+        timeLimit: quiz.timeLimit,
+        attemptsAllowed: quiz.attemptsAllowed,
+        courseId: quiz.courseId,
+        course: quiz.course,
+        questionCount: quiz.questions.length,
+        _count: { attempts: attemptCount },
+        questions: quiz.questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          type: q.type,
+          points: q.points,
+          options: normaliseOptions(q.options),
+          correctAnswer: canReview
+            ? normaliseCorrectAnswer(q.correctAnswer)
+            : null,
+        })),
+      }
+
+      // The student player consumes the flat object; instructors consume
+      // `{ quiz }`. Returning both keeps both contracts intact.
+      return NextResponse.json({ ...safeQuiz, quiz: safeQuiz })
     }
 
     return NextResponse.json({ quiz })

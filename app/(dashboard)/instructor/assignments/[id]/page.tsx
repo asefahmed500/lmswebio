@@ -13,9 +13,8 @@ import {
   ArrowLeft,
   Clock,
   CheckCircle,
-  AlertCircle,
+  CircleAlert,
   Download,
-  Loader2,
   Award,
 } from "lucide-react"
 import {
@@ -29,9 +28,24 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import { Spinner } from "@/components/ui/spinner"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPut } from "@/lib/api-client"
 import type { Assignment, AssignmentSubmission } from "@/types"
@@ -79,11 +93,11 @@ function SubmissionGradeForm({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {localError && <p className="text-sm text-destructive">{localError}</p>}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`grade-${submission.id}`}>Grade</Label>
+    <FieldGroup className="gap-3">
+      <FieldError>{localError}</FieldError>
+      <div className="grid min-w-0 gap-3 sm:grid-cols-3">
+        <Field>
+          <FieldLabel htmlFor={`grade-${submission.id}`}>Grade</FieldLabel>
           <Input
             id={`grade-${submission.id}`}
             type="number"
@@ -92,9 +106,11 @@ function SubmissionGradeForm({
             onChange={(e) => setGrade(Number(e.target.value))}
             disabled={isSubmitting}
           />
-        </div>
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <Label htmlFor={`feedback-${submission.id}`}>Feedback</Label>
+        </Field>
+        <Field className="sm:col-span-2">
+          <FieldLabel htmlFor={`feedback-${submission.id}`}>
+            Feedback
+          </FieldLabel>
           <Textarea
             id={`feedback-${submission.id}`}
             value={feedback}
@@ -103,13 +119,20 @@ function SubmissionGradeForm({
             disabled={isSubmitting}
             className="min-h-[60px]"
           />
-        </div>
+        </Field>
       </div>
-      <Button size="sm" onClick={handleSubmitGrade} disabled={isSubmitting}>
-        {isSubmitting && <Loader2 className="mr-2 size-3 animate-spin" />}
-        Submit Grade
-      </Button>
-    </div>
+      <Field>
+        <Button
+          size="sm"
+          onClick={handleSubmitGrade}
+          disabled={isSubmitting}
+          className="w-fit"
+        >
+          {isSubmitting && <Spinner data-icon="inline-start" />}
+          Submit Grade
+        </Button>
+      </Field>
+    </FieldGroup>
   )
 }
 
@@ -190,28 +213,61 @@ export default function AssignmentDetailPage() {
     }
   }, [user, params.id, refreshTrigger])
 
+  const backButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      asChild
+      aria-label="Back to assignments"
+    >
+      <Link href="/instructor/assignments">
+        <ArrowLeft />
+      </Link>
+    </Button>
+  )
+
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading assignment...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          <PageHeader
+            className="min-w-0 flex-1"
+            title="Assignment"
+            description="Assignment overview and submissions"
+          />
         </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <LoadingCard count={3} />
+        </div>
+        <LoadingCard />
       </div>
     )
   }
 
   if (error || !assignment) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="mx-auto mb-4 size-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">
-            Error loading assignment
-          </h3>
-          <p className="mb-4 text-sm text-muted-foreground">
-            {error || "Assignment not found"}
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex items-start gap-4">
+          {backButton}
+          <PageHeader
+            className="min-w-0 flex-1"
+            title="Error loading assignment"
+            description={error || "Assignment not found"}
+          />
+        </div>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>Error loading assignment</EmptyTitle>
+            <EmptyDescription>
+              {error || "Assignment not found"}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+        <div>
           <Button variant="outline" onClick={() => router.back()}>
             Go Back
           </Button>
@@ -226,22 +282,19 @@ export default function AssignmentDetailPage() {
   const pendingCount = assignment.submissions.length - gradedCount
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild aria-label="Action">
-          <Link href="/instructor/assignments">
-            <ArrowLeft />
-          </Link>
-        </Button>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-2xl font-bold tracking-tight">
-            {assignment.title}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {assignment.course?.title || `Course #${assignment.courseId}`}{" "}
-            &middot; {assignment.maxPoints} points max
-          </p>
-        </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <div className="flex items-start gap-4">
+        {backButton}
+        <PageHeader
+          className="min-w-0 flex-1"
+          title={assignment.title}
+          description={
+            <>
+              {assignment.course?.title || `Course #${assignment.courseId}`}{" "}
+              &middot; {assignment.maxPoints} points max
+            </>
+          }
+        />
       </div>
 
       {assignment.description && (
@@ -281,7 +334,7 @@ export default function AssignmentDetailPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileText className="size-5 text-primary" />
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-semibold">
                 {assignment.submissions.length}
               </div>
             </div>
@@ -296,7 +349,7 @@ export default function AssignmentDetailPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <CheckCircle className="size-5 text-success" />
-              <div className="text-2xl font-bold">{gradedCount}</div>
+              <div className="text-2xl font-semibold">{gradedCount}</div>
             </div>
           </CardContent>
         </Card>
@@ -309,7 +362,7 @@ export default function AssignmentDetailPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="size-5 text-warning" />
-              <div className="text-2xl font-bold">{pendingCount}</div>
+              <div className="text-2xl font-semibold">{pendingCount}</div>
             </div>
           </CardContent>
         </Card>
@@ -326,13 +379,17 @@ export default function AssignmentDetailPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           {assignment.submissions.length === 0 ? (
-            <div className="py-8 text-center">
-              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No submissions</h3>
-              <p className="text-sm text-muted-foreground">
-                Students haven&apos;t submitted any work yet
-              </p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>No submissions</EmptyTitle>
+                <EmptyDescription>
+                  Students haven&apos;t submitted any work yet
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             assignment.submissions.map((submission, index) => (
               <React.Fragment key={submission.id}>

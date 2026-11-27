@@ -2,13 +2,34 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { BookOpen, Search, Eye, Trash2, Loader2, Library } from "lucide-react"
+import {
+  BookOpen,
+  Search,
+  Eye,
+  Trash2,
+  Library,
+  CircleCheck,
+  Circle,
+} from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Table,
   TableBody,
@@ -20,6 +41,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -156,25 +178,14 @@ export default function AdminCoursesPage() {
       .slice(0, 2)
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading courses...</p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading courses…" />
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Courses</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage all courses on the platform
-        </p>
-      </div>
+      <PageHeader
+        title="Courses"
+        description="Manage all courses on the platform"
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card size="sm">
@@ -185,7 +196,9 @@ export default function AdminCoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-2xl font-semibold text-foreground">
+              {stats.total}
+            </div>
           </CardContent>
         </Card>
         <Card size="sm">
@@ -196,7 +209,7 @@ export default function AdminCoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-success">
+            <div className="text-2xl font-semibold text-success">
               {stats.published}
             </div>
           </CardContent>
@@ -209,30 +222,35 @@ export default function AdminCoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-warning">{stats.draft}</div>
+            <div className="text-2xl font-semibold text-warning">
+              {stats.draft}
+            </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <InputGroup className="h-9 flex-1">
+          <InputGroupInput
             placeholder="Search courses..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
           />
-        </div>
+          <InputGroupAddon align="inline-start">
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
         <Select value={levelFilter} onValueChange={setLevelFilter}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="All Levels" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Levels</SelectItem>
-            <SelectItem value="BEGINNER">Beginner</SelectItem>
-            <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-            <SelectItem value="ADVANCED">Advanced</SelectItem>
+            <SelectGroup>
+              <SelectItem value="ALL">All Levels</SelectItem>
+              <SelectItem value="BEGINNER">Beginner</SelectItem>
+              <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+              <SelectItem value="ADVANCED">Advanced</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -240,23 +258,31 @@ export default function AdminCoursesPage() {
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Status</SelectItem>
-            <SelectItem value="PUBLISHED">Published</SelectItem>
-            <SelectItem value="DRAFT">Draft</SelectItem>
+            <SelectGroup>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="PUBLISHED">Published</SelectItem>
+              <SelectItem value="DRAFT">Draft</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
 
       {filteredCourses.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-lg font-medium">No courses found</p>
-            <p className="text-sm text-muted-foreground">
-              {search || levelFilter !== "ALL" || statusFilter !== "ALL"
-                ? "Try adjusting your search or filters"
-                : "No courses have been created yet"}
-            </p>
+          <CardContent>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <BookOpen />
+                </EmptyMedia>
+                <EmptyTitle>No courses found</EmptyTitle>
+                <EmptyDescription>
+                  {search || levelFilter !== "ALL" || statusFilter !== "ALL"
+                    ? "Try adjusting your search or filters"
+                    : "No courses have been created yet"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </CardContent>
         </Card>
       ) : (
@@ -295,25 +321,25 @@ export default function AdminCoursesPage() {
                             </div>
                           )}
                         </div>
-                        <div>
-                          <p className="font-medium">{course.title}</p>
-                          <p className="text-xs text-muted-foreground">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{course.title}</p>
+                          <p className="truncate text-xs text-muted-foreground">
                             {course.slug}
                           </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Avatar className="size-6 shrink-0">
                           <AvatarImage src={course.instructor?.avatarUrl} />
-                          <AvatarFallback className="text-[10px]">
+                          <AvatarFallback>
                             {course.instructor
                               ? getInitials(course.instructor.fullName)
                               : "?"}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-sm">
+                        <span className="truncate text-sm">
                           {course.instructor?.fullName ?? "Unknown"}
                         </span>
                       </div>
@@ -337,26 +363,32 @@ export default function AdminCoursesPage() {
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon-xs" asChild>
                           <Link href={`/admin/courses/${course.id}`}>
-                            <Eye className="h-3.5 w-3.5" />
+                            <Eye />
                           </Link>
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon-xs"
                           onClick={() => handleTogglePublish(course)}
+                          aria-label={
+                            course.isPublished
+                              ? "Unpublish course"
+                              : "Publish course"
+                          }
                         >
                           {course.isPublished ? (
-                            <BookOpen className="h-3.5 w-3.5 text-warning" />
+                            <CircleCheck className="text-success" />
                           ) : (
-                            <BookOpen className="h-3.5 w-3.5 text-success" />
+                            <Circle className="text-muted-foreground" />
                           )}
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon-xs"
                           onClick={() => setDeleteId(course.id)}
+                          aria-label="Delete course"
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          <Trash2 className="text-destructive" />
                         </Button>
                       </div>
                     </TableCell>

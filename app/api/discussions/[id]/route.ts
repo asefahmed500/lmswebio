@@ -50,6 +50,8 @@ export async function GET(
             id: true,
             title: true,
             slug: true,
+            isPublished: true,
+            instructorId: true,
           },
         },
         comments: {
@@ -97,6 +99,23 @@ export async function GET(
       )
     }
 
+    const { role, id: userId } = session.user
+    const isAdmin = role === "ADMIN"
+    const isCourseInstructor =
+      role === "INSTRUCTOR" && discussion.course.instructorId === userId
+
+    if (!isAdmin && !isCourseInstructor) {
+      const hasAccess = await prisma.enrolment.findUnique({
+        where: {
+          userId_courseId: { userId, courseId: discussion.courseId },
+        },
+        select: { id: true },
+      })
+      if (!hasAccess) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+    }
+
     // Get user votes
     const userVotes = await prisma.discussionVote.findMany({
       where: {
@@ -141,6 +160,7 @@ export async function PATCH(
     // Check ownership or admin
     const discussion = await prisma.discussion.findUnique({
       where: { id: discussionId },
+      include: { course: { select: { instructorId: true } } },
     })
 
     if (!discussion) {
@@ -152,10 +172,16 @@ export async function PATCH(
 
     const isAdmin = session.user.role === "ADMIN"
     const isAuthor = discussion.userId === session.user.id
-    const isInstructor = session.user.role === "INSTRUCTOR"
+    const isCourseInstructor =
+      session.user.role === "INSTRUCTOR" &&
+      discussion.course.instructorId === session.user.id
 
-    // Only admins/instructors can pin/unpin
-    if (validatedData.isPinned !== undefined && !isAdmin && !isInstructor) {
+    // Only an admin or the instructor who owns this course may pin/unpin.
+    if (
+      validatedData.isPinned !== undefined &&
+      !isAdmin &&
+      !isCourseInstructor
+    ) {
       return NextResponse.json(
         { error: "Only admins and instructors can pin discussions" },
         { status: 403 }

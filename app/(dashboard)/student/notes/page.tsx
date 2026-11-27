@@ -6,14 +6,18 @@
 "use client"
 
 import * as React from "react"
-import { Bookmark, Search } from "lucide-react"
+import { Bookmark, CircleAlert, Search } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
 import { NotesEditor } from "@/features/learning/notes/notes-editor"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { LoadingCard } from "@/components/loading-skeleton"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -25,11 +29,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { formatDistanceToNow } from "date-fns"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { cn } from "@/lib/utils"
-import { LoadingCard } from "@/components/loading-skeleton"
 import { useDebounced } from "@/hooks/use-media-query"
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api-client"
 
@@ -104,10 +119,12 @@ export default function StudentNotesPage() {
                 const res = await apiGet<Record<string, unknown>>(
                   `/courses/${e.courseId}`
                 )
-                if (res.data) {
-                  const courseData =
-                    res.data as unknown as EnrolledCourse["course"]
-                  return { courseId: e.courseId, course: courseData }
+                // GET /api/courses/[id] returns { course }, not a bare course.
+                const payload = res.data as {
+                  course?: EnrolledCourse["course"]
+                } | null
+                if (payload?.course?.modules?.length) {
+                  return { courseId: e.courseId, course: payload.course }
                 }
               } catch {}
               return { courseId: e.courseId, course: e.course }
@@ -129,7 +146,7 @@ export default function StudentNotesPage() {
     async function loadNotes() {
       try {
         const params = new URLSearchParams()
-        if (searchQuery) params.append("search", debouncedQuery)
+        if (debouncedQuery) params.append("search", debouncedQuery)
         if (courseFilter !== "all") params.append("courseId", courseFilter)
 
         // Fixed: replaced raw fetch with apiGet
@@ -207,127 +224,136 @@ export default function StudentNotesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">My Notes</h1>
-          <p className="mt-1 text-muted-foreground">
-            View and manage your lesson notes
-          </p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <PageHeader
+          title="My Notes"
+          description="View and manage your lesson notes"
+        />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
-        <LoadingCard />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">My Notes</h1>
-          <p className="mt-1 text-muted-foreground">
-            View and manage your lesson notes
-          </p>
-        </div>
-        <Dialog open={isNewNote} onOpenChange={setIsNewNote}>
-          <DialogTrigger asChild>
-            <Button>New Note</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Create New Note</DialogTitle>
-            </DialogHeader>
-            {/* Lesson picker */}
-            <div className="flex flex-col gap-2">
-              <Label>Select Lesson</Label>
-              <Select
-                value={newNoteLessonId}
-                onValueChange={setNewNoteLessonId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a lesson..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {enrolledCourses.map((e) =>
-                    e.course?.modules?.map(
-                      (mod: {
-                        id: number
-                        title: string
-                        lessons: Array<{ id: number; title: string }>
-                      }) =>
-                        mod.lessons?.map(
-                          (lesson: { id: number; title: string }) => (
-                            <SelectItem
-                              key={lesson.id}
-                              value={String(lesson.id)}
-                            >
-                              {e.course.title} &gt; {mod.title} &gt;{" "}
-                              {lesson.title}
-                            </SelectItem>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="My Notes"
+        description="View and manage your lesson notes"
+        action={
+          <Dialog open={isNewNote} onOpenChange={setIsNewNote}>
+            <DialogTrigger asChild>
+              <Button>New Note</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Create New Note</DialogTitle>
+              </DialogHeader>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel>Select Lesson</FieldLabel>
+                  <Select
+                    value={newNoteLessonId}
+                    onValueChange={setNewNoteLessonId}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose a lesson..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {enrolledCourses.map((e) =>
+                          e.course?.modules?.map(
+                            (mod: {
+                              id: number
+                              title: string
+                              lessons: Array<{ id: number; title: string }>
+                            }) =>
+                              mod.lessons?.map(
+                                (lesson: { id: number; title: string }) => (
+                                  <SelectItem
+                                    key={lesson.id}
+                                    value={String(lesson.id)}
+                                  >
+                                    {e.course.title} &gt; {mod.title} &gt;{" "}
+                                    {lesson.title}
+                                  </SelectItem>
+                                )
+                              )
                           )
-                        )
-                    )
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            {saveError ? (
-              <Alert variant="destructive">
-                <AlertDescription>{saveError}</AlertDescription>
-              </Alert>
-            ) : null}
-            {newNoteLessonId && <NotesEditor onSave={handleSaveNote} />}
-          </DialogContent>
-        </Dialog>
-      </div>
+                        )}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </FieldGroup>
+              {saveError ? (
+                <Alert variant="destructive">
+                  <CircleAlert />
+                  <AlertDescription>{saveError}</AlertDescription>
+                </Alert>
+              ) : null}
+              {newNoteLessonId && <NotesEditor onSave={handleSaveNote} />}
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       {/* Filters */}
-      <div className="flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row">
+        <InputGroup className="min-w-0 flex-1">
+          <InputGroupInput
             placeholder="Search notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
           />
-        </div>
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
         <Select value={courseFilter} onValueChange={setCourseFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Filter by course" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Courses</SelectItem>
-            {enrolledCourses.map((e) => (
-              <SelectItem key={e.courseId} value={String(e.courseId)}>
-                {e.course.title}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              <SelectItem value="all">All Courses</SelectItem>
+              {enrolledCourses.map((e) => (
+                <SelectItem key={e.courseId} value={String(e.courseId)}>
+                  {e.course.title}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
 
       {/* Notes */}
       {notes.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <Bookmark className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No notes yet</h3>
-              <p className="mb-4 text-muted-foreground">
-                Take notes while watching lessons to remember important points.
-              </p>
-              <Button onClick={() => setIsNewNote(true)}>
-                Create Your First Note
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Bookmark />
+            </EmptyMedia>
+            <EmptyTitle>No notes yet</EmptyTitle>
+            <EmptyDescription>
+              Take notes while watching lessons to remember important points.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={() => setIsNewNote(true)}>
+              Create Your First Note
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-3">
           {/* Notes List */}
-          <div className="flex flex-col gap-3 lg:col-span-1">
-            <h2 className="text-lg font-semibold">{notes.length} Notes</h2>
+          <div className="flex min-w-0 flex-col gap-3 lg:col-span-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">My Notes</h2>
+              <Badge variant="secondary">{notes.length}</Badge>
+            </div>
             {notes.map((note) => (
               <Card
                 key={note.id}
@@ -338,11 +364,11 @@ export default function StudentNotesPage() {
                 onClick={() => setSelectedNote(note)}
               >
                 <CardContent className="p-4">
-                  <div className="mb-2 flex items-start justify-between">
-                    <h3 className="line-clamp-1 font-medium">
+                  <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
+                    <h3 className="line-clamp-1 min-w-0 font-medium">
                       {note.lesson.title}
                     </h3>
-                    <span className="text-xs whitespace-nowrap text-muted-foreground">
+                    <span className="shrink-0 text-xs whitespace-nowrap text-muted-foreground">
                       {formatDistanceToNow(new Date(note.updatedAt), {
                         addSuffix: true,
                       })}
@@ -358,7 +384,7 @@ export default function StudentNotesPage() {
           </div>
 
           {/* Note Editor */}
-          <div className="lg:col-span-2">
+          <div className="min-w-0 lg:col-span-2">
             {selectedNote ? (
               <NotesEditor
                 note={selectedNote}
@@ -366,14 +392,17 @@ export default function StudentNotesPage() {
                 onDelete={handleDeleteNote}
               />
             ) : (
-              <Card>
-                <CardContent className="py-12">
-                  <div className="text-center text-muted-foreground">
-                    <Bookmark className="mx-auto mb-4 h-12 w-12" />
-                    <p>Select a note to view or edit</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <Empty className="rounded-lg border border-dashed">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Bookmark />
+                  </EmptyMedia>
+                  <EmptyTitle>No note selected</EmptyTitle>
+                  <EmptyDescription>
+                    Select a note to view or edit
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </div>
         </div>

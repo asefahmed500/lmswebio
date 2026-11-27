@@ -2,7 +2,13 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Clock, FileQuestion, BookOpen, HelpCircle, Trophy } from "lucide-react"
+import {
+  CircleAlert,
+  Clock,
+  FileQuestion,
+  BookOpen,
+  Trophy,
+} from "lucide-react"
 import {
   Card,
   CardContent,
@@ -12,6 +18,16 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet } from "@/lib/api-client"
 
@@ -48,7 +64,7 @@ function QuizCard({ quiz }: { quiz: CompletedQuiz }) {
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <CardTitle className="line-clamp-1 text-base">
               {quiz.title}
             </CardTitle>
@@ -68,16 +84,16 @@ function QuizCard({ quiz }: { quiz: CompletedQuiz }) {
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className="size-4" />
               <span>{quiz.course.title}</span>
             </div>
             <div className="flex items-center gap-1">
-              <FileQuestion className="h-4 w-4" />
+              <FileQuestion className="size-4" />
               <span>{quiz._count.questions} questions</span>
             </div>
             {quiz.timeLimit && (
               <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
+                <Clock className="size-4" />
                 <span>{quiz.timeLimit} min</span>
               </div>
             )}
@@ -170,10 +186,9 @@ export default function CompletedQuizzesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading quizzes...</p>
+      <div className="flex min-w-0 flex-col gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LoadingCard count={3} />
         </div>
       </div>
     )
@@ -181,29 +196,29 @@ export default function CompletedQuizzesPage() {
 
   if (error) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <HelpCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-          <h3 className="mb-2 text-lg font-semibold">Error loading quizzes</h3>
-          <p className="mb-4 text-sm text-muted-foreground">{error}</p>
+      <Empty className="rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Error loading quizzes</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Try Again
           </Button>
-        </div>
-      </div>
+        </EmptyContent>
+      </Empty>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Completed Quizzes
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Quizzes you&apos;ve attempted with your best scores
-        </p>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <PageHeader
+        title="Completed Quizzes"
+        description="Quizzes you've attempted with your best scores"
+      />
 
       {quizzes.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -212,22 +227,22 @@ export default function CompletedQuizzesPage() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="py-12 text-center">
-              <Trophy className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                No completed quizzes
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Take a quiz and come back to see your results here
-              </p>
-              <Button asChild>
-                <Link href="/student/quizzes">View All Quizzes</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Empty className="rounded-lg border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Trophy />
+            </EmptyMedia>
+            <EmptyTitle>No completed quizzes</EmptyTitle>
+            <EmptyDescription>
+              Take a quiz and come back to see your results here
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link href="/student/quizzes">View All Quizzes</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
     </div>
   )

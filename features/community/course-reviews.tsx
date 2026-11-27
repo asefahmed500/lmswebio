@@ -5,7 +5,14 @@ import { Star, ThumbsUp, MessageSquare } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { formatDistanceToNow } from "date-fns"
 
 interface Review {
@@ -45,14 +52,18 @@ export function CourseReviews({
   if (reviews.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12">
-          <div className="text-center">
-            <Star className="mx-auto mb-4 size-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">No reviews yet</h3>
-            <p className="text-sm text-muted-foreground">
-              Be the first to review this course!
-            </p>
-          </div>
+        <CardContent className="py-0">
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Star />
+              </EmptyMedia>
+              <EmptyTitle>No reviews yet</EmptyTitle>
+              <EmptyDescription>
+                Be the first to review this course!
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         </CardContent>
       </Card>
     )
@@ -66,7 +77,7 @@ export function CourseReviews({
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="text-center">
-                <div className="text-4xl font-bold">
+                <div className="text-4xl font-semibold">
                   {averageRating?.toFixed(1) || "0.0"}
                 </div>
                 <div className="mt-1 flex items-center gap-1">
@@ -95,12 +106,10 @@ export function CourseReviews({
                     <div key={star} className="flex items-center gap-2 text-sm">
                       <span className="w-3">{star}</span>
                       <Star className="size-3 fill-warning text-warning" />
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-warning"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
+                      <Progress
+                        value={percentage}
+                        className="h-2 flex-1 [&_[data-slot=progress-indicator]]:bg-warning"
+                      />
                       <span className="w-8 text-right text-muted-foreground">
                         {count}
                       </span>
@@ -166,7 +175,7 @@ function ReviewCard({ review }: { review: Review }) {
     <Card>
       <CardContent className="p-6">
         <div className="flex gap-4">
-          <Avatar className="h-10 w-10">
+          <Avatar className="size-10">
             <AvatarImage src={review.user.avatarUrl || undefined} />
             <AvatarFallback>
               {review.user.fullName
@@ -211,12 +220,12 @@ function ReviewCard({ review }: { review: Review }) {
             )}
 
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-7 gap-1">
-                <ThumbsUp className="size-3" />
+              <Button variant="ghost" size="xs">
+                <ThumbsUp data-icon="inline-start" />
                 Helpful ({review.helpfulVotes})
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 gap-1">
-                <MessageSquare className="size-3" />
+              <Button variant="ghost" size="xs">
+                <MessageSquare data-icon="inline-start" />
                 Reply
               </Button>
             </div>

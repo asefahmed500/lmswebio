@@ -11,6 +11,13 @@ const updateSettingsSchema = z.object({
   maintenanceMode: z.boolean().optional(),
   maxUploadSize: z.number().min(1).max(100).optional(),
   emailNotifications: z.boolean().optional(),
+  smtpHost: z.string().max(200).optional(),
+  smtpPort: z.number().int().min(1).max(65535).optional(),
+  smtpUser: z.string().max(200).optional(),
+  smtpPass: z.string().max(500).optional(),
+  smtpFrom: z.string().max(200).optional(),
+  smtpSecure: z.boolean().optional(),
+  integrations: z.record(z.string(), z.boolean()).optional(),
 })
 
 export async function GET(request: NextRequest) {

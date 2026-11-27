@@ -1,19 +1,19 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
-import {
-  MessageSquare,
-  ThumbsUp,
-  Pin,
-  CheckCircle,
-  Clock,
-  User,
-} from "lucide-react"
+import { MessageSquare, ThumbsUp, Pin, CheckCircle, User } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { formatDistanceToNow } from "date-fns"
 
 interface Discussion {
@@ -50,21 +50,27 @@ export function DiscussionList({ discussions, courseId }: DiscussionListProps) {
   if (discussions.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12">
-          <div className="text-center">
-            <MessageSquare className="mx-auto mb-4 size-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">No discussions yet</h3>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Be the first to start a discussion!
-            </p>
-            <Button asChild>
-              <Link
-                href={`/student/discussions${courseId ? `?courseId=${courseId}` : ""}`}
-              >
-                Start Discussion
-              </Link>
-            </Button>
-          </div>
+        <CardContent className="py-0">
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MessageSquare />
+              </EmptyMedia>
+              <EmptyTitle>No discussions yet</EmptyTitle>
+              <EmptyDescription>
+                Be the first to start a discussion!
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild>
+                <Link
+                  href={`/student/discussions${courseId ? `?courseId=${courseId}` : ""}`}
+                >
+                  Start Discussion
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         </CardContent>
       </Card>
     )
@@ -81,10 +87,10 @@ export function DiscussionList({ discussions, courseId }: DiscussionListProps) {
 
 function DiscussionCard({ discussion }: { discussion: Discussion }) {
   return (
-    <Card className="transition-shadow hover:shadow-md">
+    <Card>
       <CardContent className="p-6">
         <div className="flex gap-4">
-          <Avatar className="h-10 w-10">
+          <Avatar className="size-10">
             <AvatarImage src={discussion.user.avatarUrl || undefined} />
             <AvatarFallback>
               {discussion.user.fullName
@@ -100,14 +106,14 @@ function DiscussionCard({ discussion }: { discussion: Discussion }) {
             <div className="mb-2 flex items-start justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 {discussion.isPinned && (
-                  <Badge variant="secondary" className="gap-1">
-                    <Pin className="size-3" />
+                  <Badge variant="secondary">
+                    <Pin data-icon="inline-start" />
                     Pinned
                   </Badge>
                 )}
                 {discussion.isResolved && (
-                  <Badge variant="outline" className="gap-1">
-                    <CheckCircle className="size-3" />
+                  <Badge variant="outline">
+                    <CheckCircle data-icon="inline-start" />
                     Resolved
                   </Badge>
                 )}

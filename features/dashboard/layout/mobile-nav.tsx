@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Menu } from "lucide-react"
 
 import type { Role } from "@/types"
 import { getNavConfig } from "@/features/dashboard/nav/config"
@@ -110,24 +111,15 @@ export function MobileNav({
           <li>
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <button
+                <Button
+                  variant="ghost"
                   type="button"
-                  className="flex h-16 w-full flex-col items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="flex h-16 w-full flex-col items-center justify-center gap-1 rounded-none text-[11px] font-medium text-muted-foreground"
                   aria-label="Open navigation menu"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    className="size-5"
-                    aria-hidden="true"
-                  >
-                    <path d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
+                  <Menu className="size-5" />
                   <span>More</span>
-                </button>
+                </Button>
               </SheetTrigger>
 
               <SheetContent side="bottom" className="max-h-[85svh] p-0">

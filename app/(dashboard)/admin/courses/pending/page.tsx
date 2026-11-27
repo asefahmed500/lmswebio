@@ -2,20 +2,27 @@
 
 import * as React from "react"
 import Link from "next/link"
-import {
-  BookOpen,
-  Eye,
-  Loader2,
-  Trash2,
-  CheckCircle2,
-  Search,
-} from "lucide-react"
+import { BookOpen, Eye, Trash2, CheckCircle2, Search } from "lucide-react"
 import { toast } from "sonner"
 import { apiGet, apiPatch, apiDelete } from "@/lib/api-client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Badge } from "@/components/ui/badge"
+import { Spinner } from "@/components/ui/spinner"
+import { PageLoading } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import {
   Table,
   TableBody,
@@ -27,6 +34,7 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -134,63 +142,57 @@ export default function AdminPendingCoursesPage() {
     return variants[level] || "outline"
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 size-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">
-            Loading pending courses...
-          </p>
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <PageLoading label="Loading pending courses…" />
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Pending Courses
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Review and publish courses submitted by instructors
-        </p>
-      </div>
+      <PageHeader
+        title="Pending Courses"
+        description="Review and publish courses submitted by instructors"
+      />
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <InputGroup className="h-9 flex-1">
+          <InputGroupInput
             placeholder="Search pending courses..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
           />
-        </div>
+          <InputGroupAddon align="inline-start">
+            <Search />
+          </InputGroupAddon>
+        </InputGroup>
         <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="All Levels" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Levels</SelectItem>
-            <SelectItem value="BEGINNER">Beginner</SelectItem>
-            <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-            <SelectItem value="ADVANCED">Advanced</SelectItem>
+            <SelectGroup>
+              <SelectItem value="ALL">All Levels</SelectItem>
+              <SelectItem value="BEGINNER">Beginner</SelectItem>
+              <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
+              <SelectItem value="ADVANCED">Advanced</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
 
       {filteredCourses.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <CheckCircle2 className="mb-4 size-12 text-success" />
-            <p className="text-lg font-medium">No pending courses</p>
-            <p className="text-sm text-muted-foreground">
-              {search || levelFilter !== "ALL"
-                ? "Try adjusting your search or filters"
-                : "All courses have been reviewed and published"}
-            </p>
+          <CardContent>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CheckCircle2 className="text-success" />
+                </EmptyMedia>
+                <EmptyTitle>No pending courses</EmptyTitle>
+                <EmptyDescription>
+                  {search || levelFilter !== "ALL"
+                    ? "Try adjusting your search or filters"
+                    : "All courses have been reviewed and published"}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </CardContent>
         </Card>
       ) : (
@@ -211,15 +213,13 @@ export default function AdminPendingCoursesPage() {
                 {filteredCourses.map((course) => (
                   <TableRow key={course.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
-                          <div className="flex h-full w-full items-center justify-center">
-                            <BookOpen className="size-4 text-muted-foreground" />
-                          </div>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex size-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
+                          <BookOpen className="size-4 text-muted-foreground" />
                         </div>
-                        <div>
-                          <p className="font-medium">{course.title}</p>
-                          <p className="text-xs text-muted-foreground">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{course.title}</p>
+                          <p className="truncate text-xs text-muted-foreground">
                             {course.slug}
                           </p>
                         </div>
@@ -243,7 +243,7 @@ export default function AdminPendingCoursesPage() {
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon-xs" asChild>
                           <Link href={`/admin/courses/${course.id}`}>
-                            <Eye className="h-3.5 w-3.5" />
+                            <Eye />
                           </Link>
                         </Button>
                         <Button
@@ -251,19 +251,21 @@ export default function AdminPendingCoursesPage() {
                           size="icon-xs"
                           onClick={() => handlePublish(course)}
                           disabled={publishingId === course.id}
+                          aria-label={`Publish ${course.title}`}
                         >
                           {publishingId === course.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-success" />
+                            <Spinner className="text-success" />
                           ) : (
-                            <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                            <CheckCircle2 className="text-success" />
                           )}
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon-xs"
                           onClick={() => setDeleteId(course.id)}
+                          aria-label="Delete course"
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          <Trash2 className="text-destructive" />
                         </Button>
                       </div>
                     </TableCell>

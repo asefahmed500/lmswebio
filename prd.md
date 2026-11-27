@@ -1,413 +1,269 @@
-# Product Requirements Document (PRD)  
-## Learning Management System (LMS) – Role‑Based Modular Platform  
-### Web‑Based | Backend: Node.js + Prisma | Frontend: Responsive UI (Tailwind + React)
+# Product Requirements Document (PRD)
+## LMSWebIO — Role-Based Learning Management Platform
 
-> **Version**: 1.0  
-> **Purpose**: A complete specification for building a **full‑featured LMS** with three user roles (Admin, Instructor, Student), a modular course structure, intuitive sidebar navigation, and a modern, accessible UI. The backend will use Node.js, Express, and Prisma ORM; the frontend will follow the provided design system (OKLCH colors, dropdown sidebar, responsive layout).
+> **Version:** 2.0 (as-built + gap register)  
+> **Last updated:** 2026-11-27  
+> **Source of truth:** the actual code in this repository (`app/`, `components/`, `features/`, `lib/`, `prisma/`).  
+> **Previous version:** 1.0 was a greenfield specification. It described an **Express + PostgreSQL + React 18 / React Router** application with integer IDs and listed gamification, certificates and calendar as *future* work. That stack was never implemented. This document replaces those assumptions with the shipped architecture and feature set.
 
 ---
 
 ## 1. Executive Summary
 
-Build a web‑based Learning Management System that enables **instructors** to create and manage courses, **students** to enrol, learn, and track progress, and **admins** to oversee the entire platform (users, courses, system settings). The platform follows a **modular approach** – each major feature (courses, assessments, assignments, analytics) is a separate module. The UI features a **collapsible sidebar with dropdown links** for each module, fully responsive for desktop, tablet, and mobile. The backend uses Node.js + Prisma (PostgreSQL/MySQL) with JWT authentication and role‑based access control.
+LMSWebIO is a full-stack, role-based LMS built as a **Next.js 16 App Router** application. It supports three roles — **Admin**, **Instructor** and **Student** — across roughly 70 pages and 85 API routes. Content is organised into courses → modules → lessons; students enrol, consume lessons, complete quizzes and assignments, track progress, earn certificates and badges, follow learning paths, take notes, bookmark lessons, use a calendar with RSVP, and participate in discussions and course reviews. Instructors author and grade; admins manage users, courses, categories, settings and platform analytics.
+
+The platform is delivered as a **single Next.js application** (UI + API route handlers), backed by **MongoDB through Prisma 6.19**, with **JWT access/refresh tokens in HTTP-only cookies**, **CSRF double-submit enforcement in the Edge middleware**, **Stripe Checkout + webhook payments**, **Nodemailer email** and **Zod validation**. Payments fall back to a demo auto-enrolment mode when `STRIPE_SECRET_KEY` is unset.
+
+This document describes (a) what is built, (b) what is only partially built, and (c) the remaining work required for the product to be genuinely complete. Status markers are used throughout:
+
+| Marker | Meaning |
+|--------|---------|
+| ✅ | Implemented and wired end-to-end |
+| ⚠️ | Exists but partial / known defect |
+| ❌ | Missing, stub, or dead code |
 
 ---
 
-## 2. User Roles & Permissions (Detailed)
+## 2. Product Scope & User Roles
 
-| Role        | Core Permissions                                                                                                                                                         |
-|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Admin**   | Full system control: manage users (all roles), create/delete courses (any instructor), manage categories, view platform analytics, configure system settings, handle global announcements. |
-| **Instructor** | Create, edit, publish/unpublish own courses. Add/update modules, lessons, quizzes, assignments. Grade student submissions. View course analytics (enrolment, completion). Communicate with students via course announcements. |
-| **Student** | Browse course catalogue, enrol in courses, consume lessons (text/video), submit assignments, take quizzes, view grades, track personal progress, participate in discussions (optional). |
+### 2.1 Roles
 
-Each role sees a **customised sidebar** (only relevant modules/links). The authentication middleware will enforce permissions on both API and UI routes.
+| Role | Base route | What the role can do |
+|------|-----------|----------------------|
+| **ADMIN** | `/admin` | Full control: manage all users and roles, create/oversee courses, moderate pending courses, manage categories, manage quizzes/question bank, view platform and enrolment analytics, configure settings (general/email/integrations), view notifications and own profile. Can also access instructor and student areas. |
+| **INSTRUCTOR** | `/instructor` | Create/edit/publish own courses, build modules and lessons, create quizzes and assignments, grade submissions, view course and student analytics, manage own profile and notifications. Can also access admin routes. |
+| **STUDENT** | `/student` | Browse the public catalogue, enrol (free or paid), consume lessons, complete lessons and track progress, attempt quizzes, submit assignments, view grades, earn certificates and badges, follow learning paths, take notes, bookmark lessons, use the calendar and RSVP to events, post discussions and reviews, view notifications and profile. Can also access admin routes (per current middleware — see gap G-08). |
 
----
+Role enforcement is implemented in `middleware.ts` (Edge, `jose` verification only) for page routes and in each API route handler via `getSession()` from `lib/auth/jwt.ts`. Resource-level guards live in `lib/authorization.ts` (`canAccessCourse`, `isEnrolledInCourse`, `canModifyCourse`, `canViewSubmissions`, `canGradeSubmission`).
 
-## 3. Modular Architecture
+### 2.2 Demo accounts (from `prisma/seed.ts`)
 
-The LMS is divided into the following **modules** – each can be developed independently and plugged into the main dashboard.
-
-| Module Name        | Description                                                                                 | Accessible by                     |
-|--------------------|---------------------------------------------------------------------------------------------|-----------------------------------|
-| **Course Manager** | Create, edit, organise courses into modules/lessons.                                       | Admin, Instructor                 |
-| **Enrolment**      | Student enrolment, course catalogue, enrolment requests, payment (optional future).        | Admin, Student                    |
-| **Content Delivery** | Lesson viewer (video, text, PDF), completion tracking, bookmarks.                        | Student, Instructor (preview)     |
-| **Assessment**     | Quizzes (multiple choice, true/false, essay), automated scoring, quiz builder.             | Admin, Instructor (create), Student (take) |
-| **Assignments**    | Upload/submit files, instructor grading, rubric, feedback.                                 | Instructor, Student               |
-| **Progress & Analytics** | Student progress per course (%, completion), gradebook, course‑level analytics.        | Student (own), Instructor (course), Admin (global) |
-| **Communication**  | Course announcements, direct messaging (optional), forum/discussion threads.               | All roles                          |
-| **User Management**| CRUD users, assign roles, view profiles. (Admin only)                                     | Admin                              |
-| **Settings**       | System name, logo, default timezone, email notifications, theme preferences.              | Admin                              |
-
-Each module will have its own **sidebar dropdown** (e.g., “Courses” dropdown contains sub‑links: My Courses, All Courses, Create Course (instructor), Course Catalogue (student)). The sidebar is built dynamically based on role.
+| Email | Password | Role |
+|-------|----------|------|
+| `admin@lms.com` | `Admin123!` | ADMIN |
+| `instructor@lms.com` | `Instructor123!` | INSTRUCTOR |
+| `student@lms.com` | `Student123!` | STUDENT |
 
 ---
 
-## 4. Sidebar Navigation & UI/UX Specifications
+## 3. Feature Modules (as built)
 
-### 4.1 Sidebar Structure (Desktop & Mobile)
-
-**For Admin:**
-- Dashboard (overview KPI)
-- 👩‍🏫 **Users** (dropdown) → All Users, Instructors, Students, Add User
-- 📚 **Courses** (dropdown) → All Courses, Pending Approval, Categories, Add Course
-- 📝 **Assessments** (dropdown) → All Quizzes, Question Bank
-- 📊 **Analytics** (dropdown) → Platform Reports, Revenue (if paid)
-- ⚙️ **Settings** (dropdown) → General, Email, Integrations
-
-**For Instructor:**
-- Dashboard (own stats)
-- 📚 **Courses** (dropdown) → My Courses, Create New Course, Drafts
-- ✍️ **Assignments** (dropdown) → To Grade, Submissions, Rubrics
-- 🧪 **Quizzes** (dropdown) → Manage Quizzes, Results
-- 📈 **Analytics** (dropdown) → Course Progress, Student Performance
-
-**For Student:**
-- Dashboard (enrolled courses, upcoming deadlines)
-- 📚 **My Learning** (dropdown) → Enrolled Courses, Course Catalogue, Continue Learning
-- 📝 **Assignments** (dropdown) → Pending, Submitted, Graded
-- 🧪 **Quizzes** (dropdown) → Upcoming, Completed
-- 🏆 **Achievements** (dropdown) → Certificates, Badges, Progress
-
-### 4.2 UI Design Tokens (from existing system)
-
-- Use the provided CSS variables: `--background`, `--foreground`, `--primary` (purple‑blue `oklch(0.5772 0.2129 274)`), `--sidebar` background, `--radius: 0.75rem`.  
-- Dark mode support via `.dark` class toggle.  
-- Font: `'Google Sans Flex', 'Inter', sans‑serif`.  
-- Subtle shadows (`--shadow-sm`).  
-
-### 4.3 Responsive Behaviour
-
-- **Desktop (≥1280px)**: Sidebar expanded (280px), main content area fluid.  
-- **Tablet (768px–1279px)**: Sidebar collapses to icon‑only by default, expandable via hamburger.  
-- **Mobile (<768px)**: Sidebar becomes off‑canvas overlay; all dropdowns become accordion‑style inside the sidebar. Main content uses full width, forms stack vertically.
+| Module | Capabilities | Status |
+|--------|--------------|--------|
+| **Course Manager** | Course CRUD (title, slug, description, thumbnail, category, tags, level, price, Stripe price id), draft/publish toggle, soft delete, modules and lessons with ordering and duration, module-level REST endpoints. | ✅ |
+| **Catalogue & Enrolment** | Public catalogue (`/courses`, `/api/courses/public`), filtered course listing, course detail with slug or ObjectId, free self-enrolment, paid checkout, enrolment listing, "my enrolments", completion percentage, last-accessed timestamp. | ✅ |
+| **Content Delivery** | Lesson viewer with rich text (`content` + `contentType`), manual "mark complete", derived progress, bookmarks, notes with video timestamps. | ⚠️ Single `content` field rather than separate video URL/PDF attachment; completion is manual (no watch-threshold). |
+| **Assessment — Quizzes** | Quiz CRUD, 4 question types (`MC_SINGLE`, `MC_MULTI`, `TEXT`, `TRUE_FALSE`), points, time limit, attempts allowed, rate-limited attempt submission, auto-grading, attempt history. | ⚠️ Objective grading works; `TEXT` answers score 0 (no manual grading). Seeded quizzes use an incompatible answer format. |
+| **Assessment — Assignments** | Assignment CRUD, due date, max points, text submission (API also accepts `fileUrl`), instructor grading with feedback and `gradedAt`. | ⚠️ No upload UI is wired; no rubric or late policy. |
+| **Progress & Analytics** | Per-enrolment progress = `round(completedLessons / totalLessons × 100)`, auto-complete enrolment at 100%, student progress endpoint, instructor dashboard/analytics, admin platform analytics and enrolment trends, Chart.js/recharts visualisations. | ✅ core; ⚠️ no chart PNG/PDF export, no time-spent analytics. |
+| **Communication** | Course announcements, discussions with comments (including threaded replies via `parentId`) and votes, course reviews with helpful votes. | ⚠️ No discussion detail/thread UI, no direct messaging. |
+| **Certificates** | `Certificate` model with unique verification id, issuance endpoint, public verification endpoint, student certificate gallery and viewer. | ⚠️ `certificateUrl` points at a PDF that is never generated. |
+| **Badges & Achievements** | Badge definitions with JSON criteria and points, manual awarding, student badge display. | ⚠️ No automatic criteria evaluator. |
+| **Learning Paths** | Paths with ordered mandatory courses, enrol/unenrol, progress field, card UI. | ⚠️ Path progress is never advanced by lesson completion. |
+| **Learning Tools** | Notes (per lesson, private, timestamped), bookmarks, calendar events with attendees and RSVP. | ⚠️ Recurrence fields exist but are not expanded. |
+| **Payments** | Stripe Checkout session creation, webhook handling, `Payment` records, demo auto-enrolment fallback, checkout page. | ⚠️ Webhook does not persist the real payment intent id. |
+| **Notifications** | Notification centre per role, unread counts, mark-as-read. | ⚠️ Reusable `lib/notification-service.ts` exists but has no callers, so business events do not create notifications. |
+| **User Management** | Admin user list/detail/create, role and active status, change password, instructor profile with bio/social links and aggregate stats. | ✅ |
+| **Settings** | Singleton settings document, general settings page, email settings page. | ⚠️ SMTP fields are not persisted; `/api/settings/test-email` does not exist. Integrations page is an explicit placeholder. |
+| **Platform Services** | CSRF tokens, rate limiting (memory + Mongo), sanitisation of user content, audit-log model, file upload endpoint, full-text-ish search, health check, Docker/CI, dark mode, command palette, privacy/terms pages. | ⚠️ `audit-logger.ts` is not wired into routes; upload UI is missing. |
 
 ---
 
-## 5. Core Feature Specifications
+## 4. Information Architecture & Navigation
 
-### 5.1 Course Management (Modular)
+Navigation is data-driven from `features/dashboard/nav/config.ts` and role-filtered in `features/dashboard/layout/sidebar-nav.tsx`. Each role has a primary Dashboard item, collapsible sections, and pinned Notifications / Profile items. A command palette (`⌘K`) flattens the same config for quick navigation.
 
-- **Course object**: Title, description, category, thumbnail image, price (optional), level (Beginner/Intermediate/Advanced), tags.  
-- **Modules & Lessons**: Each course can have multiple modules. Each module contains lessons (title, content type: video URL, text, PDF attachment, or SCORM).  
-- **Instructor actions**: Reorder modules/lessons via drag‑and‑drop (frontend). Draft/publish toggle.  
-- **Student view**: Lessons marked as “completed” manually or automatically after watching video (completion threshold). Progress bar at course level.  
-- **API endpoints** (protected by role):  
-  - `GET /api/courses` (filtered by role – instructors see own, students see published, admin sees all)  
-  - `POST /api/courses` (instructor/admin)  
-  - `PUT /api/courses/:id`  
-  - `DELETE /api/courses/:id` (admin only)  
-  - `GET /api/courses/:id/lessons` (with completion flags for student)
+**Admin:** Dashboard · People (All Users, Instructors, Students, Add User) · Catalogue (All Courses, Pending Approval, Categories, Add Course) · Assessments (All Quizzes, Question Bank) · Insights (Platform Reports, Enrollment Trends) · Configuration (General, Email, Integrations) · Notifications · Profile.
 
-### 5.2 Enrolment & Access Control
+**Instructor:** Dashboard · My Courses (My Courses, Create New, Drafts) · Grading (To Grade, All Submissions, Create Assignment) · Quizzes (Manage Quizzes, Create Quiz, Results) · Insights (Course Progress, Student Performance) · Notifications · Profile.
 
-- **Enrolment methods**: Self‑enrolment (open), instructor approval, admin enrolment, or via code.  
-- **Student dashboard**: Lists enrolled courses with progress percentage and “Continue” button.  
-- **Database model**: `Enrolment` (userId, courseId, enrolledAt, status: active/completed/dropped, completionPercent).  
+**Student:** Dashboard · My Learning (Enrolled Courses, Course Catalogue, Continue Learning) · Assignments (Pending, Submitted, Graded) · Quizzes (Upcoming, Completed) · Achievements (Certificates, Badges, Progress) · Community (Discussions, Learning Paths) · Tools (Notes, Calendar) · Notifications · Profile.
 
-### 5.3 Assessment & Quizzes
+Public routes: `/`, `/courses`, `/courses/[id]`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/privacy`, `/terms`.
 
-- **Quiz builder**: Instructor can add questions (type: multiple choice single/multi, text, true/false). Points per question. Time limit (optional).  
-- **Student attempt**: One or multiple attempts allowed (configurable). Immediate feedback or after due date.  
-- **Auto‑grading**: For objective questions; essay questions manual grading by instructor.  
-- **Gradebook**: Aggregated scores for each student per course. Export to CSV.  
-
-### 5.4 Assignments
-
-- **Assignment object**: Title, description, due date, max points, file attachments allowed (size limit).  
-- **Student submission**: Upload file, add comments. Submission timestamp recorded.  
-- **Instructor grading**: Grade, feedback, optional rubric. Grades appear in student gradebook.  
-- **Notifications**: Email/UI notification when graded.
-
-### 5.5 Progress & Analytics Module
-
-- **Student progress**: Calculated as (completed lessons / total lessons) * 100. Quiz/assignment scores separate.  
-- **Instructor analytics**: Average course completion, grade distribution, most difficult lessons (by time spent).  
-- **Admin analytics**: Total users, active courses, revenue (if paid), engagement metrics.  
-- **Charts**: Use Chart.js to display trends (line, bar). Provide export PNG/PDF.
-
-### 5.6 Communication Module
-
-- **Announcements**: Instructors/Admin can post to a course feed. Students see announcements on course homepage.  
-- **Direct messaging** (optional future): One‑to‑one chat between student and instructor.  
-- **Discussion forums**: Per course or per lesson – threaded comments.
+Responsive behaviour: expanded sidebar on desktop, icon/collapsible on tablet, off-canvas overlay with accordion sections on mobile. Dark mode via `next-themes`.
 
 ---
 
-## 6. Backend Architecture (Node.js + Prisma)
+## 5. Technical Architecture (as built)
 
-### 6.1 Tech Stack
-
-- **Runtime**: Node.js (v18+), Express 4.x.  
-- **ORM**: Prisma (schema‑first).  
-- **Database**: PostgreSQL (recommended) or MySQL.  
-- **Authentication**: JWT (access/refresh tokens, HTTP‑only cookies).  
-- **Validation**: Zod schemas.  
-- **File storage**: Multer + local storage or S3 for lesson attachments/assignment submissions.  
-- **Email**: Nodemailer (for notifications, password reset).  
-
-### 6.2 Database Schema (Prisma – core models)
-
-```prisma
-model User {
-  id            Int       @id @default(autoincrement())
-  email         String    @unique
-  passwordHash  String
-  fullName      String
-  role          Role      @default(STUDENT)
-  avatarUrl     String?
-  createdAt     DateTime  @default(now())
-  courses       Course[]  @relation("InstructorCourses") // for instructor
-  enrolledCourses Enrolment[]
-  assignments   AssignmentSubmission[]
-  quizAttempts  QuizAttempt[]
-}
-
-enum Role {
-  ADMIN
-  INSTRUCTOR
-  STUDENT
-}
-
-model Course {
-  id          Int       @id @default(autoincrement())
-  title       String
-  slug        String    @unique
-  description String?
-  thumbnail   String?
-  level       Level     @default(BEGINNER)
-  isPublished Boolean   @default(false)
-  instructorId Int
-  instructor  User      @relation("InstructorCourses", fields: [instructorId], references: [id])
-  modules     Module[]
-  enrolments  Enrolment[]
-  assignments Assignment[]
-  quizzes     Quiz[]
-  createdAt   DateTime  @default(now())
-}
-
-enum Level { BEGINNER INTERMEDIATE ADVANCED }
-
-model Module {
-  id          Int    @id @default(autoincrement())
-  title       String
-  order       Int
-  courseId    Int
-  course      Course @relation(fields: [courseId], references: [id])
-  lessons     Lesson[]
-}
-
-model Lesson {
-  id          Int      @id @default(autoincrement())
-  title       String
-  content     String?  // text/html or video URL
-  contentType String   // "video", "text", "pdf"
-  order       Int
-  moduleId    Int
-  module      Module   @relation(fields: [moduleId], references: [id])
-  completions LessonCompletion[]
-}
-
-model LessonCompletion {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  lessonId  Int
-  lesson    Lesson   @relation(fields: [lessonId], references: [id])
-  completedAt DateTime @default(now())
-  @@unique([userId, lessonId])
-}
-
-model Enrolment {
-  id           Int      @id @default(autoincrement())
-  userId       Int
-  user         User     @relation(fields: [userId], references: [id])
-  courseId     Int
-  course       Course   @relation(fields: [courseId], references: [id])
-  enrolledAt   DateTime @default(now())
-  status       EnrolmentStatus @default(ACTIVE)
-  progress     Float    @default(0) // 0-100
-}
-
-enum EnrolmentStatus { ACTIVE COMPLETED DROPPED }
-
-model Quiz {
-  id          Int       @id @default(autoincrement())
-  title       String
-  description String?
-  courseId    Int
-  course      Course    @relation(fields: [courseId], references: [id])
-  timeLimit   Int?      // minutes
-  attemptsAllowed Int   @default(1)
-  questions   QuizQuestion[]
-  attempts    QuizAttempt[]
-}
-
-model QuizQuestion {
-  id          Int    @id @default(autoincrement())
-  quizId      Int
-  quiz        Quiz   @relation(fields: [quizId], references: [id])
-  text        String
-  type        QuestionType // MC_SINGLE, MC_MULTI, TEXT, TRUE_FALSE
-  points      Int
-  options     Json?   // for MC questions: { "A": "text", "B": "text" }
-  correctAnswer Json?  // e.g., ["A"] or text answer
-}
-
-model QuizAttempt {
-  id          Int      @id @default(autoincrement())
-  quizId      Int
-  quiz        Quiz     @relation(fields: [quizId], references: [id])
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
-  score       Float?
-  submittedAt DateTime @default(now())
-  answers     Json     // stores user answers
-}
-
-model Assignment {
-  id          Int       @id @default(autoincrement())
-  title       String
-  description String?
-  dueDate     DateTime?
-  maxPoints   Float
-  courseId    Int
-  course      Course    @relation(fields: [courseId], references: [id])
-  submissions AssignmentSubmission[]
-}
-
-model AssignmentSubmission {
-  id           Int       @id @default(autoincrement())
-  assignmentId Int
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
-  userId       Int
-  user         User      @relation(fields: [userId], references: [id])
-  fileUrl      String?
-  textAnswer   String?
-  grade        Float?
-  feedback     String?
-  submittedAt  DateTime  @default(now())
-}
-```
-
-### 6.3 API Endpoints (Core)
-
-| Method | Endpoint                                   | Description                     | Allowed Roles                  |
-|--------|--------------------------------------------|---------------------------------|--------------------------------|
-| POST   | `/api/auth/login`                          | Login → JWT                     | Public                         |
-| POST   | `/api/auth/register`                       | Student registration            | Public (admin via admin panel) |
-| GET    | `/api/courses`                             | List courses (filtered by role) | All authenticated              |
-| POST   | `/api/courses`                             | Create course                   | Admin, Instructor              |
-| PUT    | `/api/courses/:id`                         | Update course                   | Instructor (owner), Admin      |
-| POST   | `/api/courses/:id/enrol`                   | Enrol in course                 | Student                        |
-| GET    | `/api/courses/:id/progress`                | Student progress for course     | Student (self), Instructor     |
-| POST   | `/api/lessons/:id/complete`                | Mark lesson complete            | Student                        |
-| CRUD   | `/api/quizzes`                             | Quiz management                 | Admin/Instructor               |
-| POST   | `/api/quizzes/:id/attempt`                 | Submit quiz attempt             | Student                        |
-| CRUD   | `/api/assignments`                         | Assignment management           | Admin/Instructor               |
-| POST   | `/api/assignments/:id/submit`              | Submit assignment               | Student                        |
-| PUT    | `/api/assignments/submissions/:id/grade`   | Grade submission                | Instructor                     |
-| GET    | `/api/admin/users`                         | Manage users                    | Admin only                     |
-| GET    | `/api/admin/analytics`                     | Platform analytics              | Admin only                     |
-
-All endpoints use role middleware (`authorize([...roles])`) and ownership checks for instructors.
+| Layer | Choice |
+|-------|--------|
+| Framework | Next.js 16.1.7, App Router, React 19.2, TypeScript 5.9 (strict), Turbopack |
+| Routing | Route groups `(auth)` and `(dashboard)`; API route handlers under `app/api/` |
+| Database | MongoDB, Prisma 6.19 (v7 dropped MongoDB), `String @db.ObjectId` ids, singleton client in `lib/prisma.ts`, `engine: "classic"` for CLI |
+| Auth | `jose` HS256 access (1h) + refresh (30d) tokens in HTTP-only cookies; bcryptjs password hashing; refresh rotation with `RefreshToken` records; 60s in-memory session cache |
+| Edge middleware | `middleware.ts` — role routing + CSRF double-submit validation; exempt: `/api/auth/*`, `/api/csrf-token`, `/api/payments/webhook` |
+| UI | shadcn/ui v4 (radix-sera style), Tailwind CSS v4 (`@import "tailwindcss"`, OKLCH tokens, no `tailwind.config.ts`), lucide-react icons, sonner toasts |
+| Forms | react-hook-form + Zod v4 schemas in `lib/validators/` |
+| Rich text | TipTap 3 (`@tiptap/react`, `@tiptap/starter-kit`) — no in-editor media upload |
+| Charts | Chart.js / react-chartjs-2 and Recharts |
+| Payments | Stripe v22 (`lib/stripe.ts`), demo fallback when key absent |
+| Email | Nodemailer (`lib/email.ts`), SMTP via env vars |
+| Validation/sanitisation | Zod + `sanitize-html` (`lib/sanitize.ts`) |
+| Tests | Vitest 4 + jsdom + Testing Library; 6 files / 34 passing tests |
+| Quality | ESLint 9 (core-web-vitals + TS), Prettier (no semicolons, double quotes), `npm run audit` gate |
+| Deployment | Multi-stage Dockerfile, docker-compose, standalone Next output, GitHub Actions CI with `mongo:7` service |
 
 ---
 
-## 7. Frontend Implementation Details
+## 6. Data Model
 
-### 7.1 Framework & Libraries
+All ids are MongoDB ObjectIds represented as `String`. Enums: `Role`, `Level`, `EnrolmentStatus`, `QuestionType`. There are **38 models**:
 
-- **React 18** with TypeScript (recommended).  
-- **React Router v6** – protected routes.  
-- **Zustand** or Context API for auth state.  
-- **React Hook Form** + Zod for forms (course creation, quiz builder).  
-- **Tailwind CSS** with provided design tokens.  
-- **React Query** (TanStack Query) for data fetching and caching.  
-- **Video.js** or **React Player** for video lessons.  
-- **React Beautiful DnD** for module/lesson reordering.  
+| Domain | Models |
+|--------|--------|
+| Identity & sessions | `User`, `RefreshToken` |
+| Content | `Course`, `Module`, `Lesson` |
+| Learning & progress | `Enrolment`, `LessonCompletion` |
+| Assessment | `Quiz`, `QuizQuestion`, `QuizAttempt`, `Assignment`, `AssignmentSubmission` |
+| Payments & credentials | `Payment`, `Certificate` |
+| Community | `Discussion`, `Comment`, `DiscussionVote`, `CourseReview`, `ReviewHelpfulVote`, `Announcement`, `InstructorProfile` |
+| Gamification | `LearningPath`, `LearningPathCourse`, `LearningPathEnrollment`, `Badge`, `UserBadge` |
+| Learning tools | `Note`, `Bookmark`, `CalendarEvent`, `CalendarEventAttendee` |
+| System | `Notification`, `Settings` (singleton), `RateLimitRecord`, `AuditLog` |
 
-### 7.2 Sidebar Dropdown Implementation
+Notable constraints and behaviour:
 
-- Use a recursive component for sidebar links.  
-- Each dropdown is a `<div>` that toggles `open` class on parent click (or hover for desktop).  
-- Icons from Font Awesome 6.  
-- On mobile, sidebar is an off‑canvas panel with a close button; dropdowns expand inline.  
+- `User.email`, `Course.slug`, `LearningPath.slug`, `Badge.slug`, `RefreshToken.token`, `Certificate.verificationId` and `InstructorProfile.userId` are unique.
+- `@@unique([userId, courseId])` on `Enrolment`, `[userId, lessonId]` on `LessonCompletion`, `[courseId, userId]` on `CourseReview`, `[userId, badgeId]` on `UserBadge`, etc.
+- `Module`/`Lesson`/`QuizQuestion`/`Discussion`/`Comment`/`Note`/`Bookmark` cascade on parent delete; most other models use soft deletion via `deletedAt`.
+- **MongoDB nullable-unique gotcha:** `Payment.stripePaymentIntentId` and `Payment.stripeSessionId` are `@unique` but optional — both must always be populated with a unique placeholder (current code uses `demo_<uuid>` / `pending_<uuid>`).
+- `Settings` is a fixed `"singleton"` document with 7 fields (site name/description, registration toggle, default role, maintenance mode, max upload size, email notifications).
 
-### 7.3 Course Builder Page (Instructor)
-
-- Split view: left panel shows modules/lessons tree (drag‑drop sortable), right panel shows content editor (title, content type, video URL, PDF upload).  
-- Publish/draft toggle.  
-- Autosave via debounced API calls.  
-
-### 7.4 Student Learning Interface
-
-- Course player: sidebar with lesson list (with completion checkmarks), main area displays lesson content.  
-- “Mark Complete” button at bottom of each lesson.  
-- Next/previous lesson navigation.  
-- Quiz/assignment links integrated.  
-
-### 7.5 Dashboard Components
-
-- **Admin dashboard**: Cards for total users, courses, active students; line chart of weekly enrolments.  
-- **Instructor dashboard**: Top courses by completion, pending grading queue.  
-- **Student dashboard**: “Continue where you left off”, upcoming deadlines, recommended courses.  
+Schema gaps are recorded in §8 (G-06).
 
 ---
 
-## 8. Security & Non‑Functional Requirements
+## 7. API Surface
 
-| Category           | Requirement                                                                                                                                 |
-|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| Authentication     | JWT stored in HTTP‑only secure cookie (or localStorage with refresh rotation). Password reset with email token.                           |
-| Authorization      | Middleware checks `req.user.role` and resource ownership (instructor can only edit own courses).                                           |
-| Input validation   | Zod schemas on both frontend and backend.                                                                                                  |
-| File uploads       | Limit size (20MB for videos, 5MB for PDFs). Scan for malware if using S3.                                                                 |
-| Rate limiting      | `express-rate-limit` – 50 requests/min for quiz submissions.                                                                               |
-| Database indexing  | Indexes on `Course.instructorId`, `Enrolment.userId+courseId`, `LessonCompletion.userId+lessonId`.                                         |
-| Privacy            | Student progress visible only to student and instructor of that course. Admin sees anonymised aggregates.                                  |
-| Responsiveness     | Tested on Chrome, Safari, Firefox; mobile breakpoints 375px, 768px, 1280px.                                                                |
-| Accessibility      | WCAG 2.1 AA: keyboard navigable sidebar, focus outlines, alt texts for thumbnails, ARIA expanded states for dropdowns.                    |
+All mutations require an `X-CSRF-Token` header (auto-injected by `lib/api-client.ts` helpers). Authentication is via the HTTP-only access-token cookie.
 
----
-
-## 9. Development Phases (Agile Sprints)
-
-| Sprint | Focus                                                                                 |
-|--------|---------------------------------------------------------------------------------------|
-| 1      | Database schema, Prisma models, authentication API (register/login, JWT).           |
-| 2      | Course CRUD, module/lesson management (backend + basic instructor UI).              |
-| 3      | Student enrolment, lesson viewer, completion tracking (progress calculation).       |
-| 4      | Quiz engine (create, take, auto‑grade) + assignment submission & grading.           |
-| 5      | Dashboard analytics (charts, KPI cards) and role‑based sidebar with dropdowns.      |
-| 6      | Communication module (announcements), notifications, polish UI responsiveness.      |
-| 7      | Admin user management, system settings, dark mode toggle.                           |
-| 8      | Testing (unit, integration, e2e with Cypress), performance optimisation, deployment.|
+| Domain | Endpoints |
+|--------|-----------|
+| Auth | `POST /api/auth/login`, `register`, `logout`, `refresh`, `forgot-password`, `reset-password`, `verify-email`; `GET /api/auth/me`; `POST /api/reset-password/confirm` |
+| CSRF | `GET /api/csrf-token` |
+| Courses | `GET/POST /api/courses`, `GET/PUT/DELETE /api/courses/[id]`, `POST /api/courses/[id]/enrol`, `GET/POST /api/courses/[id]/modules`, `PUT/DELETE /api/courses/[id]/modules/[moduleId]`, `GET /api/courses/public`, `GET /api/courses/public/[id]` |
+| Modules & lessons | `GET/POST /api/modules`, `PUT/DELETE /api/modules/[id]`, `GET/POST /api/lessons`, `PUT/DELETE /api/lessons/[id]`, `POST /api/lessons/[id]/complete` |
+| Enrolments | `GET/POST /api/enrollments`, `GET/DELETE /api/enrollments/[id]`, `GET /api/enrollments/[id]/progress`, `GET /api/enrolments/my` |
+| Quizzes & questions | `GET/POST /api/quizzes`, `GET/PUT/DELETE /api/quizzes/[id]`, `POST /api/quizzes/[id]/attempt`, `GET /api/quizzes/[id]/attempt`, `GET /api/quizzes/my-attempts`, `POST /api/questions`, `PUT /api/questions/[id]` |
+| Assignments & submissions | `GET/POST /api/assignments`, `GET/PUT/DELETE /api/assignments/[id]`, `POST /api/assignments/[id]/submit`, `GET /api/assignments/my-submissions`, `POST /api/assignments/submissions/[id]/grade`, `GET /api/submissions`, `GET /api/submissions/[id]` |
+| Progress & analytics | `GET /api/progress`, `GET /api/analytics`, `GET /api/admin/analytics`, `GET /api/instructors/analytics`, `GET /api/instructors/dashboard` |
+| Community | `GET/POST /api/announcements`, `GET/PUT/DELETE /api/announcements/[id]`, `GET/POST /api/discussions`, `GET/PATCH/DELETE /api/discussions/[id]`, `POST /api/discussions/[id]/vote`, `POST /api/comments`, `GET/POST /api/reviews`, `POST /api/reviews/[id]/helpful` |
+| Gamification | `GET/POST /api/badges`, `GET/POST /api/user-badges`, `GET/POST /api/learning-paths`, `GET/POST/DELETE /api/learning-paths/[id]/enroll`, `GET /api/learning-paths/enrolled` |
+| Learning tools | `GET/POST /api/notes`, `GET/PATCH/DELETE /api/notes/[id]`, `GET/POST /api/bookmarks`, `DELETE /api/bookmarks/[id]`, `GET/POST /api/calendar/events`, `POST /api/calendar/events/[id]/rsvp` |
+| Credentials & payments | `GET/POST /api/certificates`, `GET /api/certificates/verify`, `GET/POST /api/payments`, `POST /api/payments/checkout`, `POST /api/payments/webhook` |
+| Admin & users | `GET /api/users`, `POST /api/users/change-password`, `GET/POST /api/admin/users`, `GET/PUT/DELETE /api/admin/users/[id]`, `GET/PATCH /api/instructors/[id]` |
+| Utility | `GET /api/categories`, `GET /api/tags`, `GET /api/search`, `GET/PATCH /api/notifications`, `GET/PUT /api/settings`, `POST /api/upload`, `GET /api/health` |
 
 ---
 
-## 10. Success Criteria (Acceptance Tests)
+## 8. Core Business Logic (as implemented)
 
-- [ ] **Student** can browse course catalogue, enrol, watch a video lesson, mark it complete, and see progress update to 100% after finishing all lessons.  
-- [ ] **Instructor** can create a course with 2 modules, add 3 lessons (video, text, PDF), and publish. The student can then see the course content.  
-- [ ] **Instructor** can create a quiz with 5 MC questions; student takes it and receives auto‑score; instructor can override grade.  
-- [ ] **Admin** can view list of all users, change a student to instructor role, and see platform‑wide analytics (total courses, enrolments).  
-- [ ] **Sidebar** collapses on tablet and becomes off‑canvas on mobile; all dropdowns work with touch/click.  
-- [ ] **Dark mode** toggles without breaking colour contrast on any page.  
-- [ ] **API endpoints** reject unauthorised access (e.g., student trying to edit a course returns 403).  
+### 8.1 Authentication & CSRF
+- Access token (1h) and refresh token (30d) are HS256-signed with separate secrets (`JWT_SECRET`, `JWT_REFRESH_SECRET`, each ≥32 chars) and stored in HTTP-only cookies with `SameSite=lax` and `secure` in production.
+- Refresh rotation stores hashed tokens in `RefreshToken` and revokes the previous one.
+- `middleware.ts` rejects any state-changing request without a header/cookie CSRF token match; public auth endpoints, the CSRF issuer and the Stripe webhook are exempt.
+
+### 8.2 Enrolment & progress
+- `POST /api/courses/[id]/enrol` creates an `Enrolment` (`status: ACTIVE`, `progress: 0`) after auth/enrolment checks; paid courses route through checkout.
+- `POST /api/lessons/[id]/complete` verifies the lesson and the caller's active enrolment, upserts a `LessonCompletion`, counts completed lessons for that course, computes `progress = round(completed / total × 100)`, updates `lastAccessedAt`, and sets `status = COMPLETED` + `completedAt` when progress reaches 100.
+
+### 8.3 Quiz grading
+- Objective types: `MC_SINGLE` and `TRUE_FALSE` award full points on exact match; `MC_MULTI` awards pro-rata points for matched correct options.
+- `TEXT` questions currently award 0 points (manual grading is not implemented).
+- Score = `round((earned / total) × 100, 2)`. Attempts are rate-limited to 10/minute and capped by `Quiz.attemptsAllowed`; enrollment in the course is required.
+
+### 8.4 Assignment grading
+- Students submit text and/or a `fileUrl`; instructors apply a grade (≤ `maxPoints`) and feedback; `gradedAt` is stamped.
+
+### 8.5 Payments
+- Free courses/demo mode: enrol directly with a unique `demo_<uuid>` payment placeholder.
+- Live mode: create a Stripe Checkout session with inline `price_data`, record `Payment` with `pending_<uuid>` placeholders, and finalise via webhook.
+
+### 8.6 Notifications, audit, rate limiting
+- Rate limiting uses an in-memory map plus persistent `RateLimitRecord` documents; applied to login, registration, forgot-password, courses, enrolment, upload, quiz attempts and assignment submissions.
+- `lib/sanitize.ts` sanitises discussion/comment/lesson content.
+- `lib/notification-service.ts` and `lib/audit-logger.ts` are implemented but currently unused (see G-02).
 
 ---
 
-## 11. Future Enhancements (Optional)
+## 9. Gap Register — Remaining Work
 
-- SCORM 1.2/2004 support (import/export).  
-- Live classes integration (Zoom/WebRTC).  
-- Gamification: badges, leaderboards, XP points.  
-- Bulk email notifications to course students.  
-- Mobile app (React Native) wrapper for the same API.  
+These are the concrete blockers to "fully functional with real business logic", ordered by priority. They are also the acceptance criteria for v2.1.
+
+| ID | Severity | Gap | Location / evidence |
+|----|----------|-----|---------------------|
+| G-01 | Critical | Quiz pipeline is inconsistent: seeded questions use array options and `{correct: 0}` answers while the UI and grader expect `Record<string,string>`; `GET /api/quizzes/[id]` wraps the quiz and strips answers; `TEXT` is never graded. | `prisma/seed.ts:1494-1543`, `app/api/quizzes/[id]/route.ts:56-75`, `attempt/route.ts:86-106`, `student/quizzes/[id]/page.tsx:594-610` |
+| G-02 | High | `lib/notification-service.ts` and `lib/audit-logger.ts` have zero call sites — enrolment, completion, grading, publishing and role changes produce no notifications or audit entries. Whole modules are dead code. | `lib/notification-service.ts`, `lib/audit-logger.ts` (no imports) |
+| G-03 | High | Admin Settings → Email reads non-existent `smtp*` fields and posts to `/api/settings/test-email`, which does not exist. `sendVerificationEmail()` is never called, so `/api/auth/verify-email` is unreachable. | `admin/settings/email/page.tsx:69-74,101`, `lib/email.ts:63-82` |
+| G-04 | High | Integrations settings page is an explicit "coming soon" placeholder with local-only toggles. | `admin/settings/integrations/page.tsx:178-181` |
+| G-05 | High | Certificates record a URL to a PDF that is never generated; there is no `public/` directory. Badge icons point to missing `/badges/*.svg`; no automatic badge awarding from `Badge.criteria`. | `api/certificates/route.ts:127-128`, `prisma/seed.ts:1626-1652` |
+| G-06 | High | Schema/index gaps: no `Category` model; `CourseReview` lacks a `userId` index; course approval workflow has no status fields; no email-verification token fields, quiz due date/result-release, assignment rubric/late policy, lesson media URLs, or time-spent tracking. | `prisma/schema.prisma`, `api/categories/route.ts:59-64` |
+| G-07 | High | Seed data is incomplete/inconsistent: cleanup only covers 7 models; progress is random <100 so no completed enrolments; no completions, attempts, submissions, reviews, discussions or certificates; quiz format broken; notification duplicates on re-run. | `prisma/seed.ts:24-30,1451-1617` |
+| G-08 | High | Authorization defects: middleware lets STUDENT and INSTRUCTOR reach `/admin/**`; `getSession()` ignores `isActive`/`deletedAt`; `enrollments/[id]/route.ts` returns the viewer's completions instead of the enrolment owner's; access-token cookie maxAge (7d) disagrees with token lifetime (1h). | `middleware.ts:12-16`, `lib/auth/jwt.ts:90,155-167`, `api/enrollments/[id]/route.ts:87-96` |
+| G-09 | Medium | Payments: webhook never replaces `pending_<uuid>` with the real `payment_intent`; no refund/dispute/expiry reconciliation. | `api/payments/webhook/route.ts:41-55` |
+| G-10 | Medium | Dead or inert UI: `ModuleLessonTree`, `CourseList`, `CourseReviews` are unimported; `CourseCard` ignores `progress`; no assignment file-upload UI although `/api/upload` exists; no discussion detail/thread view; no chart export. | `features/courses/*`, `features/community/course-reviews.tsx`, `student/assignments/pending/page.tsx` |
+| G-11 | Medium | Learning paths never advance; calendar recurrence fields are unused; question bank is a count-only view. | `LearningPathEnrollment.progress`, `calendar-view.tsx:84-89`, `admin/quizzes/question-bank/page.tsx` |
+| G-12 | Medium | Test coverage is thin: 34 tests, no API/integration/E2E suites, and `@vitest/coverage-v8` is missing so `npm run test:coverage` fails. | `test/`, `package.json` devDependencies |
+| G-13 | Low | `data/mock/*.json` are unused, stale leftovers with integer ids; several docs (README, AUDIT_REPORT, verification checklists) contradict the code. | `data/mock/`, `README.md:22,32` |
+
+### Remediation roadmap
+
+1. **Sprint 1 — correctness:** G-01, G-08, G-07.
+2. **Sprint 2 — real workflows:** G-02, G-03, G-04, G-05, G-09.
+3. **Sprint 3 — model & UI completeness:** G-06, G-10, G-11.
+4. **Sprint 4 — quality:** G-12, G-13, accessibility pass, performance pass.
 
 ---
 
-**This PRD provides a complete roadmap for building a role‑based, modular LMS with a rich UI/UX (sidebar dropdowns, responsive design) and a robust Node.js + Prisma backend. Use it as the single source of truth for development.** 
+## 10. Non-Functional Requirements
+
+| Area | Requirement | Status |
+|------|-------------|--------|
+| Security | HTTP-only JWT cookies, refresh rotation, Edge CSRF, bcrypt, Zod validation, sanitised rich text, CSP and security headers in `next.config.mjs`, Stripe signature verification. | ✅ |
+| Rate limiting | Login/forgot-password plus mutation endpoints; 10 quiz attempts/minute. | ⚠️ Fails open when the DB lookup errors (`lib/rate-limit.ts:76-79`). |
+| Authorisation | Role routing in middleware; ownership guards in `getSession()` callers and `lib/authorization.ts`. | ⚠️ See G-08. |
+| Performance | Indexed hot columns, `select`-based queries in several endpoints, standalone build, Turbopack. | ⚠️ N+1 patterns remain on assignments/quizzes/learning-path pages. |
+| Accessibility | shadcn/ui Radix primitives, semantic HTML, keyboard-operable dropdowns and command palette, responsive breakpoints. | ⚠️ Full WCAG 2.1 AA audit not done. |
+| Observability | `/api/health`, CI pipeline, structured console errors, `AuditLog` model. | ⚠️ APM/error tracking and audit wiring missing. |
+| Deployment | Dockerfile + compose, standalone output, `.env` required. | ✅ |
+
+### Environment variables
+
+Required: `DATABASE_URL`, `JWT_SECRET` (≥32 chars), `JWT_REFRESH_SECRET` (≥32 chars). Optional: `NEXT_PUBLIC_APP_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_FROM`, `SEED_DEFAULT_PASSWORD`.
+
+### Key scripts
+
+`npm run dev`, `build`, `start`, `lint`, `typecheck`, `format`, `test`, `test:coverage`, `audit`, `db:generate`, `db:push`, `db:seed`, `db:studio`. Quality gate: `npm run audit` (lint → typecheck → tests). Build/deploy only after the gate passes.
+
+---
+
+## 11. Acceptance Criteria
+
+Baseline criteria from v1.0, re-stated with their current status:
+
+- [x] Student can browse the catalogue, enrol, consume a lesson, mark it complete and see progress update.
+- [x] Instructor can create a course with modules/lessons and publish it; students can then see the content.
+- [~] Instructor creates a quiz with 5 MC questions; student takes it and receives an auto-score — **works for instructor-created MC quizzes; seeded quizzes and essay questions are broken** (G-01).
+- [x] Admin can list users, change roles and view platform analytics.
+- [x] Sidebar collapses on tablet and becomes off-canvas on mobile; command palette works.
+- [x] Dark mode toggles without breaking layout.
+- [~] APIs reject unauthorised access — role/ownership checks exist but several authorisation defects remain (G-08).
+- [x] Payments via Stripe Checkout with demo fallback.
+- [~] Certificates and badges are viewable — issuance exists but artefacts/auto-award are missing (G-05).
+- [~] Notifications and audit trails — UI exists, event wiring does not (G-02).
+
+Additional v2.1 exit criteria: close every gap in §9, raise automated test coverage above 70% with API and integration suites, and produce an updated deployment/ops guide.
+
+---
+
+## 12. Future Enhancements (revised)
+
+Items that moved from *future* to *shipped* in v2.0: certificates, badges/gamification, learning paths, calendar, discussion forums, announcements, Stripe payments, notifications, dark mode, Docker/CI.
+
+Still open: SCORM 1.2/2004 import/export; live classes (Zoom/WebRTC); direct messaging; automated badge/criteria engine (see G-05 — partially designed already); bulk email campaigns; native mobile app; chart export; advanced analytics with time-on-task; full-text search via a dedicated engine; Sentry/APM; cookie-consent banner.
+
+---
+
+**This PRD is the single source of truth for the current product. Any discrepancy between this document and the code must be resolved by updating this document — not by relying on the older audit/verification markdown files, which describe a different, earlier design.**

@@ -9,8 +9,9 @@ import {
   Edit,
   Trash2,
   Users,
-  HelpCircle,
+  ListChecks,
   BarChart3,
+  Search,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -24,6 +25,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -41,14 +43,29 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { LoadingCard } from "@/components/loading-skeleton"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { PageHeader } from "@/features/dashboard/components/page-header"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiDelete } from "@/lib/api-client"
 import type { Quiz } from "@/types"
@@ -126,33 +143,36 @@ export default function InstructorQuizzesPage() {
     0
   )
 
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 size-8 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading quizzes...</p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Quizzes</h1>
-          <p className="mt-1 text-muted-foreground">
-            Create and manage quizzes for your courses
-          </p>
-        </div>
+  const header = (
+    <PageHeader
+      title="Quizzes"
+      description="Create and manage quizzes for your courses"
+      action={
         <Button asChild>
           <Link href="/instructor/quizzes/new">
             <Plus data-icon="inline-start" />
             New Quiz
           </Link>
         </Button>
+      }
+    />
+  )
+
+  if (isLoading) {
+    return (
+      <div className="flex min-w-0 flex-col gap-6">
+        {header}
+        <div className="grid gap-4 md:grid-cols-3">
+          <LoadingCard count={3} />
+        </div>
+        <LoadingCard />
       </div>
+    )
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      {header}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -164,7 +184,7 @@ export default function InstructorQuizzesPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileText className="size-5 text-primary" />
-              <div className="text-2xl font-bold">{quizzes.length}</div>
+              <div className="text-2xl font-semibold">{quizzes.length}</div>
             </div>
           </CardContent>
         </Card>
@@ -176,8 +196,8 @@ export default function InstructorQuizzesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <HelpCircle className="size-5 text-info" />
-              <div className="text-2xl font-bold">{totalQuestions}</div>
+              <ListChecks className="size-5 text-info" />
+              <div className="text-2xl font-semibold">{totalQuestions}</div>
             </div>
           </CardContent>
         </Card>
@@ -190,7 +210,7 @@ export default function InstructorQuizzesPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Users className="size-5 text-warning" />
-              <div className="text-2xl font-bold">{totalAttempts}</div>
+              <div className="text-2xl font-semibold">{totalAttempts}</div>
             </div>
           </CardContent>
         </Card>
@@ -198,27 +218,32 @@ export default function InstructorQuizzesPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="max-w-sm flex-1">
-              <Input
+          <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+            <InputGroup className="h-9 max-w-sm min-w-0 flex-1">
+              <InputGroupInput
                 type="search"
                 placeholder="Search quizzes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+            </InputGroup>
             <Select
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All Quizzes</SelectItem>
-                <SelectItem value="HAS_QUESTIONS">Has Questions</SelectItem>
-                <SelectItem value="NO_QUESTIONS">No Questions</SelectItem>
-                <SelectItem value="HAS_ATTEMPTS">Has Attempts</SelectItem>
+                <SelectGroup>
+                  <SelectItem value="ALL">All Quizzes</SelectItem>
+                  <SelectItem value="HAS_QUESTIONS">Has Questions</SelectItem>
+                  <SelectItem value="NO_QUESTIONS">No Questions</SelectItem>
+                  <SelectItem value="HAS_ATTEMPTS">Has Attempts</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -279,28 +304,32 @@ export default function InstructorQuizzesPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild>
-                            <Link href={`/instructor/quizzes/${quiz.id}`}>
-                              <Edit className="mr-2 size-4" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href={`/instructor/quizzes/results?quizId=${quiz.id}`}
-                            >
-                              <BarChart3 className="mr-2 size-4" />
-                              View Results
-                            </Link>
-                          </DropdownMenuItem>
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/instructor/quizzes/${quiz.id}`}>
+                                <Edit data-icon="inline-start" />
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/instructor/quizzes/results?quizId=${quiz.id}`}
+                              >
+                                <BarChart3 data-icon="inline-start" />
+                                View Results
+                              </Link>
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setDeleteId(quiz.id)}
-                          >
-                            <Trash2 className="mr-2 size-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setDeleteId(quiz.id)}
+                            >
+                              <Trash2 data-icon="inline-start" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -309,23 +338,29 @@ export default function InstructorQuizzesPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className="py-12 text-center">
-              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No quizzes found</h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {searchQuery || statusFilter !== "ALL"
-                  ? "Try adjusting your filters or search query"
-                  : "Get started by creating your first quiz"}
-              </p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText />
+                </EmptyMedia>
+                <EmptyTitle>No quizzes found</EmptyTitle>
+                <EmptyDescription>
+                  {searchQuery || statusFilter !== "ALL"
+                    ? "Try adjusting your filters or search query"
+                    : "Get started by creating your first quiz"}
+                </EmptyDescription>
+              </EmptyHeader>
               {!searchQuery && statusFilter === "ALL" && (
-                <Button asChild>
-                  <Link href="/instructor/quizzes/new">
-                    <Plus data-icon="inline-start" />
-                    Create Quiz
-                  </Link>
-                </Button>
+                <EmptyContent>
+                  <Button asChild>
+                    <Link href="/instructor/quizzes/new">
+                      <Plus data-icon="inline-start" />
+                      Create Quiz
+                    </Link>
+                  </Button>
+                </EmptyContent>
               )}
-            </div>
+            </Empty>
           )}
         </CardContent>
       </Card>
@@ -346,8 +381,8 @@ export default function InstructorQuizzesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() => deleteId && handleDelete(deleteId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

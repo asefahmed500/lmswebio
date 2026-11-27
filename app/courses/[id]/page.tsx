@@ -4,20 +4,41 @@ import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
+import { toast } from "sonner"
 import {
   ArrowLeft,
+  BookOpen,
   ChevronDown,
   ChevronUp,
   Clock,
-  BookOpen,
   Layers,
   Users,
-  Loader2,
 } from "lucide-react"
 import { SynexNavbar } from "@/components/synex/Navbar"
 import { HomepageFooter } from "@/components/homepage/homepage-footer"
 import { useAuth } from "@/components/auth-provider"
 import { apiGet, apiPost } from "@/lib/api-client"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import { Separator } from "@/components/ui/separator"
+import { DetailLoading } from "@/components/loading-skeleton"
+import { Spinner } from "@/components/ui/spinner"
 
 interface ApiLesson {
   id: string
@@ -113,7 +134,8 @@ export default function PublicCourseDetailPage() {
   function toggleModule(id: string) {
     setExpandedModules((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -130,7 +152,7 @@ export default function PublicCourseDetailPage() {
         checkoutUrl?: string
       }>(`/courses/${course!.id}/enrol`)
       if (r.error) {
-        alert(r.error)
+        toast.error(r.error)
         return
       }
       if (r.data?.checkoutUrl) {
@@ -138,10 +160,11 @@ export default function PublicCourseDetailPage() {
         return
       }
       setAlreadyEnrolled(true)
+      toast.success("You're enrolled. Happy learning!")
       router.push(`/student/courses/${course!.id}`)
     } catch (err) {
       console.error(err)
-      alert("Something went wrong.")
+      toast.error("Something went wrong.")
     } finally {
       setEnrolling(false)
     }
@@ -161,10 +184,10 @@ export default function PublicCourseDetailPage() {
 
   if (loading)
     return (
-      <div className="flex min-h-screen flex-col bg-canvas">
+      <div className="flex min-h-screen flex-col bg-background">
         <SynexNavbar />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="size-6 animate-spin rounded-md border-2 border-graphite/20 border-t-void-black" />
+        <div className="mx-auto w-full max-w-[1280px] flex-1 px-5 py-10">
+          <DetailLoading />
         </div>
         <HomepageFooter />
       </div>
@@ -172,18 +195,25 @@ export default function PublicCourseDetailPage() {
 
   if (!course)
     return (
-      <div className="flex min-h-screen flex-col bg-canvas">
+      <div className="flex min-h-screen flex-col bg-background">
         <SynexNavbar />
-        <div className="flex flex-1 flex-col items-center justify-center gap-4">
-          <h1 className="font-bradford text-[32px] font-medium text-void-black">
-            Course Not Found
-          </h1>
-          <Link
-            href="/"
-            className="rounded-md border border-graphite/20 px-5 py-2 font-visueltpro text-sm font-light text-graphite transition-colors hover:border-graphite/40"
-          >
-            Back to Home
-          </Link>
+        <div className="flex flex-1 items-center justify-center p-6">
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <BookOpen />
+              </EmptyMedia>
+              <EmptyTitle>Course Not Found</EmptyTitle>
+              <EmptyDescription>
+                This course may have been removed or is no longer published.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button variant="outline" asChild>
+                <Link href="/">Back to Home</Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         </div>
         <HomepageFooter />
       </div>
@@ -192,22 +222,22 @@ export default function PublicCourseDetailPage() {
   const isFree = !course.price || course.price === 0
 
   return (
-    <div className="flex min-h-screen flex-col bg-canvas">
+    <div className="flex min-h-screen flex-col bg-background">
       <SynexNavbar />
 
       <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-[1280px] px-5 py-10">
-          <Link
-            href="/courses"
-            className="mb-8 inline-flex items-center gap-1 font-visueltpro text-sm font-light text-smoke transition-colors hover:text-void-black"
-          >
-            <ArrowLeft className="size-4" /> All Courses
-          </Link>
+          <Button variant="ghost" size="sm" className="mb-8 -ml-2" asChild>
+            <Link href="/courses">
+              <ArrowLeft data-icon="inline-start" />
+              All Courses
+            </Link>
+          </Button>
 
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_400px] lg:gap-16">
-            {/* Left — image */}
-            <div>
-              <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-graphite/10 bg-chalk">
+          <div className="grid min-w-0 grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-16">
+            {/* Left — image and curriculum */}
+            <div className="min-w-0">
+              <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
                 {course.thumbnail ? (
                   <Image
                     src={course.thumbnail}
@@ -218,37 +248,35 @@ export default function PublicCourseDetailPage() {
                     priority
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <BookOpen className="size-16 text-smoke/30" />
+                  <div className="flex size-full items-center justify-center">
+                    <BookOpen className="size-12 text-muted-foreground/40" />
                   </div>
                 )}
               </div>
 
               {/* Stats row below image */}
-              <div className="mt-6 flex flex-wrap gap-6">
-                <div className="flex items-center gap-2">
-                  <Layers className="size-4 text-smoke" />
-                  <span className="font-visueltpro text-sm font-light text-graphite">
+              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3">
+                <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                  <Layers className="size-4 shrink-0" />
+                  <span className="truncate">
                     {course._count.modules} modules
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <BookOpen className="size-4 text-smoke" />
-                  <span className="font-visueltpro text-sm font-light text-graphite">
-                    {totalLessons} lessons
-                  </span>
+                <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                  <BookOpen className="size-4 shrink-0" />
+                  <span className="truncate">{totalLessons} lessons</span>
                 </div>
                 {totalDuration > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="size-4 text-smoke" />
-                    <span className="font-visueltpro text-sm font-light text-graphite">
+                  <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="size-4 shrink-0" />
+                    <span className="truncate">
                       {formatDuration(totalDuration)}
                     </span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Users className="size-4 text-smoke" />
-                  <span className="font-visueltpro text-sm font-light text-graphite">
+                <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                  <Users className="size-4 shrink-0" />
+                  <span className="truncate">
                     {course._count.enrolments} students
                   </span>
                 </div>
@@ -256,11 +284,9 @@ export default function PublicCourseDetailPage() {
 
               {/* Curriculum */}
               {course.modules.length > 0 && (
-                <div className="mt-10">
-                  <h2 className="mb-6 font-bradford text-[28px] font-medium tracking-[-0.02em] text-void-black">
-                    Curriculum
-                  </h2>
-                  <div className="flex flex-col rounded-xl border border-graphite/10 bg-chalk">
+                <section className="mt-10">
+                  <h2 className="mb-6">Curriculum</h2>
+                  <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card">
                     {course.modules.map((mod, i) => {
                       const expanded = expandedModules.has(mod.id)
                       const count = mod.lessons.length
@@ -269,54 +295,58 @@ export default function PublicCourseDetailPage() {
                         0
                       )
                       return (
-                        <div
-                          key={mod.id}
-                          className={i > 0 ? "border-t border-graphite/10" : ""}
-                        >
+                        <div key={mod.id} className="min-w-0">
+                          {i > 0 && <Separator />}
                           <button
                             type="button"
                             onClick={() => toggleModule(mod.id)}
-                            className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-canvas/50"
+                            aria-expanded={expanded}
+                            className="flex w-full min-w-0 items-center gap-3 px-5 py-4 text-left transition-colors outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/25"
                           >
-                            <div className="flex items-center gap-3">
-                              <span className="font-visueltpro text-xs font-medium text-smoke">
-                                {String(i + 1).padStart(2, "0")}
+                            <span className="min-w-0 flex-1">
+                              <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+                                <span className="text-xs font-medium text-muted-foreground">
+                                  {String(i + 1).padStart(2, "0")}
+                                </span>
+                                <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                                  {mod.title}
+                                </span>
                               </span>
-                              <span className="font-visueltpro text-sm font-medium text-void-black">
-                                {mod.title}
-                              </span>
-                              <span className="font-visueltpro text-xs font-light text-smoke">
+                              <span className="mt-1 block text-xs text-muted-foreground">
                                 {count} lesson{count !== 1 ? "s" : ""}
                                 {dur > 0 ? ` · ${formatDuration(dur)}` : ""}
                               </span>
-                            </div>
+                            </span>
                             {expanded ? (
-                              <ChevronUp className="size-4 text-smoke" />
+                              <ChevronUp className="size-4 shrink-0 text-muted-foreground" />
                             ) : (
-                              <ChevronDown className="size-4 text-smoke" />
+                              <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
                             )}
                           </button>
                           {expanded && (
-                            <div className="border-t border-graphite/8 bg-canvas/30 px-5 pt-3 pb-4">
+                            <div className="bg-muted/40 px-5 pt-3 pb-4">
                               {mod.lessons.map((lesson, j) => (
                                 <div
                                   key={lesson.id}
-                                  className="flex items-center justify-between py-2.5"
+                                  className="flex min-w-0 items-center justify-between gap-3 py-2.5"
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <span className="w-5 font-visueltpro text-xs text-smoke">
+                                  <div className="flex min-w-0 items-center gap-3">
+                                    <span className="w-5 shrink-0 text-xs text-muted-foreground">
                                       {j + 1}
                                     </span>
-                                    <span className="font-visueltpro text-sm font-light text-graphite">
+                                    <span className="min-w-0 truncate text-sm text-muted-foreground">
                                       {lesson.title}
                                     </span>
                                   </div>
-                                  <div className="flex items-center gap-3">
-                                    <span className="rounded-md bg-canvas px-2 py-0.5 font-visueltpro text-[10px] text-smoke">
+                                  <div className="flex shrink-0 items-center gap-3">
+                                    <Badge
+                                      variant="secondary"
+                                      className="font-mono"
+                                    >
                                       {lesson.contentType}
-                                    </span>
+                                    </Badge>
                                     {lesson.duration && (
-                                      <span className="font-visueltpro text-xs text-smoke">
+                                      <span className="text-xs text-muted-foreground">
                                         {formatDuration(lesson.duration)}
                                       </span>
                                     )}
@@ -329,124 +359,118 @@ export default function PublicCourseDetailPage() {
                       )
                     })}
                   </div>
-                </div>
+                </section>
               )}
             </div>
 
             {/* Right — info card */}
             <div className="lg:sticky lg:top-20 lg:self-start">
-              <div className="rounded-xl border border-graphite/10 bg-chalk p-6">
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {course.category && (
-                    <span className="rounded-md bg-canvas px-3 py-1 font-visueltpro text-xs font-light text-graphite">
-                      {course.category}
-                    </span>
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-wrap gap-2">
+                    {course.category && (
+                      <Badge variant="secondary">{course.category}</Badge>
+                    )}
+                    <Badge variant="secondary">
+                      {levelLabels[course.level] || course.level}
+                    </Badge>
+                  </div>
+                  <CardTitle className="font-heading text-2xl leading-tight">
+                    {course.title}
+                  </CardTitle>
+                  {course.description && (
+                    <CardDescription className="leading-relaxed">
+                      {course.description}
+                    </CardDescription>
                   )}
-                  <span className="rounded-md bg-canvas px-3 py-1 font-visueltpro text-xs font-light text-graphite">
-                    {levelLabels[course.level] || course.level}
-                  </span>
-                </div>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-6">
+                  <div className="text-2xl font-semibold">
+                    {isFree ? (
+                      <span className="text-muted-foreground">Free</span>
+                    ) : (
+                      <span>${course.price!.toFixed(2)}</span>
+                    )}
+                  </div>
 
-                {/* Title */}
-                <h1 className="mt-4 font-bradford text-[28px] leading-tight font-medium tracking-[-0.02em] text-void-black">
-                  {course.title}
-                </h1>
-
-                {/* Description */}
-                {course.description && (
-                  <p className="mt-3 font-visueltpro text-sm leading-relaxed font-light text-smoke">
-                    {course.description}
-                  </p>
-                )}
-
-                {/* Price */}
-                <div className="mt-6 font-visueltpro text-[28px] font-medium text-void-black">
-                  {isFree ? (
-                    <span className="text-smoke">Free</span>
+                  {alreadyEnrolled ? (
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href={`/student/courses/${course.id}`}>
+                        Go to Course
+                      </Link>
+                    </Button>
                   ) : (
-                    <span>${course.price!.toFixed(2)}</span>
-                  )}
-                </div>
-
-                {/* CTA */}
-                {alreadyEnrolled ? (
-                  <Link
-                    href={`/student/courses/${course.id}`}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-void-black/20 px-6 py-3 font-visueltpro text-sm font-medium text-void-black transition-colors hover:bg-void-black/5"
-                  >
-                    Go to Course
-                  </Link>
-                ) : (
-                  <button
-                    onClick={handleEnrol}
-                    disabled={enrolling}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-void-black px-6 py-3 font-visueltpro text-sm font-medium text-chalk transition-opacity hover:opacity-90 disabled:opacity-60"
-                  >
-                    {enrolling && <Loader2 className="size-4 animate-spin" />}
-                    {enrolling
-                      ? "Processing..."
-                      : isFree
-                        ? "Enrol for Free"
-                        : "Purchase & Enrol"}
-                  </button>
-                )}
-
-                {!isAuthenticated && (
-                  <p className="mt-3 text-center font-visueltpro text-xs font-light text-smoke">
-                    <Link
-                      href="/login"
-                      className="underline hover:text-void-black"
+                    <Button
+                      className="w-full"
+                      onClick={handleEnrol}
+                      disabled={enrolling}
                     >
-                      Log in
-                    </Link>{" "}
-                    to enrol
-                  </p>
-                )}
-
-                {/* Instructor */}
-                <div className="mt-6 flex items-center gap-3 border-t border-graphite/10 pt-5">
-                  {course.instructor.avatarUrl ? (
-                    <Image
-                      src={course.instructor.avatarUrl}
-                      alt=""
-                      width={40}
-                      height={40}
-                      className="rounded-md"
-                    />
-                  ) : (
-                    <div className="flex size-10 items-center justify-center rounded-md bg-void-black font-visueltpro text-xs font-bold text-chalk">
-                      {course.instructor.fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)}
-                    </div>
+                      {enrolling && <Spinner />}
+                      {enrolling
+                        ? "Processing..."
+                        : isFree
+                          ? "Enrol for Free"
+                          : "Purchase & Enrol"}
+                    </Button>
                   )}
-                  <div>
-                    <p className="font-visueltpro text-sm font-medium text-void-black">
-                      {course.instructor.fullName}
-                    </p>
-                    <p className="font-visueltpro text-xs font-light text-smoke">
-                      Instructor
-                    </p>
-                  </div>
-                </div>
 
-                {/* Tags */}
-                {course.tags && course.tags.length > 0 && (
-                  <div className="mt-5 flex flex-wrap gap-1.5 border-t border-graphite/10 pt-4">
-                    {course.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-md border border-graphite/10 px-2.5 py-0.5 font-visueltpro text-[11px] text-smoke"
+                  {!isAuthenticated && (
+                    <p className="-mt-2 text-center text-xs text-muted-foreground">
+                      <Link
+                        href="/login"
+                        className="text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
                       >
-                        {tag}
-                      </span>
-                    ))}
+                        Log in
+                      </Link>{" "}
+                      to enrol
+                    </p>
+                  )}
+
+                  <Separator />
+
+                  {/* Instructor */}
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar size="lg">
+                      {course.instructor.avatarUrl ? (
+                        <AvatarImage
+                          src={course.instructor.avatarUrl}
+                          alt={course.instructor.fullName}
+                        />
+                      ) : (
+                        <AvatarFallback>
+                          {course.instructor.fullName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {course.instructor.fullName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Instructor
+                      </p>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Tags */}
+                  {course.tags && course.tags.length > 0 && (
+                    <>
+                      <Separator />
+                      <div className="flex flex-wrap gap-1.5">
+                        {course.tags.map((tag) => (
+                          <Badge key={tag} variant="outline">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

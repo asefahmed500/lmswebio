@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/auth/jwt"
 import { z } from "zod"
 import { rateLimit, getRateLimitIdentifier } from "@/lib/rate-limit"
+import { gradeAnswer } from "@/lib/quiz"
+
+class AttemptLimitError extends Error {}
 
 const submitQuizSchema = z.object({
   answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
@@ -58,17 +61,6 @@ export async function POST(
       )
     }
 
-    const existingAttempts = await prisma.quizAttempt.count({
-      where: { quizId, userId },
-    })
-
-    if (existingAttempts >= quiz.attemptsAllowed) {
-      return NextResponse.json(
-        { error: "Maximum attempts reached" },
-        { status: 403 }
-      )
-    }
-
     const body = await request.json()
     const parsed = submitQuizSchema.safeParse(body)
     if (!parsed.success) {
@@ -82,45 +74,58 @@ export async function POST(
 
     let totalPoints = 0
     let earnedPoints = 0
+    let needsManualGrading = false
 
     for (const question of quiz.questions) {
-      totalPoints += question.points
-      const userAnswer = answers[question.id.toString()]
-
-      if (!userAnswer) continue
-
-      if (question.type === "MC_SINGLE" || question.type === "TRUE_FALSE") {
-        if (userAnswer === question.correctAnswer) {
-          earnedPoints += question.points
-        }
-      } else if (question.type === "MC_MULTI") {
-        const correct = (question.correctAnswer as string[]) || []
-        const userAns = (userAnswer as string[]) || []
-        const matchedCount = userAns.filter((a: string) =>
-          correct.includes(a)
-        ).length
-        if (matchedCount > 0 && correct.length > 0) {
-          earnedPoints += (question.points * matchedCount) / correct.length
-        }
+      const fraction = gradeAnswer(
+        question.type,
+        question.correctAnswer,
+        answers[question.id]
+      )
+      if (fraction === null) {
+        // Text/essay answers are excluded from the automatic score and must
+        // be graded by the instructor.
+        needsManualGrading = true
+        continue
       }
+      totalPoints += question.points
+      earnedPoints += question.points * fraction
     }
 
     const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0
 
-    const attempt = await prisma.quizAttempt.create({
-      data: {
-        quizId,
-        userId,
-        score: Math.round(score * 100) / 100,
-        answers,
-      },
-      include: {
-        quiz: { select: { id: true, title: true } },
-      },
+    // The attempt-limit check and insert must be atomic, otherwise concurrent
+    // submissions can bypass attemptsAllowed.
+    const attempt = await prisma.$transaction(async (tx) => {
+      const existingAttempts = await tx.quizAttempt.count({
+        where: { quizId, userId },
+      })
+      if (existingAttempts >= quiz.attemptsAllowed) {
+        throw new AttemptLimitError()
+      }
+
+      return tx.quizAttempt.create({
+        data: {
+          quizId,
+          userId,
+          score: needsManualGrading ? null : Math.round(score * 100) / 100,
+          answers,
+        },
+        include: { quiz: { select: { id: true, title: true } } },
+      })
     })
 
-    return NextResponse.json(attempt, { status: 201 })
+    return NextResponse.json(
+      { ...attempt, needsManualGrading },
+      { status: 201 }
+    )
   } catch (error) {
+    if (error instanceof AttemptLimitError) {
+      return NextResponse.json(
+        { error: "Maximum attempts reached" },
+        { status: 403 }
+      )
+    }
     console.error("POST /api/quizzes/[id]/attempt error:", error)
     return NextResponse.json(
       { error: "Internal server error" },
